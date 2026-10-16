@@ -1,6 +1,6 @@
-# Admin superadmin contract (DRAFT)
+# Admin superadmin contract
 
-Status: **dummy-data draft** untuk artboard 12a-12c dan 13a-13c: pengaturan, kelola admin, undangan admin, dan log. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Akun admin, undangan, dan audit log memakai MySQL (langkah 10 dan 12); pengaturan masih dummy dan tersimpan per sesi browser sampai langkah 17.
+Status: **di MySQL (langkah 17)** untuk artboard 12a-12c dan 13a-13c: pengaturan, kelola admin, undangan admin, dan log. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Akun admin, undangan, audit log, dan pengaturan memakai MySQL (langkah 10, 12, 17); pengaturan tersimpan di `app_settings`.
 
 Semua endpoint di bawah, kecuali undangan, butuh sesi **superadmin**: tanpa sesi `401`, admin biasa `403 { message: "Hanya superadmin yang bisa mengakses halaman ini." }`. Menyembunyikan menu hanya kemudahan; API yang memutuskan.
 
@@ -34,7 +34,7 @@ interface AdminSettings {
 type AdminSettingsInput = Omit<AdminSettings, 'rulesVersion' | 'updatedBy' | 'updatedAt'>;
 ```
 
-Batas menit 0-10080, bulan 1-24. `registrationCloseMinutes` langsung dipakai `registration.closesAt` di kegiatan dan `engagedWindowMonths` di dashboard. Tiap kolom yang berubah dicatat sebagai satu baris log ("Ubah pengaturan").
+Batas menit 0-10080, bulan 1-24. `registrationCloseMinutes` dipakai `registration.closesAt` kegiatan (admin, member, halaman publik) dan `cancellationCloseMinutes` batas batal member; `engagedWindowMonths` dibaca dashboard; `adminWhatsapp` jadi tombol WhatsApp admin; `whatsappGroupUrl` dan `rulesSummary`/`rulesVersion` tampil di layar member. Kolom opsional yang dikosongkan (atau hanya spasi) disimpan sebagai `null`; `rulesSummary` di-trim. Belum pernah diubah admin: bawaan 60/60/6, kolom opsional `null`, `rulesSummary` kosong, `rulesVersion` 1, `updatedBy` = `"Sistem"`. `updatedBy`/`updatedAt` = perubahan terakhir pada salah satu kolom di atas. `rulesVersion` naik 1 hanya bila `rulesSummary` benar-benar berubah. Tiap kolom yang berubah dicatat sebagai satu baris log ("Ubah pengaturan").
 
 ## Kelola admin
 
