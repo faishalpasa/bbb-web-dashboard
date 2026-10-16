@@ -16,6 +16,7 @@ export interface EventListItem {
     registered: number;
     capacity: number | null;
     attended: number | null;
+    allowsNonMember: boolean;
 }
 
 export interface EventList extends PaginatedCollection<EventListItem> {
@@ -36,7 +37,6 @@ export interface EventDetail extends EventListItem {
     mapUrl: string | null;
     bannerUrl: string | null;
     usesQuota: boolean;
-    allowsNonMember: boolean;
     attendanceCode: string;
     publicPath: string;
     present: number;

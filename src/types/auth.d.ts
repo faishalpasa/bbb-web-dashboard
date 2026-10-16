@@ -1,5 +1,12 @@
 import type { Identifier } from '@/types/api';
 
+// The Bearer token the API returns next to the data of any endpoint that starts or renews a session.
+export interface AuthToken {
+    accessToken: string;
+    tokenType: 'Bearer';
+    expiresAt: string;
+}
+
 export type AdminRole = 'admin' | 'superadmin';
 
 export interface AdminUser {

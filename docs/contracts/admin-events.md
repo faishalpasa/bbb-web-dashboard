@@ -44,6 +44,7 @@ interface EventListItem {
     registered: number;
     capacity: number | null; // null = tanpa kuota
     attended: number | null; // null sampai kegiatan ditutup
+    allowsNonMember: boolean; // tipe kegiatan: true = terbuka untuk external
 }
 // list summary: { upcomingTotal: number; total: number }
 
@@ -55,7 +56,6 @@ interface EventDetail extends EventListItem {
     mapUrl: string | null; // link Maps (offline) atau link meeting (online)
     bannerUrl: string | null;
     usesQuota: boolean;
-    allowsNonMember: boolean;
     attendanceCode: string;
     publicPath: string; // "/e/{slug}"
     present: number;

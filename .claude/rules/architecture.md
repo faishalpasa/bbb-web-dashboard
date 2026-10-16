@@ -3,7 +3,7 @@
 ## System
 
 ```text
-Browser -> web app (static SPA, this repository)  --HTTP /api, cookies-->  Laravel API (bbb-api)
+Browser -> web app (static SPA, this repository)  --HTTP /api, Authorization: Bearer-->  Laravel API (bbb-api)
 ```
 
 - This repository is only the web app: Vite + React 19 + TypeScript + TanStack Router, deployed as static files (Vercel, Netlify, Cloudflare Pages, or any static host).
@@ -17,8 +17,8 @@ Page -> _context.tsx / hook -> services/<domain>.ts -> axiosClient (utils/api.ts
 ```
 
 - Pages never import `axios`. Contexts and hooks call `src/services/*`; services call the shared `axiosClient` from `@/utils/api`.
-- `utils/api.ts` owns the base URL, credentials, and the Sanctum CSRF handshake: mutations first call `GET {VITE_API_ORIGIN}/sanctum/csrf-cookie`, and a `419` is retried once after refreshing the cookie.
-- Authentication is Sanctum SPA cookie auth. There are no tokens in JavaScript. The app and API must share a parent domain (`localhost:5174` and `localhost:8000` locally).
+- `utils/api.ts` owns the base URL and the `Authorization: Bearer` header: it attaches the stored access token, and a `401` on a request that carried a token calls `POST /api/auth/refresh` once and retries. The token lives in `utils/token.ts` (localStorage).
+- Authentication is a JWT access token returned by login (and by email verification, Google exchange, and refresh). Never put the token in a URL, log it, or render server HTML. The app and API no longer need a shared parent domain; the API only allow-lists the origin through CORS.
 - Admin session/auth/capabilities are pending contract agreement. Do not reuse the member session as proof of admin access. App-wide session state will live in `app-context.tsx` once defined.
 
 ## Service functions

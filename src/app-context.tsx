@@ -4,6 +4,7 @@ import { ROUTES } from '@/constants/route';
 import { getSession, postLogout } from '@/services/auth';
 import type { AdminSession } from '@/types/auth';
 import { setUnauthorizedHandler } from '@/utils/api';
+import { clearToken } from '@/utils/token';
 
 export interface AppContextValue {
     appName: string;
@@ -68,6 +69,7 @@ export const AppContextProvider = ({ children }: PropsWithChildren) => {
             await postLogout();
         } finally {
             // The local session is dropped even when the request fails, so the admin never stays stuck in the app.
+            clearToken();
             setSession(null);
         }
     }, [setSession]);

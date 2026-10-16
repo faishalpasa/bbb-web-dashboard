@@ -11,7 +11,7 @@ src/                       # mirrors reklub/admin-dashboard
 ├── constants/             # one <domain>.ts per domain; route.ts holds ROUTES; env.ts holds flags
 ├── services/              # Axios calls, one <domain>.ts per domain
 ├── utils/                 # pure helpers; check here before writing new ones
-│   ├── api.ts             # shared axiosClient + CSRF handshake
+│   ├── api.ts             # shared axiosClient + Bearer header and token refresh
 │   ├── error.ts           # toServiceError, errorMessage, fieldErrorMessage
 │   ├── date.ts, string.ts, device.ts
 ├── hooks/                 # reusable hooks, camelCase files: useTitle.ts

@@ -8,7 +8,7 @@ Keputusan produk yang sudah ada:
 - Akun admin dibuat lewat undangan (artboard 13a-13c); setelah aktif, admin masuk dengan email dan password yang dibuat saat aktivasi.
 - Sesi member bukan bukti akses admin.
 
-Transport, CSRF, envelope `{ data }` dan format error mengikuti `frontend-api.md`.
+Transport (token Bearer), envelope `{ data }` dan format error mengikuti `frontend-api.md`. Login admin dan penerimaan undangan menambahkan `token` (`typ: admin`, berlaku 30 menit) ke `AdminSession`; dashboard memakai `POST /api/auth/refresh` dan `Authorization: Bearer`.
 
 ## Endpoint
 
@@ -21,7 +21,7 @@ Transport, CSRF, envelope `{ data }` dan format error mengikuti `frontend-api.md
 - Kredensial salah: `422 { message, errors: { email: ["Email atau password salah."] } }`. Pesan sama untuk email tidak terdaftar dan password salah.
 - Akun member biasa (bukan admin) yang mencoba masuk diperlakukan sama seperti kredensial salah; tidak ada pesan yang membocorkan bahwa email itu milik member.
 - Admin yang dinonaktifkan: `422` pada field `email` ('Akun admin ini sudah dinonaktifkan. Hubungi superadmin.'), setelah password terbukti benar. Admin yang undangannya belum diaktifkan belum punya password dan mendapat pesan kredensial salah.
-- `GET /api/admin/session` tanpa sesi admin: `401`. Sesi member pada cookie yang sama tetap `401` di endpoint admin.
+- `GET /api/admin/session` tanpa sesi admin: `401`. Token member di endpoint admin juga `401`.
 - Hak akses (`403`) dikembalikan API pada tiap endpoint admin; capability di bawah hanya mengatur tampilan.
 
 ## Types
@@ -50,7 +50,7 @@ interface AdminSession {
 
 ## Pertanyaan terbuka
 
-- Cookie sesi berbagi host `localhost` (cookie tidak membedakan port), jadi admin dan member memakai satu cookie sesi Laravel. Fase dummy memisahkannya lewat key sesi: login admin hanya menulis key admin, sesi member tidak pernah dianggap admin, dan logout admin hanya menghapus key admin. Logout member (`invalidate`) tetap mengakhiri seluruh sesi, termasuk admin. Pemisahan cookie per guard dibahas saat fase database.
+- Admin dan member kini memakai token terpisah (`typ` `admin` dan `member`), jadi tidak berbagi sesi lagi; rute admin menolak token member dan sebaliknya. Fase dummy tetap menyimpan state di session store server yang dikunci klaim `sid` token. Logout admin mencabut token admin saja.
 - Tujuan redirect setelah login: `/` (Dashboard). Redirect ke halaman asal sebelum 401 belum diputuskan.
 - Credential dummy (hanya fase dummy, `App\Support\Dummy\DummyAdmins`): `superadmin@bbb.test` / `superadmin123`, `admin@bbb.test` / `admin123`, dan `wahyuni.sari@bbb.org` / `admin123`. Tuti Handayani dan admin yang diundang dikelola lewat halaman Admin (`admin-superadmin.md`).
 - Remember me, lupa password admin, dan rate limit login belum ada desainnya; tidak dibuat.

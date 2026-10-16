@@ -7,8 +7,8 @@ Status: **dummy-data draft**. Contract ini menjadi boundary antara web app (repo
 - Web app adalah SPA statis; seluruh data berasal dari API lewat HTTP. Tidak ada props dari server.
 - Base URL API adalah `VITE_API_BASE_URL` (lokal: `http://localhost:8000/api`, production: `https://api.<domain>/api`).
 - Healthcheck: `GET /` dan `GET /api/health` (tanpa autentikasi) membalas `{ "data": { "status": "ok", ... } }`.
-- Autentikasi memakai Laravel Sanctum SPA (cookie). Sebelum request mutasi (`POST/PUT/PATCH/DELETE`), frontend memanggil `GET {VITE_API_ORIGIN}/sanctum/csrf-cookie`, lalu mengirim header `X-XSRF-TOKEN` dari cookie `XSRF-TOKEN` dengan `withCredentials`. Respons `419` berarti cookie CSRF kedaluwarsa; frontend mengambil cookie baru dan mengulang sekali.
-- Web app dan API harus satu domain induk (lokal: `localhost:5173` dan `localhost:8000`). API mengizinkan origin web app lewat CORS dengan credentials.
+- Autentikasi memakai JWT. Endpoint yang membuat sesi (login member/admin, `register/verify`, penerimaan undangan admin, Google exchange, refresh) menambahkan `token: { accessToken, tokenType: "Bearer", expiresAt }` ke data yang sudah dibalas (`AuthSession`, data form onboarding, atau sesi admin); frontend menyimpannya dan mengirim `Authorization: Bearer {accessToken}` di setiap request. Tidak ada cookie auth, handshake CSRF, atau `/sanctum/csrf-cookie` (`docs/plans/bearer-auth.md`): API tidak membaca atau mengeset cookie untuk `/api/*`. Access token member berlaku 60 menit, admin 30 menit. `401` pada request yang membawa token berarti token kedaluwarsa atau dicabut: frontend memanggil `POST /api/auth/refresh` sekali, lalu mengulang request; bila refresh gagal, token dihapus dan frontend kembali ke layar masuk. Token tidak boleh muncul di URL atau log.
+- Web app dan API tidak perlu satu domain induk. API hanya mengizinkan origin web app dan dashboard lewat CORS (`CORS_ALLOWED_ORIGINS`), tanpa credentials. Satu-satunya cookie ada di redirect Google (grup web API, di host API) dan tidak pernah dibaca `/api/*`.
 - Respons sukses JSON memakai envelope `{ "data": ... }`.
 - Error validasi memakai status `422` dengan `{ "message", "errors": { "field": ["..."] } }`. Penolakan bisnis (kuota penuh, sudah terdaftar) memakai `422` dengan `message` Indonesia. Data tidak ada: `404 { "message": "Data tidak ditemukan." }`. Link satu kali pakai (verifikasi email dan atur ulang password) yang tidak bisa dipakai dibalas `422 { "message", "code" }` dengan `code` salah satu dari `token_expired`, `token_used`, atau `token_invalid`, sehingga frontend memilih halaman error tanpa mencocokkan teks pesan. Belum masuk: `401`.
 - Semua identifier domain dikirim sebagai string dan semua datetime sebagai ISO 8601 UTC.
@@ -16,7 +16,7 @@ Status: **dummy-data draft**. Contract ini menjadi boundary antara web app (repo
 
 ## Auth/session
 
-Login membuat sesi cookie. Setelah autentikasi berhasil, frontend berpindah halaman dengan router client-side. `GET /api/auth/session` membalas `401` bila belum masuk.
+Login membuat sesi dan mengembalikan token (lihat Token Bearer di bawah). Setelah autentikasi berhasil, frontend menyimpan token dan berpindah halaman dengan router client-side. `GET /api/auth/session` membalas `401` bila belum masuk.
 
 | Method | URL | Result |
 | --- | --- | --- |
@@ -35,13 +35,25 @@ Pendaftaran email membuat akun yang belum terverifikasi dan mengirim link verifi
 
 `POST /api/auth/logout` mengakhiri sesi dan membalas `204` tanpa body.
 
+### Token Bearer
+
+| Method | URL | Payload/result |
+| --- | --- | --- |
+| `POST` | `/api/auth/refresh` | Header `Authorization: Bearer` (boleh sudah kedaluwarsa, sampai 14 hari sejak diterbitkan) -> sesi yang sama dengan `GET /api/auth/session` (member atau admin sesuai token) + `token` baru; token lama dicabut |
+| `POST` | `/api/auth/google/exchange` | `{ code }` -> `AuthSession` + `token`; code sekali pakai dan berlaku 60 detik, salah dibalas `422 { code: "token_invalid" }` |
+
+`AuthToken`: `{ accessToken: string, tokenType: "Bearer", expiresAt: string }` (ISO 8601 UTC). Isi JWT: `sub`, `typ` (`member` atau `admin`), `sid` (tetap sepanjang refresh), `jti` (unik per token), `oiat` (waktu token pertama sesi diterbitkan; refresh boleh sampai 14 hari sesudahnya), `iat`, `nbf`, `exp`. Rute admin menolak token `member` dan sebaliknya. `POST /api/auth/logout` dan `POST /api/admin/logout` dengan token mencabut `jti` dan membalas `204`; token yang sudah dicabut dijawab `401`. Request tanpa token ke rute publik (event publik, wilayah) tidak pernah dijawab `401`, bahkan bila header berisi token basi: token yang tidak valid diperlakukan sebagai anonim.
+
+Fase dummy: state per sesi (pendaftaran, status keluar, event admin) dikunci oleh klaim `sid` (session store server, tanpa cookie), sehingga reload dan refresh token tetap melihat state yang sama sampai sesi dummy dibersihkan (120 menit tanpa aktivitas). Undangan admin dummy hanya bisa diterima dari sesi yang mengundang (akunnya ada di state sesi itu), sama seperti jalur cookie.
+
+
 `GET /api/auth/session` membalas salah satu dari: member lengkap (`member.status` `active`), akun migrasi (`member.status` `migrated` dan `requiresProfileCompletion: true`), pendaftar yang belum mengisi data diri (`member: null` dan `requiresProfileCompletion: true`), member terbatas (`exit_requested` atau `unsubscribed`), atau `401` bila belum masuk. Web app memakai respons ini untuk guard rute: tanpa sesi ke `/login`; `member: null` ke `/onboarding/profile`; akun migrasi ke `/onboarding/complete-profile`; member terbatas ke `/status`; selain itu area member terbuka. Layar masuk dan daftar mengarahkan orang yang sudah masuk ke tujuan yang sama. Respons `401` pada endpoint `/api/member/*` saat web app terbuka berarti sesi habis, dan web app kembali ke `/login`.
 
 `AuthSession` memuat user, ringkasan member bila ada, serta flag `requiresProfileCompletion` untuk akun migrasi.
 
 ## Daftar dan masuk dengan Google
 
-Alur Google adalah redirect halaman penuh lewat API, bukan XHR. Rute-nya ada di grup web API (bukan `/api`) karena callback datang dari Google tanpa Origin/Referer web app dan harus memakai cookie sesi.
+Alur Google adalah redirect halaman penuh lewat API, bukan XHR. Rute-nya ada di grup web API (bukan `/api`) karena callback datang dari Google tanpa Origin/Referer web app. Setelah callback, API mengarahkan ke `/auth/google/callback?code=` di web app (code sekali pakai, berlaku 60 detik); web app membacanya sekali, langsung menghapusnya dari URL, lalu menukarnya lewat `POST /api/auth/google/exchange` dan berpindah sesuai sesi (`/home`, `/onboarding/profile`, atau `/status`).
 
 | Method | URL | Keterangan |
 | --- | --- | --- |
@@ -151,13 +163,79 @@ Frontend tidak menghitung cutoff atau kapasitas sendiri. Mock boleh mensimulasik
 
 State memuat waktu buka/tutup, `attendedAt` (waktu kehadiran tercatat, `null` sebelum hadir), jumlah percobaan tersisa, status pendaftaran, dan capability submit. Jendela default adalah 30 menit sebelum kegiatan sampai kegiatan ditutup, dengan maksimal 5 kode salah per 10 menit. Backend tetap menjadi sumber keputusan waktu dan rate limit.
 
-Dummy: status pendaftaran dan absensi disimpan per sesi (cookie), jadi daftar, batal, dan hadir terlihat setelah reload; kode absensi yang benar adalah `BFF-2410` dan jendela waktu absensi diabaikan.
+Dummy: status pendaftaran dan absensi disimpan per sesi token (klaim `sid`), jadi daftar, batal, dan hadir terlihat setelah reload; kode absensi yang benar adalah `BFF-2410` dan jendela waktu absensi diabaikan.
 
 ## Fase data dummy
 
 Saat ini API Laravel membalas data dummy tanpa database: isi profil tetap fixture statis, sedangkan daftar kegiatan dibuat oleh Faker dengan seed tetap (paginasi 10 per halaman). Pendaftaran/absensi dan status permintaan keluar disimpan per file session agar transisi dan guard dapat diuji setelah reload; simpan profil, foto, dan password hanya mengembalikan hasil tanpa persistence permanen. Tiga kegiatan skenario tetap: `event-001` (terbuka), `event-002` (sudah terdaftar, kode absensi `BFF-2410`), `event-003` (selesai).
 
 Kredensial login dummy: `buibu@gmail.com` / `buibu123`. Nilai ini hanya fixture development dan bukan credential production.
+
+## Halaman publik kegiatan (usulan, belum diimplementasi API)
+
+Status: **disepakati**; API dummy sudah menjawab endpoint ini (`PublicEventController`), persistensi sungguhan menyusul. Halaman `/e/{slug}` terbuka tanpa login dan tidak pernah mengarah ke `/login`.
+
+| Method | URL | Payload/result |
+| --- | --- | --- |
+| `GET` | `/api/public/events/{slug}` | `PublicEventDetail` |
+| `POST` | `/api/public/events/{slug}/registrations` | `PublicRegistrationInput` -> `PublicRegistrationResult` (`201`) |
+
+Keduanya tanpa autentikasi dan tanpa token. Wilayah memakai endpoint terbuka `GET /api/regions/provinces` dan `GET /api/regions/regencies?provinceCode=`.
+
+`PublicEventDetail`:
+
+```ts
+{
+    slug: string;
+    title: string;
+    description: string;            // teks biasa, baris baru ditampilkan apa adanya
+    bannerUrl: string | null;
+    startsAt: string;               // ISO 8601 UTC
+    endsAt: string;
+    timezone: string;               // zona waktu acara (Asia/Jakarta, Asia/Makassar, Asia/Jayapura)
+    lifecycle: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+    format: { value: 'online' | 'offline'; label: string };
+    venueName: string | null;
+    address: string | null;
+    mapUrl: string | null;          // hanya link Maps untuk offline; null untuk online
+    usesQuota: boolean;
+    capacity: number | null;        // null bila usesQuota false
+    registeredCount: number | null; // null bila usesQuota false; UI tidak menampilkan info kuota
+    registrationStatus: 'open' | 'full' | 'closed';
+    registrationClosesAt: string;   // startsAt dikurangi registrationCloseMinutes
+    registrationCloseMinutes: number; // dari Pengaturan (registrationCloseMinutes), bukan angka tetap di UI
+    consentVersion: string;         // versi Kebijakan Data Pribadi yang dikirim kembali saat mendaftar
+    adminWhatsappUrl: string | null; // kontak admin untuk keadaan kuota penuh/ditutup; null = tombol nonaktif
+}
+```
+
+- `404 { message }` untuk slug yang tidak ada, kegiatan `draft`, dan kegiatan internal (`allowsNonMember: false`). API tidak membedakan ketiganya. Kegiatan `completed` atau `cancelled` dibalas `200` dengan `lifecycle` yang sesuai agar web app menampilkan layar khusus.
+- Respons tidak memuat data admin (kode kehadiran, daftar peserta, id internal). **Link meeting kegiatan online tidak pernah dikirim ke endpoint ini**; peserta hanya menerimanya lewat email konfirmasi.
+- `registrationStatus`: `full` bila `usesQuota` dan kuota terisi, `closed` bila sudah melewati `registrationClosesAt` atau `lifecycle` bukan `upcoming`. Server yang memutuskan; web app tidak menghitung kuota atau cutoff sendiri.
+
+`PublicRegistrationInput` (semua wajib, nama field camelCase):
+
+```ts
+{
+    name: string;
+    email: string;
+    whatsapp: string;       // dinormalisasi 628... oleh web app, divalidasi ulang server
+    provinceCode: string;
+    regencyCode: string;
+    birthYear: number;      // usia minimal 17 tahun
+    consentVersion: string; // nilai dari PublicEventDetail.consentVersion
+}
+```
+
+`PublicRegistrationResult`: `{ email: string }`. Server membuat pendaftaran non-member dan mengirim email konfirmasi (di fase dummy tidak terkirim). Web app menampilkan `email` tebal di layar berhasil.
+
+Penolakan bisnis memakai `422 { message, code, errors? }` dengan `code` yang bisa dibedakan: `event_full` (kuota penuh), `registration_closed` (pendaftaran ditutup), dan `email_already_registered` (dengan `errors.email` berisi "Email ini sudah dipakai mendaftar kegiatan ini."). Setelah `event_full` atau `registration_closed`, web app memuat ulang detail kegiatan dan menampilkan keadaan yang sesuai. Validasi field memakai `422 { errors }` biasa. Endpoint di-throttle per IP dan per email; kelebihan dibalas `429`.
+
+Admin dialog "Tambah peserta" hanya mengumpulkan nama, email, dan WhatsApp; provinsi, kabupaten/kota, dan tahun lahir wajib hanya untuk pendaftaran lewat halaman publik, sehingga peserta yang ditambah admin boleh tidak memilikinya (nullable di sisi API).
+
+Fase dummy: kegiatan diambil dari daftar kegiatan admin (slug mis. `diskusi-buku-bulanan` terbuka, `kopdar-bbb-bff` kuota penuh, `diskusi-buku-september` selesai, `webinar-parenting` dibatalkan, `kelas-menulis-online` online, `webinar-literasi-digital` tanpa kuota). Pendaftaran tamu disimpan di cache per kegiatan (tamu tidak punya token), ikut terhitung di kuota, dan tampil di daftar peserta admin; email konfirmasi tidak terkirim. `adminWhatsappUrl` dari Pengaturan (`adminWhatsapp`), lalu `BBB_ADMIN_WHATSAPP_URL`.
+
+Open Graph per slug (judul dan banner) tidak bisa disajikan SPA statis. Keputusan: fungsi edge/serverless di host menjawab request crawler ke `/e/{slug}` dengan HTML berisi meta OG dari `GET /api/public/events/{slug}`, sedangkan browser biasa tetap menerima SPA. Host belum dipilih; pekerjaan ini dicatat di `TASKS.md`.
 
 ## Mock MSW (opsional, dev saja)
 

@@ -26,4 +26,4 @@ Admin-only static SPA. Member/public pages live in `../web-app`; Laravel JSON AP
 
 `npm ci`, `npm run dev` (http://localhost:5174), `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run build`.
 
-Use localhost, not 127.0.0.1. Before API integration, allow localhost:5174 in API CORS and Sanctum alongside localhost:5173. Never overwrite the member origin. Scaffold has no admin authentication or protected data yet.
+Use localhost, not 127.0.0.1. Before API integration, allow localhost:5174 in API CORS alongside localhost:5173. Auth is migrating to `Authorization: Bearer` (`docs/plans/bearer-auth.md` in web-app and bbb-api). Never overwrite the member origin. Scaffold has no admin authentication or protected data yet.

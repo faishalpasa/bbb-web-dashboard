@@ -50,3 +50,8 @@ Launch target: 30 October 2026. Admin-only app; member/public work remains in we
 - Live Claude artboard access through signed-in Chrome; ask for exports if unavailable.
 
 Origin connection was explicitly requested. Commit/push/deploy still require a separate explicit request. No backend database/migrations until the user ends the dummy phase.
+
+## Bearer auth migration (`docs/plans/bearer-auth.md` in web-app and bbb-api)
+
+- [x] Phase 3 (web-dashboard): admin Bearer token (`bbb.admin.token`), refresh on 401, no CSRF handshake, logout revokes the token. Checked in the browser at the dev server against the local API: sign-in, reload, expired-token refresh, logout (token revoked), and a POST (add guest participant) with no `/sanctum/csrf-cookie` request.
+- [ ] Invitation accept link is still limited by the dummy phase: the invited account only exists in the inviting admin's session.

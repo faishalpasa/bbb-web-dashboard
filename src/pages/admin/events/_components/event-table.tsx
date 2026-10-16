@@ -49,11 +49,18 @@ export const EventTable = () => {
                                       <td className="py-3 pr-3 pl-4 font-medium">{event.title}</td>
                                       <td className={event.startsAt ? 'px-3 py-3' : 'text-muted-foreground px-3 py-3'}>{scheduleOf(event)}</td>
                                       <td className="px-3 py-3">
-                                          <StatusBadge
-                                              tone={event.format.value === 'online' ? 'neutral' : 'success'}
-                                              label={event.format.label}
-                                              data-test-id={`events_badge_format_${event.id}`}
-                                          />
+                                          <div className="flex flex-wrap gap-1">
+                                              <StatusBadge
+                                                  tone={event.format.value === 'online' ? 'neutral' : 'success'}
+                                                  label={event.format.label}
+                                                  data-test-id={`events_badge_format_${event.id}`}
+                                              />
+                                              <StatusBadge
+                                                  tone={event.allowsNonMember ? 'sage' : 'neutral'}
+                                                  label={event.allowsNonMember ? 'External' : 'Internal'}
+                                                  data-test-id={`events_badge_audience_${event.id}`}
+                                              />
+                                          </div>
                                       </td>
                                       <td className="px-3 py-3 text-right font-mono text-xs">{quotaOf(event)}</td>
                                       <td className="px-3 py-3 text-right font-mono text-xs">{attendedOf(event)}</td>
@@ -116,7 +123,8 @@ export const EventTable = () => {
                               </div>
                               <p className={event.startsAt ? 'text-sm' : 'text-muted-foreground text-sm'}>{scheduleOf(event)}</p>
                               <p className="text-muted-foreground text-xs">
-                                  {event.format.label} · Terdaftar {quotaOf(event)} · Hadir {attendedOf(event)}
+                                  {event.format.label} · {event.allowsNonMember ? 'External' : 'Internal'} · Terdaftar {quotaOf(event)} · Hadir{' '}
+                                  {attendedOf(event)}
                               </p>
                               {canEdit(event) && (
                                   <Link
