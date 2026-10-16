@@ -1,6 +1,6 @@
 # Admin member management contract (DRAFT)
 
-Status: **dummy-data draft** untuk artboard 9a-9e. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Semua endpoint butuh sesi admin (`401` bila tidak ada). Perubahan fase dummy (tambah, edit, status, catatan) disimpan per sesi browser.
+Status: **draft** untuk artboard 9a-9e. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Semua endpoint butuh token admin (`401` tanpa token atau dengan token member; semua admin, bukan hanya superadmin). Data member memakai MySQL sejak langkah 11; `id` adalah UUID string. Hanya audit log ekspor yang masih dummy per sesi (langkah 12).
 
 | Method | URL | Result |
 | --- | --- | --- |
@@ -12,14 +12,14 @@ Status: **dummy-data draft** untuk artboard 9a-9e. Diimplementasi di `bbb-api` d
 | `PUT` | `/api/admin/members/{id}` | `MemberEditInput` -> `MemberDetail` |
 | `POST` | `/api/admin/members/{id}/deactivate` | -> `MemberDetail`; `422` bila sudah nonaktif |
 | `POST` | `/api/admin/members/{id}/activate` | -> `MemberDetail`; `422` bila bukan nonaktif |
-| `POST` | `/api/admin/members/{id}/reset-password` | -> `{ email }` (fase dummy: email tidak dikirim); `422` bila member belum melengkapi data |
+| `POST` | `/api/admin/members/{id}/reset-password` | -> `{ email }`; mengantrekan email berisi link atur ulang password (pengiriman nyata menunggu provider email) dan mematikan link reset lama yang belum dipakai; `422` bila member belum melengkapi data |
 | `PUT` | `/api/admin/members/{id}/note` | `{ note }` -> `{ note }` (maks. 2000 karakter) |
 
 Daftar wilayah memakai endpoint `/api/regions/*` yang sama dengan member.
 
 ## List
 
-Query: `search` (nama, email, nomor anggota, atau nomor WhatsApp), `status`, `provinceCode`, `preference` (`online|offline|both|unset`), `attendance` (`attended|never`), `page`, `perPage` (default 20, maks. 100). Urutan: member yang baru ditambahkan di atas, lalu urutan dasar.
+Query: `search` (nama, email, nomor anggota, atau nomor WhatsApp; `%` dan `_` dicari apa adanya; pencarian tanpa huruf dianggap nomor telepon: yang diawali `0` atau `62` dicocokkan sebagai awal nomor `628...`, selain itu sebagai potongan nomor), `status` (status admin turunan; status tak dikenal tidak memfilter), `provinceCode`, `preference` (`online|offline|both|unset`), `attendance` (`attended|never`), `page` (minimal 1), `perPage` (default 20, minimal 1, maks. 100). Urutan: member yang paling baru bergabung (`joinedAt`) di atas. `summary.activeTotal` menghitung status admin `active` (bukan `email_bounced`), `summary.total` semua member.
 
 ```ts
 interface MemberListItem {
@@ -89,10 +89,13 @@ interface MemberCreateInput extends MemberEditInput {
 }
 ```
 
-Email, nomor anggota, dan status tidak berubah lewat edit; status diubah lewat endpoint deactivate/activate. Nomor anggota (`BFF-xxxxx`) dibuat server saat disimpan, status awal `active`.
+Email, nomor anggota, status, dan persetujuan yang tercatat tidak berubah lewat edit (field itu diabaikan bila dikirim); status diubah lewat endpoint deactivate/activate. Edit berlaku untuk member berstatus apa pun, tidak melengkapi data member yang masih `awaiting_data`, dan ikut memperbarui nama akun. Nomor anggota (`BFF-xxxxx`) dibuat server saat disimpan (urutan transaksional), status awal `active`, `signupMethod` `admin`. Email dicek unik tanpa memperhatikan huruf besar/kecil dan disimpan huruf kecil (`422 "Email sudah terdaftar."`); WhatsApp dinormalisasi ke `628...` (`08...` diterima) dan unik termasuk member yang sudah dihapus. Akun dibuat tanpa password: dengan `sendInvitation` email belum terverifikasi dan sebuah link atur password diantrekan (pengiriman nyata menunggu provider), tanpa itu email dianggap terverifikasi oleh admin. `consentAcknowledged: true` mencatat persetujuan dengan versi aturan terkini dan waktu sekarang; selain itu `consent` tetap `null`.
+
+Penonaktifan mengubah status tersimpan menjadi `unsubscribed` (tampil `inactive`), membatalkan pendaftaran `registered` pada kegiatan yang belum berakhir (riwayat hadir tidak berubah, kursi kembali), dan dicatat ke audit log tipe `members`. Pengaktifan kembali (`inactive` -> `active`) tidak memulihkan pendaftaran. Permintaan keluar yang masih menunggu tidak diputuskan oleh penonaktifan; keputusannya tetap lewat layar Permintaan Keluar.
 
 ## Terbuka
 
-- Status admin (`awaiting_data`, `email_bounced`) belum dipetakan ke status member di `frontend-api.md` (`migrated`, `exit_requested`, `unsubscribed`).
+- Status admin diturunkan dari status tersimpan: `unsubscribed` -> `inactive`, `migrated` -> `awaiting_data`, `exit_requested` tetap, dan `email_bounced` hanya untuk member `active` yang alamat emailnya bermasalah (belum ada yang mengisi penanda itu selain seed/admin). `statistics.absent` kini jumlah pendaftaran berstatus `absent` (sebelumnya selisih ikut dan hadir), `history` memuat pendaftaran yang tidak dibatalkan dari yang terbaru, maksimal 50. `signupMethod` bernilai `legacy` (label "Data lama") untuk member impor yang belum punya metode daftar; nilai itu di luar union tiga nilai di atas dan hanya labelnya yang dipakai dashboard.
+- Ekspor CSV memakai filter yang sama, tanpa paginasi, dan menambahkan `'` di depan sel yang diawali `=`, `+`, `-`, `@` supaya tidak dijalankan sebagai rumus di spreadsheet.
+- Kegiatan, peserta kegiatan, daftar dan keputusan permintaan keluar admin, serta angka dashboard masih dummy (langkah 13-18) dan belum membaca member di database kecuali: menambah peserta kegiatan memilih member dari database.
 - Preferensi kegiatan dibuat opsional di form tambah/edit karena daftar menampilkan "Belum diisi".
-- Dampak nonaktif ke pendaftaran kegiatan mendatang (dialog 9d) belum disimulasikan di dummy.
