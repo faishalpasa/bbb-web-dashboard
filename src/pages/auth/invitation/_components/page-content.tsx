@@ -23,10 +23,7 @@ export const PageContent = () => {
             data-test-id="invitation_root"
         >
             <div className="w-full max-w-[400px] space-y-6">
-                <div className="flex items-center justify-center gap-3">
-                    <BrandLogo className="w-[170px]" />
-                    <span className="text-muted-foreground text-sm font-medium">Admin</span>
-                </div>
+                <BrandLogo className="mx-auto w-[260px]" />
 
                 <section className="border-border bg-card space-y-5 rounded-xl border p-6 shadow-sm">
                     {state === 'loading' && (
