@@ -7,7 +7,7 @@ Status: **di MySQL (langkah 13)**. Diimplementasi di `bbb-api` dan dipakai `web-
 | `GET` | `/api/admin/events?status&page&perPage` | `{ items: EventListItem[], meta, summary }` |
 | `GET` | `/api/admin/events/options` | `{ statuses, formats, timezones }` |
 | `POST` | `/api/admin/events/attendance-code` | `{ attendanceCode }` (kode acak 8 karakter) |
-| `POST` | `/api/admin/events/banner` | multipart `banner` (JPG/PNG, maks. 5 MB) -> `{ bannerUrl }` (file disimpan permanen di disk `public`, URL `/storage/event-banners/...`; kirim URL itu kembali di `bannerUrl` saat menyimpan; URL lain atau file hilang -> `422` pada `bannerUrl`) |
+| `POST` | `/api/admin/events/banner` | multipart `banner` (JPG/PNG, maks. 5 MB) -> `{ bannerUrl }` (file disimpan permanen di disk `public`, URL `/images/event-banners/...`; kirim URL itu kembali di `bannerUrl` saat menyimpan; URL lain atau file hilang -> `422` pada `bannerUrl`) |
 | `POST` | `/api/admin/events` | `EventInput` -> `EventDetail` (`201`) |
 | `GET` | `/api/admin/events/{id}` | `EventDetail` (`404` bila tidak ada) |
 | `PUT` | `/api/admin/events/{id}` | `EventInput` -> `EventDetail` |
