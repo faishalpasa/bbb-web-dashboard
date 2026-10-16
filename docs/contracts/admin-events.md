@@ -1,13 +1,13 @@
-# Admin event management contract (DRAFT)
+# Admin event management contract
 
-Status: **dummy-data draft** untuk artboard 10a-10c. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Semua endpoint butuh sesi admin (`401` bila tidak ada). Data kegiatan admin fase dummy terpisah dari kegiatan di sisi member (`/api/member/events`) dan tersimpan per sesi browser.
+Status: **di MySQL (langkah 13)**. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Semua endpoint butuh token admin (`401` bila tidak ada atau token member). Kegiatan admin dan kegiatan di sisi member (`/api/member/events`) adalah **satu tabel** `events`: kegiatan `published` langsung terlihat member, draf tidak. Id kegiatan dan peserta adalah UUID (string). Daftar diurutkan `COALESCE(starts_at, created_at)` terbaru dulu, lalu id.
 
 | Method | URL | Result |
 | --- | --- | --- |
 | `GET` | `/api/admin/events?status&page&perPage` | `{ items: EventListItem[], meta, summary }` |
 | `GET` | `/api/admin/events/options` | `{ statuses, formats, timezones }` |
 | `POST` | `/api/admin/events/attendance-code` | `{ attendanceCode }` (kode acak 8 karakter) |
-| `POST` | `/api/admin/events/banner` | multipart `banner` (JPG/PNG, maks. 5 MB) -> `{ bannerUrl }` (fase dummy: data URL) |
+| `POST` | `/api/admin/events/banner` | multipart `banner` (JPG/PNG, maks. 5 MB) -> `{ bannerUrl }` (file disimpan permanen di disk `public`, URL `/storage/event-banners/...`; kirim URL itu kembali di `bannerUrl` saat menyimpan; URL lain atau file hilang -> `422` pada `bannerUrl`) |
 | `POST` | `/api/admin/events` | `EventInput` -> `EventDetail` (`201`) |
 | `GET` | `/api/admin/events/{id}` | `EventDetail` (`404` bila tidak ada) |
 | `PUT` | `/api/admin/events/{id}` | `EventInput` -> `EventDetail` |
@@ -26,7 +26,9 @@ Status: **dummy-data draft** untuk artboard 10a-10c. Diimplementasi di `bbb-api`
 - Menerbitkan (`publish: true`) dan mengedit kegiatan yang sudah dipublikasikan memakai aturan penuh: `startsAt` dan `endsAt` wajib dan `endsAt` setelah `startsAt`; `startsAt` harus di masa depan saat draf diterbitkan; offline butuh `venueName` dan `address`; online butuh `mapUrl` (link meeting); kuota aktif butuh `capacity`, dan `capacity` tidak boleh di bawah jumlah terdaftar.
 - Kegiatan `completed` dan `cancelled` tidak bisa diedit (`422`).
 - `close`: peserta yang belum ditandai hadir menjadi `absent`. Tombol X pada peserta (`present: false`) mengembalikan ke `registered`, atau ke `absent` bila kegiatan sudah ditutup; tanda bisa dikoreksi setelah ditutup.
-- Pendaftaran member ditutup 60 menit sebelum mulai (`registration.closesAt`, akan dibaca dari Pengaturan). Admin masih bisa menambah peserta sampai akhir hari mulai di zona waktu acara (`registration.adminAddUntil`); kuota penuh dan kegiatan non-member tertutup menolak dengan `422`.
+- Pendaftaran member ditutup 60 menit sebelum mulai (`registration.closesAt`, dibaca dari `app_settings.registration_close_minutes`, bawaan 60). Admin masih bisa menambah peserta sampai akhir hari mulai di zona waktu acara (`registration.adminAddUntil`); kuota penuh dan kegiatan non-member tertutup menolak dengan `422`.
+- `registered` menghitung semua pendaftaran yang bukan `cancelled`, member dan tamu (kuota juga). `attended` = jumlah `present`, `null` sampai ditutup. Peserta dan kehadiran dibaca/ditulis di `event_registrations`; daftar peserta berurutan `registered_at, id`, pencarian nama/nomor member/nama tamu. `cancel` tidak mengubah pendaftaran. Mengubah kapasitas di bawah jumlah terdaftar ditolak.
+- Banner lama dihapus dari disk bila tidak ada kegiatan lain (termasuk salinan/terhapus) yang masih memakainya; `duplicate` memakai file yang sama.
 - `slug` (link `/e/{slug}`) dibuat dari judul bila kosong dan harus unik; `attendanceCode` dibuat acak bila kosong, disimpan huruf besar.
 - Waktu dikirim dan diterima sebagai ISO 8601 UTC; `timezone` (`WIB|WITA|WIT`) dipakai untuk menampilkan dan mengisi jam.
 
@@ -84,4 +86,4 @@ interface EventParticipant {
 
 - Aturan kapan boleh menutup acara (sebelum acara mulai) belum diputuskan; dummy mengizinkan setiap kegiatan `published`.
 - Email pembatalan ke pendaftar dan konfirmasi non-member tidak dikirim di fase dummy.
-- Halaman publik `/e/{slug}` ada di `web-app` dan belum dibuat.
+- Halaman publik `/e/{slug}` masih dummy sampai langkah 19: kegiatan buatan admin belum punya halaman publik yang jalan, dan tamu publik belum muncul di daftar peserta.
