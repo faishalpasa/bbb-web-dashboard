@@ -8,6 +8,7 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
     danger: 'bg-[#f8dcdc] text-[#a32222]',
     pending: 'bg-[#fbefc4] text-[#7a5b00]',
     dark: 'bg-[#002a32] text-white',
+    sage: 'bg-[#e4e6d3] text-[#3f4426]',
 };
 
 interface StatusBadgeProps {

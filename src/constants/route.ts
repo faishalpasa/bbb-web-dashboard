@@ -1,6 +1,7 @@
 export const ROUTES = {
     dashboard: '/',
     login: '/login',
+    invitation: '/invitation',
     members: '/members',
     memberNew: '/members/new',
     memberDetail: '/members/$memberId',

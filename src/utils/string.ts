@@ -34,3 +34,14 @@ export const slugify = (value: string): string =>
         .replace(/[̀-ͯ]/g, '')
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
+
+// "Jumat 19.00 WIB" minus N minutes -> "Jumat 18.00 WIB", rolling back over midnight into the previous weekday.
+export const clockMinusMinutes = (weekdays: string[], weekdayIndex: number, hour: number, minutes: number): string => {
+    const total = hour * 60 - minutes;
+    const dayShift = Math.floor(total / 1440);
+    const minuteOfDay = ((total % 1440) + 1440) % 1440;
+    const weekday = weekdays[(((weekdayIndex + dayShift) % 7) + 7) % 7];
+    const pad = (value: number): string => String(value).padStart(2, '0');
+
+    return `${weekday} ${pad(Math.floor(minuteOfDay / 60))}.${pad(minuteOfDay % 60)} WIB`;
+};

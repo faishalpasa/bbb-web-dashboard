@@ -2,8 +2,7 @@ import { createRootRouteWithContext, createRoute, createRouter, lazyRouteCompone
 
 import type { AppContextValue } from '@/app-context';
 import { AdminLayout } from '@/components/layout/admin-layout';
-import { PlaceholderPage } from '@/components/layout/placeholder-page';
-import { ROUTES, type StaticRoute } from '@/constants/route';
+import { ROUTES } from '@/constants/route';
 
 // Route guards read the session through the app context, which RouterProvider receives as `context`.
 export interface RouterContext {
@@ -104,22 +103,38 @@ const exitRequestsRoute = createRoute({
     component: lazyRouteComponent(() => import('@/pages/admin/exit-requests'), 'PageExitRequests'),
 });
 
-const placeholderRoute = (path: StaticRoute, title: string, testId: string) =>
-    createRoute({
-        getParentRoute: () => adminLayoutRoute,
-        path,
-        component: () => <PlaceholderPage title={title} testId={testId} />,
-    });
+const settingsRoute = createRoute({
+    getParentRoute: () => adminLayoutRoute,
+    path: ROUTES.settings,
+    component: lazyRouteComponent(() => import('@/pages/admin/settings'), 'PageSettings'),
+});
 
-const placeholderRoutes = [
-    placeholderRoute(ROUTES.admins, 'Admin', 'admins_placeholder'),
-    placeholderRoute(ROUTES.settings, 'Pengaturan', 'settings_placeholder'),
-    placeholderRoute(ROUTES.auditLogs, 'Log', 'audit_logs_placeholder'),
-];
+const adminsRoute = createRoute({
+    getParentRoute: () => adminLayoutRoute,
+    path: ROUTES.admins,
+    component: lazyRouteComponent(() => import('@/pages/admin/admins'), 'PageAdmins'),
+});
+
+const auditLogsRoute = createRoute({
+    getParentRoute: () => adminLayoutRoute,
+    path: ROUTES.auditLogs,
+    component: lazyRouteComponent(() => import('@/pages/admin/audit-logs'), 'PageAuditLogs'),
+});
+
+// Opened from the invitation email; the token is the only credential, so there is no session guard.
+const invitationRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: ROUTES.invitation,
+    validateSearch: (search: Record<string, unknown>): { token?: string } => ({
+        token: typeof search.token === 'string' ? search.token : undefined,
+    }),
+    component: lazyRouteComponent(() => import('@/pages/auth/invitation'), 'PageInvitation'),
+});
 
 export const router = createRouter({
     routeTree: rootRoute.addChildren([
         loginRoute,
+        invitationRoute,
         adminLayoutRoute.addChildren([
             dashboardRoute,
             membersRoute,
@@ -131,7 +146,9 @@ export const router = createRouter({
             eventDetailRoute,
             eventEditRoute,
             exitRequestsRoute,
-            ...placeholderRoutes,
+            settingsRoute,
+            adminsRoute,
+            auditLogsRoute,
         ]),
     ]),
     context: { auth: undefined! },

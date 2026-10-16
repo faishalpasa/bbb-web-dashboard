@@ -69,3 +69,7 @@ export const fromLocalInput = (value: string, timezone: EventTimezone): string |
 
     return new Date(Date.parse(`${value}:00Z`) - EVENT_ZONES[timezone].offsetHours * 3_600_000).toISOString();
 };
+
+// 5 Okt 2026, 14.20 (WIB), for the audit log.
+export const formatLogTime = (iso: string): string =>
+    `${formatTableDate(iso).replace(/^0/, '')}, ${format(iso, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}`;

@@ -8,6 +8,7 @@ export type ApiErrorCode = 'token_expired' | 'token_used' | 'token_invalid';
 
 export interface ApiErrorResponse {
     message?: string;
+    adminWhatsappUrl?: string | null;
     code?: ApiErrorCode | 'membership_restricted';
     errors?: Record<string, string[]>;
 }

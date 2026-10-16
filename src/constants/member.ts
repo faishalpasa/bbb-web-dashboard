@@ -1,6 +1,6 @@
 import type { MemberAdminStatus, MemberHistoryStatus } from '@/types/member';
 
-export type BadgeTone = 'success' | 'neutral' | 'warning' | 'danger' | 'pending' | 'dark';
+export type BadgeTone = 'success' | 'neutral' | 'warning' | 'danger' | 'pending' | 'dark' | 'sage';
 
 // Status labels come from the API; the tone is presentation only.
 export const MEMBER_STATUS_TONES: Record<MemberAdminStatus, BadgeTone> = {
