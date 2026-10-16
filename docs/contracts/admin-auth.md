@@ -1,6 +1,6 @@
 # Admin auth contract (DRAFT, awaiting approval)
 
-Status: **dummy-data draft**, diimplementasi di `bbb-api` (`/api/admin/*`, terpisah dari endpoint member) dan dipakai `web-dashboard`. Salinan identik ada di kedua repo; ubah bersamaan.
+Status: **draft**, diimplementasi di `bbb-api` (`/api/admin/*`, terpisah dari endpoint member) dan dipakai `web-dashboard`. Salinan identik ada di kedua repo; ubah bersamaan. Akun admin, login, sesi, dan undangan sudah memakai MySQL (langkah 10); endpoint admin lain (dashboard, member, kegiatan, permintaan keluar, pengaturan, log) masih dummy per sesi sampai langkahnya dimigrasi.
 
 Keputusan produk yang sudah ada:
 
@@ -50,7 +50,8 @@ interface AdminSession {
 
 ## Pertanyaan terbuka
 
-- Admin dan member kini memakai token terpisah (`typ` `admin` dan `member`), jadi tidak berbagi sesi lagi; rute admin menolak token member dan sebaliknya. Fase dummy tetap menyimpan state di session store server yang dikunci klaim `sid` token. Logout admin mencabut token admin saja.
+- Admin dan member memakai token terpisah (`typ` `admin` dan `member`); rute admin menolak token member dan sebaliknya. Klaim `sub` token admin adalah UUID admin. API **memuat admin dari database pada setiap request**: admin yang dinonaktifkan atau dihapus langsung `401` (termasuk `POST /api/auth/refresh`), dan peran dibaca ulang sehingga perubahan peran berlaku seketika; tidak perlu menunggu token habis. State dummy endpoint admin lain masih disimpan di session store server yang dikunci klaim `sid`. Logout admin mencabut token admin saja (token member di `/api/admin/logout` dijawab `401`).
 - Tujuan redirect setelah login: `/` (Dashboard). Redirect ke halaman asal sebelum 401 belum diputuskan.
-- Credential dummy (hanya fase dummy, `App\Support\Dummy\DummyAdmins`): `superadmin@bbb.test` / `superadmin123`, `admin@bbb.test` / `admin123`, dan `wahyuni.sari@bbb.org` / `admin123`. Tuti Handayani dan admin yang diundang dikelola lewat halaman Admin (`admin-superadmin.md`).
+- Akun pengembangan (seeder `AdminSeeder`, hanya environment `local`/`testing`, bukan credential production): `superadmin@bbb.test` / `superadmin123`, `admin@bbb.test` / `admin123`, `wahyuni.sari@bbb.org` / `admin123`, dan `tuti.handayani@bbb.org` (nonaktif). Admin lain dibuat lewat undangan (`admin-superadmin.md`). Email dicocokkan tanpa memperhatikan huruf besar/kecil dan spasi di tepi.
+- `badges.pendingExitRequests` masih dihitung dari daftar permintaan keluar dummy (sama dengan layar Permintaan Keluar) sampai review admin dimigrasi (langkah 16).
 - Remember me, lupa password admin, dan rate limit login belum ada desainnya; tidak dibuat.

@@ -1,6 +1,6 @@
 # Admin superadmin contract (DRAFT)
 
-Status: **dummy-data draft** untuk artboard 12a-12c dan 13a-13c: pengaturan, kelola admin, undangan admin, dan log. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Perubahan fase dummy tersimpan per sesi browser.
+Status: **dummy-data draft** untuk artboard 12a-12c dan 13a-13c: pengaturan, kelola admin, undangan admin, dan log. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Akun admin dan undangan memakai MySQL (langkah 10); pengaturan dan log masih dummy dan tersimpan per sesi browser sampai langkah 17 dan 12.
 
 Semua endpoint di bawah, kecuali undangan, butuh sesi **superadmin**: tanpa sesi `401`, admin biasa `403 { message: "Hanya superadmin yang bisa mengakses halaman ini." }`. Menyembunyikan menu hanya kemudahan; API yang memutuskan.
 
@@ -52,13 +52,13 @@ interface AdminAccount {
 
 - Undangan selalu membuat peran `admin`. Email harus unik di antara admin (`422` "Email sudah terdaftar sebagai admin."). Undangan berlaku 7 hari dan sekali pakai.
 - Admin yang keluar dinonaktifkan, bukan dihapus. Superadmin tidak bisa menonaktifkan dirinya sendiri. Admin nonaktif tidak bisa masuk (`422` pada `email`) dan sesinya berhenti.
-- **Fase dummy saja:** email undangan tidak dikirim; respons pembuatan memuat `invitationPath` (`/invitation?token=...`) agar link bisa dibuka manual.
+- Email undangan **belum dikirim** (provider email belum ada), jadi respons pembuatan memuat `invitationPath` (`/invitation?token=...`) agar link bisa dibuka manual; hapus bagian ini saat email nyata aktif. Email admin dicek unik tanpa memperhatikan huruf besar/kecil dan disimpan huruf kecil; nama tanpa spasi tepi. Akun admin tidak pernah dihapus, hanya dinonaktifkan: nonaktif berlaku di request berikutnya admin itu. Hanya admin `active` yang bisa dinonaktifkan, hanya `inactive` yang bisa diaktifkan kembali (admin `invited` belum bisa keduanya).
 
 ## Undangan
 
 - Link di email membuka `/invitation?token=...` di dashboard; halaman membaca token sekali, menghapusnya dari URL, dan menyimpannya hanya di memori.
 - Token yang tidak bisa dipakai dibalas `422 { message, code, adminWhatsappUrl }` dengan `code` `token_expired`, `token_used`, atau `token_invalid`; `adminWhatsappUrl` (`https://wa.me/...` atau `null`) berasal dari Pengaturan.
-- Fase dummy: token `expired` dan `used` selalu gagal, untuk menjangkau layar link kedaluwarsa.
+- Token berupa 64 karakter acak; hanya hash SHA-256 yang disimpan. Berlaku 7 hari (tepat pada waktu kedaluwarsa sudah mati) dan sekali pakai; memakai satu link mengakhiri semua link lain untuk admin yang sama. Urutan penolakan: tidak dikenal atau admin tidak ada `token_invalid`, sudah dipakai `token_used`, admin tidak lagi berstatus diundang `token_invalid`, lewat waktu `token_expired`. Link dibuka tanpa sesi apa pun; penerima tidak perlu sesi pengundang. Token ajaib `expired`/`used` dari fase dummy sudah tidak ada: tokennya sembarang string tidak dikenal menjadi `token_invalid`.
 - Password minimal 8 karakter. Setelah aktif, admin masuk dengan email dan password (desain 13b menyebut juga Google; belum dibuat karena login admin hanya email + password).
 
 ## Log
