@@ -90,12 +90,12 @@ export const MemberFormSections = ({ form, preferences, isEmailEditable, 'data-t
                         <Input
                             id="whatsapp"
                             type="tel"
-                            inputMode="tel"
+                            inputMode="numeric"
                             value={fields.whatsapp}
                             aria-required="true"
                             autoComplete="off"
-                            onChange={(event) => setField('whatsapp', event.target.value)}
-                            placeholder="0812 3456 7890"
+                            onChange={(event) => setField('whatsapp', event.target.value.replace(/\D/g, ''))}
+                            placeholder="081234567890"
                             className="bg-card h-11 font-mono"
                             data-test-id={`${testId}_input_whatsapp`}
                         />

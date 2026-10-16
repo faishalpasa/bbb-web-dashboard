@@ -155,10 +155,11 @@ export const AddParticipantDialog = () => {
                                 <Input
                                     id="guestWhatsapp"
                                     type="tel"
+                                    inputMode="numeric"
                                     value={guestFields.whatsapp}
                                     aria-required="true"
-                                    onChange={(event) => setGuestField('whatsapp', event.target.value)}
-                                    placeholder="0812 3456 7890"
+                                    onChange={(event) => setGuestField('whatsapp', event.target.value.replace(/\D/g, ''))}
+                                    placeholder="081234567890"
                                     className="bg-card h-11 font-mono"
                                     data-test-id="event_detail_dialog_input_guest_whatsapp"
                                 />

@@ -142,10 +142,10 @@ export const PageContent = () => {
                         <Input
                             id="adminWhatsapp"
                             type="tel"
-                            inputMode="tel"
+                            inputMode="numeric"
                             value={fields.adminWhatsapp}
-                            onChange={(event) => setField('adminWhatsapp', event.target.value)}
-                            placeholder="0812 3456 7000"
+                            onChange={(event) => setField('adminWhatsapp', event.target.value.replace(/\D/g, ''))}
+                            placeholder="081234567000"
                             className="bg-card h-11 max-w-xs font-mono"
                             data-test-id="settings_input_admin_whatsapp"
                         />
