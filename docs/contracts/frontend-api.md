@@ -113,7 +113,7 @@ Keputusan versi untuk implementasi persisten langkah 6 (16 Oktober 2026): `conse
 
 Onboarding email/migrasi memerlukan JWT member hidup dan User terverifikasi (401 tanpa identitas, 403 email belum terverifikasi/peran/status/flow salah). Semua field divalidasi ulang server: usia minimal 17 menurut tahun kalender, WhatsApp unik termasuk member soft-deleted (08/format pemisah dinormalisasi ke 628), preferensi online/offline/both, relasi wilayah Kemendagri 2/4/6 digit, kode pos 5 angka. Kode pos kecamatan adalah saran, bukan pembatas alamat Ibu. Endpoint wilayah membaca tabel DB, diurutkan menurut kode; induk tak dikenal memberi daftar kosong. `consentVersion`/`rulesVersion` wajib string versi admin terkini bagi consent baru; basi/missing mendapat 422 errors per field. Simpan profil + user.name + nomor BFF-xxxxx atomik memakai lock user dan sequence. Retry valid pada profil yang sudah active mengembalikan profil tersimpan tanpa mengedit/mengalokasikan nomor kedua. JWT/sid lama tetap valid, auth/session berikutnya melihat member DB lengkap. Jalur Google bertanda dummy-member tetap adapter sid-backed yang dibatasi grant Google hingga langkah 20, bukan bukti Google persisten.
 
-`MemberProfileData` juga memuat `statistics: { joinedEvents, attendedEvents }`. Angka masih dihitung API dari pendaftaran dummy per sesi (status registered/present/absent untuk ikut, present untuk hadir) sampai langkah 7/8. Nama, nomor anggota, avatar, dan label status di layar profil berasal dari `profile`.
+`MemberProfileData` juga memuat `statistics: { joinedEvents, attendedEvents }`. Untuk identitas DB, angka dihitung dari event_registrations milik member (status registered/present/absent untuk ikut, present untuk hadir); Google legacy masih memakai fixture/sid sampai langkah 20. Nama, nomor anggota, avatar, dan label status di layar profil berasal dari `profile`.
 
 Edit data diri memakai form yang sama dengan onboarding, dengan email read-only. Versi persetujuan/peraturan yang sudah diterima ikut payload; edit tidak meminta persetujuan baru. GET profil untuk identitas DB sudah membaca Member/User/region DB agar kartu onboarding sukses/reload menampilkan nomor dan identitas yang benar (dependensi langkah 6). GET Google legacy masih fixture. PUT profil masih dummy sampai langkah 8: simpan hanya menggemakan isian tervalidasi, bukan menyimpan perubahan ke DB. Adapter wilayah dummy sementara menerima kode DB juga, supaya form edit/admin/publik tetap berjalan setelah endpoint wilayah beralih ke Kemendagri; fixture lama dihapus saat flow masing-masing dimigrasi. Foto opsional dipotong persegi dari tengah oleh frontend sebelum dikirim; fase dummy memvalidasi file dan mengembalikan data URL tanpa menyimpan upload. Penyimpanan foto permanen menyusul.
 
@@ -151,6 +151,8 @@ Tab daftar kegiatan: `upcoming` (kegiatan yang belum selesai), `registered` (keg
 
 Quota bersifat opsional. Saat `capacity` bernilai `null`, UI tidak menampilkan kapasitas atau sisa kursi. Server mengirim `canRegister`, `canCancel`, dan alasan Indonesia sebagai keputusan otoritatif.
 
+Langkah 7: sesi DB membaca events/event_registrations MySQL dengan UUID string; enum format online/offline, timezone IANA dan datetime UTC. Draft, soft-deleted, waktu tidak lengkap, dan id tak dikenal menghasilkan 404 Indonesia yang sama. Lifecycle completed juga berlaku bila endsAt telah lewat, walau admin belum menutup acara; absensi punya jendela terpisah sampai admin close. Mendatang/terdaftar diurutkan startsAt lalu id menaik, riwayat menurun; paginasi 10. Lokasi offline memisahkan Maps/alamat dan online memakai meetingUrl (tidak ada attendanceCode di payload member). Daftar/detail hanya memuat registrasi pemilik JWT, bukan memberId dari input. UpcomingEvents di Home sudah memakai UUID DB agar tautannya berfungsi; identitas Home/WhatsApp masih langkah 8.
+
 ## Pendaftaran kegiatan
 
 | Method | URL | Payload/result |
@@ -158,7 +160,9 @@ Quota bersifat opsional. Saat `capacity` bernilai `null`, UI tidak menampilkan k
 | `POST` | `/api/member/events/{eventId}/registrations` | `EventRegistration` |
 | `DELETE` | `/api/member/registrations/{registrationId}` | `EventRegistration` |
 
-Frontend tidak menghitung cutoff atau kapasitas sendiri. Mock boleh mensimulasikan hasil, tetapi backend nantinya tetap memvalidasi transaksi.
+Frontend tidak menghitung cutoff atau kapasitas sendiri. Register/cancel DB transaksional memakai urutan lock user -> member -> event -> registration, recheck status dan kapasitas. Cutoff daftar dan batal masing-masing dari app_settings.registration_close_minutes dan cancellation_close_minutes; tepat pada cutoff (now >= cutoff) sudah ditolak 422. cancellationCutoffAt pada hasil mutasi memakai cutoff batal, bukan daftar. Detail hanya menyediakan registrationClosesAt, jadi FE tidak menebak angka cutoff batal dari field itu.
+
+Kuota menghitung semua registrasi member/tamu DB yang tidak cancelled; batal mengembalikan kursi, quota null tidak membatasi. Duplicate register masih 422 dengan pesan sudah terdaftar; setelah cancelled, daftar ulang memakai UUID/baris unik yang sama dengan registeredAt baru. Registrasi orang lain/tak dikenal tidak bisa dibatalkan (404); hadir/selesai/batal/cutoff ditolak sesuai capability. Bridge exit sementara membatalkan registrasi DB mendatang/berlangsung yang masih registered, tidak mengembalikan kursi saat exit dibatalkan, tidak mengubah present/history; exit request sendiri tetap sid-backed sampai langkah 9. Admin/public masih dummy terpisah, belum menulis ke acara DB yang sama sampai langkahnya dimigrasi.
 
 ## Absensi
 
@@ -167,13 +171,15 @@ Frontend tidak menghitung cutoff atau kapasitas sendiri. Mock boleh mensimulasik
 | `GET` | `/api/member/events/{eventId}/attendance` | `AttendanceState` |
 | `POST` | `/api/member/events/{eventId}/attendance` | `{ code: string }` -> `AttendanceSubmissionResult` |
 
-State memuat waktu buka/tutup, `attendedAt` (waktu kehadiran tercatat, `null` sebelum hadir), jumlah percobaan tersisa, status pendaftaran, dan capability submit. Jendela default adalah 30 menit sebelum kegiatan sampai kegiatan ditutup, dengan maksimal 5 kode salah per 10 menit. Backend tetap menjadi sumber keputusan waktu dan rate limit.
+State memuat waktu buka/tutup, `attendedAt` (waktu kehadiran tercatat, `null` sebelum hadir), jumlah percobaan tersisa, status pendaftaran, dan capability submit. Jendela adalah tepat 30 menit sebelum mulai (inklusif) sampai admin menutup/membatalkan kegiatan, bukan endsAt terjadwal. closesAt null selama belum ditutup, lalu closed_at/cancelled_at UTC bila ada. Sudah hadir selalu completed dan waktu bukti tidak ditimpa oleh retry, termasuk setelah close. Kode dinormalisasi huruf besar dan whitespace dihapus seperti FE. Hanya registrasi sendiri registered/present yang memiliki endpoint attendance; cancelled/absent/milik orang lain/unknown -> 404.
 
-Dummy: status pendaftaran dan absensi disimpan per sesi token (klaim `sid`), jadi daftar, batal, dan hadir terlihat setelah reload; kode absensi yang benar adalah `BFF-2410` dan jendela waktu absensi diabaikan.
+Maksimal 5 kode salah per member per jendela 600 detik sejak percobaan salah pertama; budget lintas kegiatan/JWT, tidak reset saat login atau kode sukses pada acara lain. RateLimiter memakai cache database di runtime; row lock user menserialisasi submit paralel. Percobaan di luar jendela/validasi gagal/tidak memiliki registrasi tidak memakan budget. Setelah lima salah, canSubmit false/rate_limited sampai tepat retryAt; hit berikutnya tidak menggeser timer. Hasil submission tetap 200 dengan accepted false/state/message, bukan mengubah kontrak menjadi 429. Kode salah menurunkan attemptsRemaining; kode benar mencatat present/attendedAt atomik. Submit ulang yang sudah completed mengembalikan accepted false dengan state bukti lama. Backend tetap otoritatif.
+
+Khusus Google legacy bertanda dummy-member: adapter lama masih menyimpan pendaftaran/absensi per sid, kode BFF-2410 dan waktu diabaikan sampai langkah 20. Identitas DB tidak boleh jatuh kembali ke fixture ini bila UUID tidak ditemukan; DB member memakai kode per acara dan jendela nyata.
 
 ## Fase data dummy
 
-Migrasi database berjalan satu flow per langkah. Login/session/logout/refresh dan registrasi email/verifikasi/lupa-reset password kini memakai users/members/user_tokens MySQL (langkah 4–5). Profil, kegiatan, pendaftaran/absensi dan exit request masih dummy/sid sampai langkahnya diganti; PUT member/password masih dummy, berbeda dari password/reset yang sudah persisten. Pengisian profil belum membuat member DB sampai langkah 6. Token sid tetap untuk bridge sementara, bukan sumber identitas login UUID. Tiga kegiatan skenario tetap: event-001 (terbuka), event-002 (terdaftar, kode BFF-2410), event-003 (selesai).
+Migrasi database berjalan satu flow per langkah. Login/session/logout/refresh, registrasi/verifikasi/lupa-reset, onboarding/migrasi/nomor, GET profil, dan events/registrasi/absensi member kini memakai MySQL (langkah 4–7). Home hanya daftar/link kegiatan yang DB; identitas/WhatsApp Home, PUT profil/password/foto/rules, exit request, admin dan publik masih menunggu langkahnya. Token sid tetap untuk bridge sementara, bukan sumber identitas login UUID. event-001/002/003 hanya untuk legacy Google dummy; member DB memakai UUID dan acara seeded seperti membaca-bersama-oktober/diskusi-buku-keluarga.
 
 Kredensial login dummy: `buibu@gmail.com` / `buibu123`. Nilai ini hanya fixture development dan bukan credential production.
 
