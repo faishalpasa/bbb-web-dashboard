@@ -1,6 +1,6 @@
 # Admin superadmin contract (DRAFT)
 
-Status: **dummy-data draft** untuk artboard 12a-12c dan 13a-13c: pengaturan, kelola admin, undangan admin, dan log. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Akun admin dan undangan memakai MySQL (langkah 10); pengaturan dan log masih dummy dan tersimpan per sesi browser sampai langkah 17 dan 12.
+Status: **dummy-data draft** untuk artboard 12a-12c dan 13a-13c: pengaturan, kelola admin, undangan admin, dan log. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Akun admin, undangan, dan audit log memakai MySQL (langkah 10 dan 12); pengaturan masih dummy dan tersimpan per sesi browser sampai langkah 17.
 
 Semua endpoint di bawah, kecuali undangan, butuh sesi **superadmin**: tanpa sesi `401`, admin biasa `403 { message: "Hanya superadmin yang bisa mengakses halaman ini." }`. Menyembunyikan menu hanya kemudahan; API yang memutuskan.
 
@@ -68,12 +68,12 @@ interface AuditLogEntry {
     id: string;
     at: string; // ISO 8601 UTC
     actor: string; // nama admin
-    type: { value: 'export' | 'settings' | 'admins'; label: string }; // Ekspor data, Ubah pengaturan, Kelola admin
+    type: { value: 'export' | 'settings' | 'admins' | 'members'; label: string }; // Ekspor data, Ubah pengaturan, Kelola admin, Kelola member
     detail: string; // kalimat Indonesia siap tampil
 }
 ```
 
-Terbaru di atas, hanya baca. Yang dicatat saat ini: ekspor member (dengan filter dan jumlah baris), perubahan pengaturan, serta pembuatan, penonaktifan, dan pengaktifan admin.
+Terbaru di atas (waktu tercatat, lalu urutan pencatatan di detik yang sama), hanya baca (tidak ada endpoint tulis; `POST`/`PUT`/`PATCH`/`DELETE` dijawab `405`). Query: `type` (salah satu dari `types`; nilai tak dikenal memberi daftar kosong), `page`, `perPage` (default 20, minimal 1, maks. 100). `types` selalu berisi empat tipe dalam urutan tetap, meski belum ada entri. Yang dicatat: ekspor member (dengan filter dan jumlah baris), perubahan pengaturan (satu entri per kolom yang berubah, tidak ada entri bila tidak ada perubahan), pembuatan/penonaktifan/pengaktifan admin, serta penonaktifan dan pengaktifan kembali member. Entri ditulis dalam transaksi yang sama dengan aksinya (aksi yang ditolak atau gagal tidak meninggalkan entri). `actor` adalah nama admin saat aksi terjadi dan tidak berubah bila admin diganti namanya atau dihapus.
 
 ## Terbuka
 

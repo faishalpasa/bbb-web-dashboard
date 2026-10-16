@@ -11,6 +11,7 @@ export const AUDIT_LOG_TONES: Record<AuditLogType, BadgeTone> = {
     export: 'success',
     settings: 'neutral',
     admins: 'sage',
+    members: 'warning',
 };
 
 // The "Semua" tab sends no type filter; the other tabs come from the API.

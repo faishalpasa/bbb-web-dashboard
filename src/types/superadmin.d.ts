@@ -36,7 +36,7 @@ export interface AdminInviteInput {
     email: string;
 }
 
-export type AuditLogType = 'export' | 'settings' | 'admins';
+export type AuditLogType = 'export' | 'settings' | 'admins' | 'members';
 
 export interface AuditLogEntry {
     id: Identifier;
