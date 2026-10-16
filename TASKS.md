@@ -21,15 +21,16 @@ Launch target: 30 October 2026. Admin-only app; member/public work remains in we
 ## 1. Admin foundation (next)
 
 - [ ] Inspect admin artboards in Chrome at 1360px; export only if necessary.
-- [ ] Agree admin session/auth/capabilities contract with the API, including 401/403, redirect destination and shared-cookie behavior.
-- [ ] Allow both 5173 and 5174 origins in API local CORS/Sanctum; do not break member redirects.
-- [ ] Login, route guards, admin shell/sidebar and capability-gated navigation.
-- [ ] Dashboard (artboard 8), dummy API and matching tests.
+- [ ] Agree admin session/auth/capabilities contract with the API, including 401/403, redirect destination and shared-cookie behavior. (Draft in docs/contracts/admin-auth.md, implemented as dummy `/api/admin/*`; awaiting approval.)
+- [x] Allow both 5173 and 5174 origins in API local CORS/Sanctum; do not break member redirects. (`.env.example` updated; FRONTEND_URL unchanged.)
+- [x] Login (email + password, adapted from member artboard 1a) and route guard; verified at 1360px against the real dummy API.
+- [x] Admin shell/sidebar (left drawer below 1024px) and capability-gated navigation (Superadmin group hidden for plain admins; Member/Kegiatan/Permintaan Keluar/Admin/Pengaturan/Log render PlaceholderPage until their flows land).
+- [x] Dashboard (artboard 8) with dummy `GET /api/admin/dashboard` (docs/contracts/admin-dashboard.md) and Pest tests; checked at 1360px as superadmin and admin. Loading/error/401 states built; error/401 not yet exercised in a browser.
 
 ## 2. Admin flows
 
-- [ ] Member list/filter/create/detail/edit, confirmed deactivation.
-- [ ] Event list/create/edit, participants, attendance code generation, manual Present/X, close event.
+- [x] Member list/filter/create/detail/edit, confirmed deactivation (plus dummy export CSV, reset-password acknowledgement, internal note, and reactivation added at the user's request). Checked at 1360px and 375px against the real dummy API (`docs/contracts/admin-members.md`). Not yet covered by Playwright.
+- [x] Event list/create/edit, participants, attendance code generation, manual Present/X, close event (plus add participant dialog, dummy banner upload, duplicate, announcement text, cancel at the user's request). Checked at 1360px and 375px against the real dummy API (`docs/contracts/admin-events.md`). Not yet covered by Playwright; the public page `/e/{slug}` still belongs to web-app.
 - [ ] Exit-request review.
 - [ ] Superadmin settings, admin management, invitations and audit log. Email artboards are templates, not functional email delivery during dummy phase.
 - [ ] Masterlist import mock-first: upload, column mapping, preview summary, row issues, confirmation, result and error report (see docs/contracts/masterlist-import.md).

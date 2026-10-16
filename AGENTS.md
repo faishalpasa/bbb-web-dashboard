@@ -12,7 +12,7 @@ Admin-only static SPA. Member/public pages live in `../web-app`; Laravel JSON AP
 ## Rules
 
 - Match web-app: Vite, React 19, strict TypeScript, code-based TanStack Router, Tailwind 4, existing shadcn-style primitives, Axios, opt-in development MSW.
-- Admin viewport is 1360px. Indonesian UI; member-facing copy addresses Ibu.
+- Admin design target is 1360px; layouts also work down to mobile (below 1024px the sidebar becomes a left drawer opened from a top bar). Indonesian UI; member-facing copy addresses Ibu.
 - Named arrow exports `Page<Name>`; `src/pages/<area>/<page>/{index.tsx,_context.tsx,_components/}`.
 - App-wide state only in `app-context.tsx`; page state/service calls in `_context.tsx`; no business rules in React.
 - Services use verb-prefixed functions, `{ data, status: true }`, and throw `ServiceError`. Pages never import Axios.

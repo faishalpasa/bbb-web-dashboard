@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
 import { Button } from '@/components/ui/button';
 
@@ -11,6 +13,8 @@ interface ConfirmationDialogProps {
     isSubmitting: boolean;
     error: string | null;
     isDestructive?: boolean;
+    cancelLabel?: string;
+    children?: ReactNode;
     'data-test-id': string;
 }
 
@@ -24,6 +28,8 @@ export const ConfirmationDialog = ({
     isSubmitting,
     error,
     isDestructive = false,
+    cancelLabel = 'Tidak jadi',
+    children,
     'data-test-id': testId,
 }: ConfirmationDialogProps) => (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && !isSubmitting && onClose()}>
@@ -32,6 +38,7 @@ export const ConfirmationDialog = ({
                 <DialogTitle>{title}</DialogTitle>
                 <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
+            {children}
             {error && (
                 <p role="alert" className="text-destructive px-4 text-sm sm:px-0" data-test-id={`${testId}_error`}>
                     {error}
@@ -54,7 +61,7 @@ export const ConfirmationDialog = ({
                     disabled={isSubmitting}
                     data-test-id={`${testId}_button_keep`}
                 >
-                    Tidak jadi
+                    {cancelLabel}
                 </Button>
             </DialogFooter>
         </DialogContent>

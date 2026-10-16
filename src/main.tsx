@@ -9,9 +9,15 @@ import './index.css';
 import { RouterProvider } from '@tanstack/react-router';
 import { createRoot } from 'react-dom/client';
 
-import { AppContextProvider } from '@/app-context';
+import { AppContextProvider, useAppContext } from '@/app-context';
 import { IS_MOCK_API_ENABLED } from '@/constants/env';
 import { router } from '@/router';
+
+const AppRouter = () => {
+    const auth = useAppContext();
+
+    return <RouterProvider router={router} context={{ auth }} />;
+};
 
 const startApp = async () => {
     if (IS_MOCK_API_ENABLED) {
@@ -22,7 +28,7 @@ const startApp = async () => {
     if (!root) throw new Error('Elemen #root tidak ditemukan.');
     createRoot(root).render(
         <AppContextProvider>
-            <RouterProvider router={router} />
+            <AppRouter />
         </AppContextProvider>,
     );
 };
