@@ -13,6 +13,7 @@ export interface AdminUser {
 export interface AdminCapabilities {
     manageMembers: boolean;
     manageEvents: boolean;
+    reviewExitRequests: boolean;
     manageAdmins: boolean;
     manageSettings: boolean;
     viewAuditLog: boolean;

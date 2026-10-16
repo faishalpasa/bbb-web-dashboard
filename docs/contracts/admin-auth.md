@@ -39,6 +39,7 @@ interface AdminSession {
     can: {
         manageMembers: boolean; // semua admin: tambah/edit/nonaktifkan member
         manageEvents: boolean; // semua admin: kelola kegiatan dan peserta
+        reviewExitRequests: boolean; // semua admin: setujui atau tolak permintaan keluar
         manageAdmins: boolean; // menu Admin (superadmin)
         manageSettings: boolean; // menu Pengaturan (superadmin)
         viewAuditLog: boolean; // menu Log (superadmin)

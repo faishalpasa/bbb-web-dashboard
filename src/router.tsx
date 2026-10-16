@@ -98,6 +98,12 @@ const eventEditRoute = createRoute({
     component: lazyRouteComponent(() => import('@/pages/admin/events/[id]/edit'), 'PageEventEdit'),
 });
 
+const exitRequestsRoute = createRoute({
+    getParentRoute: () => adminLayoutRoute,
+    path: ROUTES.exitRequests,
+    component: lazyRouteComponent(() => import('@/pages/admin/exit-requests'), 'PageExitRequests'),
+});
+
 const placeholderRoute = (path: StaticRoute, title: string, testId: string) =>
     createRoute({
         getParentRoute: () => adminLayoutRoute,
@@ -106,7 +112,6 @@ const placeholderRoute = (path: StaticRoute, title: string, testId: string) =>
     });
 
 const placeholderRoutes = [
-    placeholderRoute(ROUTES.exitRequests, 'Permintaan Keluar', 'exit_requests_placeholder'),
     placeholderRoute(ROUTES.admins, 'Admin', 'admins_placeholder'),
     placeholderRoute(ROUTES.settings, 'Pengaturan', 'settings_placeholder'),
     placeholderRoute(ROUTES.auditLogs, 'Log', 'audit_logs_placeholder'),
@@ -125,6 +130,7 @@ export const router = createRouter({
             eventNewRoute,
             eventDetailRoute,
             eventEditRoute,
+            exitRequestsRoute,
             ...placeholderRoutes,
         ]),
     ]),

@@ -11,6 +11,8 @@ export interface AppContextValue {
     setSession: (session: AdminSession | null) => void;
     // Resolves the current session once and reuses it; route guards call this before every protected page.
     ensureSession: () => Promise<AdminSession | null>;
+    // Re-reads the session, for numbers that change after an action (the exit request badge).
+    refreshSession: () => Promise<void>;
     handleLogout: () => Promise<void>;
 }
 
@@ -54,6 +56,13 @@ export const AppContextProvider = ({ children }: PropsWithChildren) => {
         return () => setUnauthorizedHandler(null);
     }, []);
 
+    const refreshSession = useCallback(async () => {
+        const refreshed = await fetchSession();
+
+        // A failed refresh keeps the current session; the 401 handler already deals with a lost one.
+        if (refreshed) setSession(refreshed);
+    }, [setSession]);
+
     const handleLogout = useCallback(async () => {
         try {
             await postLogout();
@@ -64,8 +73,8 @@ export const AppContextProvider = ({ children }: PropsWithChildren) => {
     }, [setSession]);
 
     const value = useMemo<AppContextValue>(
-        () => ({ appName: 'BBB BFF Admin', session, setSession, ensureSession, handleLogout }),
-        [session, setSession, ensureSession, handleLogout],
+        () => ({ appName: 'BBB BFF Admin', session, setSession, ensureSession, refreshSession, handleLogout }),
+        [session, setSession, ensureSession, refreshSession, handleLogout],
     );
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
