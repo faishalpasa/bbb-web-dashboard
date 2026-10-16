@@ -1,6 +1,6 @@
-# Admin dashboard contract (DRAFT)
+# Admin dashboard contract
 
-Status: **dummy-data draft** untuk artboard 8. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`.
+Status: **di MySQL (langkah 18)** untuk artboard 8. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`.
 
 | Method | URL | Result |
 | --- | --- | --- |
@@ -40,6 +40,14 @@ interface AdminDashboard {
 }
 ```
 
-Angka kegiatan (mendatang, draf, belum ditutup, kehadiran terakhir) berasal dari data kegiatan di `admin-events.md`.
+Cara menghitung (semua dari tabel, jumlah query tetap):
+
+- `members.total` = semua member; `newThisMonth` = `joined_at` sejak awal bulan kalender di Jakarta (WIB).
+- `engaged.total` = member **aktif** yang hadir (`present`) minimal 1 kegiatan yang mulai dalam `windowMonths` bulan terakhir (sampai sekarang); `windowMonths` dari Pengaturan.
+- `exitRequests` dan `actions.exitRequestsPending` = permintaan keluar `pending` (lihat `admin-exit-requests.md`).
+- `upcomingEvents` = kegiatan `published` yang belum mulai, urut `startsAt`; `registered` = pendaftaran bukan `cancelled` (member + tamu); `full` = berkuota dan `registered >= quota`. Daftar di bawah `upcomingEvents` hanya 3 teratas.
+- `draftEvents` = status `draft`; `unclosedPastEvents` = `published` dengan `endsAt` sudah lewat; `incompleteMembers` = member `migrated` (menunggu data) yang dibuat lebih dari 7 hari lalu.
+- `participationPreferences` dan `provinces` = porsi dari member **aktif**; persen preferensi dibulatkan dengan metode sisa terbesar agar jumlahnya 100 (semua 0 bila belum ada member aktif); provinsi: 5 teratas (jumlah member, lalu nama), member tanpa provinsi tidak masuk daftar tetapi ikut penyebut.
+- `latestAttendance` = kegiatan `completed` dengan `startsAt` terbaru; `registered` bukan `cancelled`, `attended` = `present`, `absent` = sisanya; `averagePercent` = total hadir / total terdaftar dari maksimal 6 kegiatan selesai terakhir (`averageEventCount` = jumlahnya).
 
 Catatan: baris "Perlu Tindakan" dengan `count` 0 tidak ditampilkan. `latestAttendance` bernilai `null` bila belum ada kegiatan yang selesai.
