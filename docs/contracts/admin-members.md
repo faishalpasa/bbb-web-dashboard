@@ -1,6 +1,6 @@
 # Admin member management contract (DRAFT)
 
-Status: **draft** untuk artboard 9a-9e. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Semua endpoint butuh token admin (`401` tanpa token atau dengan token member; semua admin, bukan hanya superadmin). Data member memakai MySQL sejak langkah 11; `id` adalah UUID string. Hanya audit log ekspor yang masih dummy per sesi (langkah 12).
+Status: **di MySQL** untuk artboard 9a-9e. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Semua endpoint butuh token admin (`401` tanpa token atau dengan token member; semua admin, bukan hanya superadmin). Data member memakai MySQL sejak langkah 11; `id` adalah UUID string. Hanya audit log ekspor yang masih dummy per sesi (langkah 12).
 
 | Method | URL | Result |
 | --- | --- | --- |
@@ -97,5 +97,5 @@ Penonaktifan mengubah status tersimpan menjadi `unsubscribed` (tampil `inactive`
 
 - Status admin diturunkan dari status tersimpan: `unsubscribed` -> `inactive`, `migrated` -> `awaiting_data`, `exit_requested` tetap, dan `email_bounced` hanya untuk member `active` yang alamat emailnya bermasalah (belum ada yang mengisi penanda itu selain seed/admin). `statistics.absent` kini jumlah pendaftaran berstatus `absent` (sebelumnya selisih ikut dan hadir), `history` memuat pendaftaran yang tidak dibatalkan dari yang terbaru, maksimal 50. `signupMethod` bernilai `legacy` (label "Data lama") untuk member impor yang belum punya metode daftar; nilai itu di luar union tiga nilai di atas dan hanya labelnya yang dipakai dashboard.
 - Ekspor CSV memakai filter yang sama, tanpa paginasi, dan menambahkan `'` di depan sel yang diawali `=`, `+`, `-`, `@` supaya tidak dijalankan sebagai rumus di spreadsheet.
-- Kegiatan, peserta kegiatan, daftar dan keputusan permintaan keluar admin, serta angka dashboard masih dummy (langkah 13-18) dan belum membaca member di database kecuali: menambah peserta kegiatan memilih member dari database.
+- Kegiatan, peserta, permintaan keluar, dan dashboard membaca member yang sama dari MySQL (langkah 13-18).
 - Preferensi kegiatan dibuat opsional di form tambah/edit karena daftar menampilkan "Belum diisi".

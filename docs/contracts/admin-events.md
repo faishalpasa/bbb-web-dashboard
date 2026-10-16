@@ -84,6 +84,6 @@ interface EventParticipant {
 
 ## Terbuka
 
-- Aturan kapan boleh menutup acara (sebelum acara mulai) belum diputuskan; dummy mengizinkan setiap kegiatan `published`.
-- Email pembatalan ke pendaftar dan konfirmasi non-member tidak dikirim di fase dummy.
-- Halaman publik `/e/{slug}` masih dummy sampai langkah 19: kegiatan buatan admin belum punya halaman publik yang jalan, dan tamu publik belum muncul di daftar peserta.
+- Aturan kapan boleh menutup acara (sebelum acara mulai) belum diputuskan; API mengizinkan setiap kegiatan `published`.
+- Email pembatalan ke pendaftar dan konfirmasi non-member belum dikirim (menunggu penyedia email).
+- Halaman publik `/e/{slug}` ada (langkah 19, `frontend-api.md`): kegiatan `published` dengan `allowsNonMember: true` tampil, dan tamu yang mendaftar muncul di daftar peserta.
