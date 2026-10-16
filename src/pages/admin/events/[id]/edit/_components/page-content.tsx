@@ -1,5 +1,6 @@
 import { Link, useParams } from '@tanstack/react-router';
-import { LoaderCircle } from 'lucide-react';
+import { EllipsisVertical, LoaderCircle } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
@@ -135,7 +136,7 @@ const EditForm = () => {
                         <p className="text-sm">
                             {isDraft ? 'Kegiatan berstatus draf belum terlihat oleh member.' : 'Kegiatan sudah terlihat oleh member.'}
                         </p>
-                        <div className="grid gap-2">
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
                             {isDraft ? (
                                 <>
                                     <Button
@@ -151,7 +152,7 @@ const EditForm = () => {
                                     <Button
                                         type="submit"
                                         variant="outline"
-                                        className="bg-card h-11 w-full"
+                                        className="bg-card col-span-2 h-11 w-full"
                                         disabled={isSubmitting}
                                         data-test-id="event_edit_button_save_draft"
                                     >
@@ -169,6 +170,13 @@ const EditForm = () => {
                                     Simpan Perubahan
                                 </Button>
                             )}
+                            <EventActionsMenu
+                                canCancel={event.actions.canCancel}
+                                isDuplicating={isDuplicating}
+                                onDuplicate={() => void duplicate()}
+                                onCopyAnnouncement={() => void copyAnnouncement()}
+                                onCancel={() => setCancelDialogOpen(true)}
+                            />
                         </div>
                     </section>
 
@@ -196,45 +204,6 @@ const EditForm = () => {
                         )}
                         <p className="text-muted-foreground text-xs">Aturan ini diambil dari Pengaturan dan berlaku untuk semua kegiatan.</p>
                     </section>
-
-                    <section className="border-border bg-card space-y-3 rounded-lg border p-5" data-test-id="event_edit_other">
-                        <h2 className="font-semibold">Lainnya</h2>
-                        <div className="grid gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="bg-card w-full"
-                                disabled={isDuplicating}
-                                onClick={() => void duplicate()}
-                                data-test-id="event_edit_button_duplicate"
-                            >
-                                {isDuplicating ? 'Menduplikasi…' : 'Duplikat kegiatan'}
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="bg-card w-full"
-                                onClick={() => void copyAnnouncement()}
-                                data-test-id="event_edit_button_copy_announcement"
-                            >
-                                Salin teks pengumuman
-                            </Button>
-                            {event.actions.canCancel && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="bg-card border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive w-full"
-                                    onClick={() => setCancelDialogOpen(true)}
-                                    data-test-id="event_edit_button_cancel_event"
-                                >
-                                    Batalkan kegiatan
-                                </Button>
-                            )}
-                        </div>
-                        <p className="text-muted-foreground text-xs">
-                            Membatalkan kegiatan mengirim email ke semua pendaftar dan tidak dihitung sebagai ketidakhadiran.
-                        </p>
-                    </section>
                 </div>
             </div>
 
@@ -252,5 +221,112 @@ const EditForm = () => {
                 data-test-id="event_edit_dialog_cancel"
             />
         </form>
+    );
+};
+
+interface EventActionsMenuProps {
+    canCancel: boolean;
+    isDuplicating: boolean;
+    onDuplicate: () => void;
+    onCopyAnnouncement: () => void;
+    onCancel: () => void;
+}
+
+const EventActionsMenu = ({ canCancel, isDuplicating, onDuplicate, onCopyAnnouncement, onCancel }: EventActionsMenuProps) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        containerRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+
+        const handlePointerDown = (event: PointerEvent) => {
+            if (event.target instanceof Node && !containerRef.current?.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsOpen(false);
+                triggerRef.current?.focus();
+            }
+        };
+
+        document.addEventListener('pointerdown', handlePointerDown);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('pointerdown', handlePointerDown);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isOpen]);
+
+    const runAction = (action: () => void) => {
+        setIsOpen(false);
+        action();
+    };
+
+    return (
+        <div ref={containerRef} className="relative">
+            <Button
+                ref={triggerRef}
+                type="button"
+                variant="outline"
+                size="icon"
+                className="bg-card h-11 w-11"
+                aria-label="Buka menu lainnya"
+                aria-haspopup="menu"
+                aria-expanded={isOpen}
+                aria-controls="event-edit-more-menu"
+                onClick={() => setIsOpen((currentValue) => !currentValue)}
+                data-test-id="event_edit_button_more"
+            >
+                <EllipsisVertical className="size-5" />
+            </Button>
+
+            {isOpen && (
+                <div
+                    id="event-edit-more-menu"
+                    role="menu"
+                    aria-label="Lainnya"
+                    className="border-border bg-popover absolute top-full right-0 z-20 mt-2 w-60 rounded-md border p-1 shadow-lg"
+                    data-test-id="event_edit_menu_more"
+                >
+                    <p className="text-muted-foreground px-3 py-2 text-xs font-semibold tracking-wide uppercase">Lainnya</p>
+                    <button
+                        type="button"
+                        role="menuitem"
+                        className="hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring w-full rounded-sm px-3 py-2 text-left text-sm outline-hidden focus-visible:ring-2"
+                        disabled={isDuplicating}
+                        onClick={() => runAction(onDuplicate)}
+                        data-test-id="event_edit_button_duplicate"
+                    >
+                        {isDuplicating ? 'Menduplikasi…' : 'Duplikat kegiatan'}
+                    </button>
+                    <button
+                        type="button"
+                        role="menuitem"
+                        className="hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring w-full rounded-sm px-3 py-2 text-left text-sm outline-hidden focus-visible:ring-2"
+                        onClick={() => runAction(onCopyAnnouncement)}
+                        data-test-id="event_edit_button_copy_announcement"
+                    >
+                        Salin teks pengumuman
+                    </button>
+                    {canCancel && (
+                        <button
+                            type="button"
+                            role="menuitem"
+                            className="text-destructive hover:bg-destructive/5 focus-visible:bg-destructive/5 focus-visible:ring-destructive w-full rounded-sm px-3 py-2 text-left text-sm outline-hidden focus-visible:ring-2"
+                            onClick={() => runAction(onCancel)}
+                            data-test-id="event_edit_button_cancel_event"
+                        >
+                            Batalkan kegiatan
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
     );
 };
