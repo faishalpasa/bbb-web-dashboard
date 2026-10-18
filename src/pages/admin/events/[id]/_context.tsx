@@ -1,7 +1,14 @@
 import { useParams } from '@tanstack/react-router';
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { getEvent, getEventParticipants, postCloseEvent, postEventParticipant, putParticipantAttendance } from '@/services/event';
+import {
+    getEvent,
+    getEventParticipants,
+    getEventParticipantsExport,
+    postCloseEvent,
+    postEventParticipant,
+    putParticipantAttendance,
+} from '@/services/event';
 import { getMembers } from '@/services/member';
 import type { LoadFailure } from '@/types/api';
 import type { EventDetail, EventParticipantList, ParticipantInput, ParticipantSummary } from '@/types/event';
@@ -30,6 +37,7 @@ interface PageContextValue {
     participants: EventParticipantList | null;
     participantsFailure: LoadFailure | null;
     isLoadingParticipants: boolean;
+    isExporting: boolean;
     page: number;
     searchText: string;
     summary: ParticipantSummary | null;
@@ -50,6 +58,7 @@ interface PageContextValue {
     setSearchText: (value: string) => void;
     goToPage: (page: number) => void;
     toggleAttendance: (participantId: string, present: boolean) => Promise<void>;
+    exportParticipants: () => Promise<void>;
     copyText: (text: string, label: string) => Promise<void>;
     setCloseDialogOpen: (open: boolean) => void;
     closeEvent: () => Promise<void>;
@@ -80,6 +89,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [search, setSearch] = useState('');
     const [summary, setSummary] = useState<ParticipantSummary | null>(null);
     const [notice, setNotice] = useState<PageContextValue['notice']>(null);
+    const [isExporting, setIsExporting] = useState(false);
     const [pendingParticipantIds, setPendingParticipantIds] = useState<string[]>([]);
     const [isCloseDialogOpen, setCloseDialogOpenState] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
@@ -284,6 +294,29 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         [eventId, finishAdding],
     );
 
+    // Exports what the list currently shows: the same applied search, every page of it.
+    const exportParticipants = useCallback(async () => {
+        if (!event || !eventId) return;
+
+        setIsExporting(true);
+        setNotice(null);
+
+        try {
+            const response = await getEventParticipantsExport(eventId, search);
+            const url = URL.createObjectURL(response.data);
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = `peserta-${event.slug}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            setNotice({ tone: 'error', text: errorMessage(error) });
+        } finally {
+            setIsExporting(false);
+        }
+    }, [event, eventId, search]);
+
     const value = useMemo<PageContextValue>(
         () => ({
             event,
@@ -292,6 +325,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             participants,
             participantsFailure,
             isLoadingParticipants,
+            isExporting,
             page,
             searchText,
             summary,
@@ -312,6 +346,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             setSearchText,
             goToPage: setPage,
             toggleAttendance,
+            exportParticipants,
             copyText,
             setCloseDialogOpen: (open) => {
                 setCloseError(null);
@@ -367,6 +402,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             participants,
             participantsFailure,
             isLoadingParticipants,
+            isExporting,
             page,
             searchText,
             summary,
@@ -385,6 +421,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             addError,
             isAdding,
             toggleAttendance,
+            exportParticipants,
             copyText,
             closeEvent,
             submitParticipant,

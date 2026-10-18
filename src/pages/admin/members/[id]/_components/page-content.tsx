@@ -3,10 +3,12 @@ import { Link } from '@tanstack/react-router';
 import { useAppContext } from '@/app-context';
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { WhatsappButton } from '@/components/molecules/whatsapp-button';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MEMBER_STATUS_TONES } from '@/constants/member';
 import { ROUTES } from '@/constants/route';
+import { memberGreetingMessage, whatsappChatUrl } from '@/utils/string';
 
 import { usePageContext } from '../_context';
 import { InternalNote } from './internal-note';
@@ -73,43 +75,54 @@ export const PageContent = () => {
                         />
                     </div>
 
-                    {canManageMembers && (
-                        <div className="flex flex-wrap gap-2">
-                            {member.actions.canEdit && (
-                                <Button asChild variant="outline" className="bg-card">
-                                    <Link to={ROUTES.memberEdit} params={{ memberId: member.id }} data-test-id="member_detail_link_edit">
-                                        Edit Data
-                                    </Link>
-                                </Button>
-                            )}
-                            {member.actions.canResetPassword && (
-                                <Button
-                                    variant="outline"
-                                    className="bg-card"
-                                    disabled={isSendingReset}
-                                    onClick={() => void sendResetPassword()}
-                                    data-test-id="member_detail_button_reset_password"
-                                >
-                                    {isSendingReset ? 'Mengirim…' : 'Kirim Link Reset Password'}
-                                </Button>
-                            )}
-                            {member.actions.canDeactivate && (
-                                <Button
-                                    variant="outline"
-                                    className="bg-card border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
-                                    onClick={() => openStatusDialog('deactivate')}
-                                    data-test-id="member_detail_button_deactivate"
-                                >
-                                    Nonaktifkan
-                                </Button>
-                            )}
-                            {member.actions.canActivate && (
-                                <Button onClick={() => openStatusDialog('activate')} data-test-id="member_detail_button_activate">
-                                    Aktifkan
-                                </Button>
-                            )}
-                        </div>
-                    )}
+                    <div className="flex flex-wrap gap-2">
+                        {member.whatsapp && (
+                            <WhatsappButton
+                                href={whatsappChatUrl(member.whatsapp, memberGreetingMessage(member.name))}
+                                label={`Chat ${member.name} lewat WhatsApp`}
+                                text="Chat"
+                                data-test-id="member_detail_link_chat"
+                            />
+                        )}
+                        {canManageMembers && (
+                            <>
+                                {member.actions.canEdit && (
+                                    <Button asChild variant="outline" className="bg-card">
+                                        <Link to={ROUTES.memberEdit} params={{ memberId: member.id }} data-test-id="member_detail_link_edit">
+                                            Edit
+                                        </Link>
+                                    </Button>
+                                )}
+                                {member.actions.canResetPassword && (
+                                    <Button
+                                        variant="outline"
+                                        className="bg-card"
+                                        disabled={isSendingReset}
+                                        title="Kirim link reset password ke email member"
+                                        onClick={() => void sendResetPassword()}
+                                        data-test-id="member_detail_button_reset_password"
+                                    >
+                                        {isSendingReset ? 'Mengirim…' : 'Reset Password'}
+                                    </Button>
+                                )}
+                                {member.actions.canDeactivate && (
+                                    <Button
+                                        variant="outline"
+                                        className="bg-card border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
+                                        onClick={() => openStatusDialog('deactivate')}
+                                        data-test-id="member_detail_button_deactivate"
+                                    >
+                                        Nonaktifkan
+                                    </Button>
+                                )}
+                                {member.actions.canActivate && (
+                                    <Button onClick={() => openStatusDialog('activate')} data-test-id="member_detail_button_activate">
+                                        Aktifkan
+                                    </Button>
+                                )}
+                            </>
+                        )}
+                    </div>
                 </div>
             </header>
 

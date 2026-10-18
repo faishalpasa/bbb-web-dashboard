@@ -133,6 +133,20 @@ export const getEventParticipants = async (eventId: string, query: ParticipantLi
     }
 };
 
+// Every participant that matches the search, as the CSV the API builds (no pagination).
+export const getEventParticipantsExport = async (eventId: string, search: string): Promise<ServiceResponse<Blob>> => {
+    try {
+        const { data } = await axiosClient.get<Blob>(`/admin/events/${eventId}/participants/export`, {
+            params: compactParams({ search }),
+            responseType: 'blob',
+        });
+
+        return { data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
 export const postEventParticipant = async (eventId: string, input: ParticipantInput): Promise<ServiceResponse<EventParticipant>> => {
     try {
         const { data } = await axiosClient.post<ApiEnvelope<EventParticipant>>(`/admin/events/${eventId}/participants`, input);

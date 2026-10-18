@@ -1,8 +1,9 @@
-import { Check, X } from 'lucide-react';
+import { Check, Download, X } from 'lucide-react';
 
 import { useAppContext } from '@/app-context';
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { WhatsappButton } from '@/components/molecules/whatsapp-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PARTICIPANT_STATUS_TONES } from '@/constants/event';
 import type { EventParticipant } from '@/types/event';
 import { formatRegisteredAt } from '@/utils/date';
-import { formatWhatsapp } from '@/utils/string';
+import { attendanceConfirmationMessage, formatWhatsapp, whatsappChatUrl } from '@/utils/string';
 
 import { usePageContext } from '../_context';
 
@@ -58,8 +59,43 @@ const AttendanceAction = ({ participant }: AttendanceActionProps) => {
     );
 };
 
+// Needs no capability: it only reads data that is already on the row.
+const WhatsappAction = ({ participant }: AttendanceActionProps) => {
+    const { event } = usePageContext();
+
+    if (!participant.whatsapp || !event) return null;
+
+    return (
+        <WhatsappButton
+            href={whatsappChatUrl(participant.whatsapp, attendanceConfirmationMessage(participant.name, event.title))}
+            label={`Konfirmasi kehadiran ${participant.name} lewat WhatsApp`}
+            text="Chat"
+            size="sm"
+            data-test-id={`event_detail_link_whatsapp_${participant.id}`}
+        />
+    );
+};
+
+const ParticipantActions = ({ participant }: AttendanceActionProps) => (
+    <div className="flex items-center justify-end gap-2">
+        <WhatsappAction participant={participant} />
+        <AttendanceAction participant={participant} />
+    </div>
+);
+
 export const ParticipantTable = () => {
-    const { participants, participantsFailure, isLoadingParticipants, page, searchText, setSearchText, goToPage, reload } = usePageContext();
+    const {
+        participants,
+        participantsFailure,
+        isLoadingParticipants,
+        isExporting,
+        page,
+        searchText,
+        setSearchText,
+        goToPage,
+        exportParticipants,
+        reload,
+    } = usePageContext();
     const items = participants?.items ?? [];
     const meta = participants?.meta;
     const rangeStart = meta && meta.total > 0 ? (meta.currentPage - 1) * meta.perPage + 1 : 0;
@@ -71,19 +107,31 @@ export const ParticipantTable = () => {
             data-test-id="event_detail_participants"
             aria-busy={isLoadingParticipants}
         >
-            <div className="grid gap-1.5 p-4">
-                <Label htmlFor="participantSearch" className="text-xs font-normal">
-                    Cari peserta
-                </Label>
-                <Input
-                    id="participantSearch"
-                    type="search"
-                    value={searchText}
-                    onChange={(event) => setSearchText(event.target.value)}
-                    placeholder="Nama atau nomor member"
-                    className="bg-card h-10 max-w-sm"
-                    data-test-id="event_detail_input_search"
-                />
+            <div className="flex flex-wrap items-end justify-between gap-3 p-4">
+                <div className="grid w-full max-w-sm gap-1.5">
+                    <Label htmlFor="participantSearch" className="text-xs font-normal">
+                        Cari peserta
+                    </Label>
+                    <Input
+                        id="participantSearch"
+                        type="search"
+                        value={searchText}
+                        onChange={(event) => setSearchText(event.target.value)}
+                        placeholder="Nama atau nomor member"
+                        className="bg-card h-10"
+                        data-test-id="event_detail_input_search"
+                    />
+                </div>
+                <Button
+                    variant="outline"
+                    className="bg-card"
+                    disabled={isExporting || isLoadingParticipants || items.length === 0}
+                    onClick={() => void exportParticipants()}
+                    data-test-id="event_detail_button_export"
+                >
+                    <Download aria-hidden="true" />
+                    {isExporting ? 'Menyiapkan…' : 'Ekspor Excel'}
+                </Button>
             </div>
 
             {participantsFailure ? (
@@ -133,8 +181,8 @@ export const ParticipantTable = () => {
                                                       data-test-id={`event_detail_badge_status_${participant.id}`}
                                                   />
                                               </td>
-                                              <td className="py-2 pr-4 pl-3 text-right">
-                                                  <AttendanceAction participant={participant} />
+                                              <td className="py-2 pr-4 pl-3">
+                                                  <ParticipantActions participant={participant} />
                                               </td>
                                           </tr>
                                       ))}
@@ -161,7 +209,9 @@ export const ParticipantTable = () => {
                                     {participant.memberNumber ?? 'Non-member'} · {formatWhatsapp(participant.whatsapp)}
                                 </p>
                                 <p className="text-muted-foreground text-xs">Didaftarkan: {registeredLabel(participant)}</p>
-                                <AttendanceAction participant={participant} />
+                                <div className="flex justify-start">
+                                    <ParticipantActions participant={participant} />
+                                </div>
                             </li>
                         ))}
                     </ul>

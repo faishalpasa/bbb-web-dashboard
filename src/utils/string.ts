@@ -23,6 +23,15 @@ export const formatWhatsapp = (normalized: string): string => {
     return local.replace(/^(\d{4})(\d{4})(\d+)$/, '$1-$2-$3');
 };
 
+// A WhatsApp chat with the message already typed, for the admin to review and send.
+export const whatsappChatUrl = (whatsapp: string, message: string): string =>
+    `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+
+export const attendanceConfirmationMessage = (name: string, eventTitle: string): string =>
+    `Halo Ibu ${name},\nSaya admin Buibu Baca Buku ingin mengkonfirmasi apakah ibu akan hadir di acara ${eventTitle}?`;
+
+export const memberGreetingMessage = (name: string): string => `Halo Ibu ${name},\nSaya admin Buibu Baca Buku.`;
+
 // "Kabupaten Bogor" -> "Kab. Bogor"; city names stay as they are.
 export const abbreviateRegency = (label: string): string => label.replace(/^Kabupaten /, 'Kab. ');
 

@@ -46,16 +46,7 @@ export const MemberProfile = () => {
                     {member.isEmailVerified && <StatusBadge tone="success" label="Terverifikasi" data-test-id="member_detail_badge_email_verified" />}
                 </ProfileRow>
                 <ProfileRow label="No. WhatsApp" data-test-id="member_detail_row_whatsapp">
-                    <span className="mr-2 font-mono">{formatWhatsapp(member.whatsapp)}</span>
-                    <a
-                        href={`https://wa.me/${member.whatsapp}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-semibold underline underline-offset-4"
-                        data-test-id="member_detail_link_whatsapp"
-                    >
-                        Buka WhatsApp
-                    </a>
+                    <span className="font-mono">{formatWhatsapp(member.whatsapp)}</span>
                 </ProfileRow>
                 <ProfileRow label="Domisili" data-test-id="member_detail_row_domicile">
                     {domicile}

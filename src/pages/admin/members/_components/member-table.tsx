@@ -1,17 +1,56 @@
 import { Link } from '@tanstack/react-router';
+import { Eye } from 'lucide-react';
 
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { WhatsappButton } from '@/components/molecules/whatsapp-button';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MEMBER_STATUS_TONES } from '@/constants/member';
 import { ROUTES } from '@/constants/route';
+import type { MemberListItem } from '@/types/member';
 import { formatTableDate } from '@/utils/date';
 import { formatNumber } from '@/utils/number';
-import { abbreviateRegency, formatWhatsapp } from '@/utils/string';
+import { abbreviateRegency, formatWhatsapp, memberGreetingMessage, whatsappChatUrl } from '@/utils/string';
 
 import { usePageContext } from '../_context';
 
 const HEADERS = ['Nomor', 'Nama', 'No. WhatsApp', 'Domisili', 'Preferensi', 'Status'];
+
+interface MemberActionsProps {
+    member: MemberListItem;
+}
+
+// Detail and WhatsApp as icon buttons, so opening a member does not depend on clicking the name.
+const MemberActions = ({ member }: MemberActionsProps) => (
+    <div className="flex items-center justify-end gap-2">
+        {member.whatsapp && (
+            <WhatsappButton
+                href={whatsappChatUrl(member.whatsapp, memberGreetingMessage(member.name))}
+                label={`Hubungi ${member.name} lewat WhatsApp`}
+                data-test-id={`members_link_whatsapp_${member.id}`}
+            />
+        )}
+        <Button asChild variant="outline" size="icon" className="bg-card size-9">
+            <Link
+                to={ROUTES.memberDetail}
+                params={{ memberId: member.id }}
+                aria-label={`Lihat detail ${member.name}`}
+                title="Lihat detail"
+                data-test-id={`members_link_detail_${member.id}`}
+            >
+                <Eye />
+            </Link>
+        </Button>
+    </div>
+);
+
+// Regency on the first line and province under it, so a long province name never stretches the column.
+const Domicile = ({ member }: MemberActionsProps) => (
+    <>
+        <span className="block">{member.regency ? abbreviateRegency(member.regency) : '-'}</span>
+        {member.province && <span className="text-muted-foreground block text-xs">{member.province}</span>}
+    </>
+);
 
 export const MemberTable = () => {
     const { list, isLoading, rangeStart, rangeEnd, query, goToPage } = usePageContext();
@@ -25,41 +64,33 @@ export const MemberTable = () => {
                     <thead className="bg-secondary/60 text-left">
                         <tr>
                             {HEADERS.map((header) => (
-                                <th key={header} className="px-3 py-3 font-semibold first:pl-4">
+                                <th key={header} className="px-3 py-3 font-semibold whitespace-nowrap first:pl-4">
                                     {header}
                                 </th>
                             ))}
-                            <th className="px-3 py-3 text-right font-semibold">Ikut / Hadir</th>
-                            <th className="py-3 pr-4 pl-3 font-semibold">Bergabung</th>
+                            <th className="px-3 py-3 text-right font-semibold whitespace-nowrap">Ikut / Hadir</th>
+                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Bergabung</th>
+                            <th className="py-3 pr-4 pl-3 text-right font-semibold">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading && items.length === 0
                             ? Array.from({ length: 8 }, (_, index) => (
                                   <tr key={index} className="border-border border-t">
-                                      <td colSpan={8} className="px-4 py-3">
+                                      <td colSpan={9} className="px-4 py-3">
                                           <Skeleton className="h-5 w-full" />
                                       </td>
                                   </tr>
                               ))
                             : items.map((member) => (
                                   <tr key={member.id} className="border-border border-t" data-test-id={`members_row_${member.id}`}>
-                                      <td className="py-3 pr-3 pl-4 font-mono text-xs">{member.memberNumber ?? '-'}</td>
-                                      <td className="px-3 py-3 font-medium">
-                                          <Link
-                                              to={ROUTES.memberDetail}
-                                              params={{ memberId: member.id }}
-                                              className="underline underline-offset-4"
-                                              data-test-id={`members_link_detail_${member.id}`}
-                                          >
-                                              {member.name}
-                                          </Link>
-                                      </td>
-                                      <td className="px-3 py-3 font-mono text-xs">{formatWhatsapp(member.whatsapp)}</td>
+                                      <td className="py-3 pr-3 pl-4 font-mono text-xs whitespace-nowrap">{member.memberNumber ?? '-'}</td>
+                                      <td className="px-3 py-3 font-medium">{member.name}</td>
+                                      <td className="px-3 py-3 font-mono text-xs whitespace-nowrap">{formatWhatsapp(member.whatsapp)}</td>
                                       <td className="px-3 py-3">
-                                          {[member.regency && abbreviateRegency(member.regency), member.province].filter(Boolean).join(', ')}
+                                          <Domicile member={member} />
                                       </td>
-                                      <td className="px-3 py-3">
+                                      <td className="px-3 py-3 whitespace-nowrap">
                                           {member.preference ? member.preference.label : <span className="text-[#8a6d1f]">Belum diisi</span>}
                                       </td>
                                       <td className="px-3 py-3">
@@ -69,10 +100,13 @@ export const MemberTable = () => {
                                               data-test-id={`members_badge_status_${member.id}`}
                                           />
                                       </td>
-                                      <td className="px-3 py-3 text-right font-mono text-xs">
+                                      <td className="px-3 py-3 text-right font-mono text-xs whitespace-nowrap">
                                           {member.joinedEvents} / {member.attendedEvents}
                                       </td>
-                                      <td className="py-3 pr-4 pl-3">{formatTableDate(member.joinedAt)}</td>
+                                      <td className="px-3 py-3 whitespace-nowrap">{formatTableDate(member.joinedAt)}</td>
+                                      <td className="py-2 pr-4 pl-3">
+                                          <MemberActions member={member} />
+                                      </td>
                                   </tr>
                               ))}
                     </tbody>
@@ -93,14 +127,7 @@ export const MemberTable = () => {
                               data-test-id={`members_card_${member.id}`}
                           >
                               <div className="flex items-start justify-between gap-3">
-                                  <Link
-                                      to={ROUTES.memberDetail}
-                                      params={{ memberId: member.id }}
-                                      className="font-semibold underline underline-offset-4"
-                                      data-test-id={`members_card_link_detail_${member.id}`}
-                                  >
-                                      {member.name}
-                                  </Link>
+                                  <p className="font-semibold">{member.name}</p>
                                   <StatusBadge
                                       tone={MEMBER_STATUS_TONES[member.status.value]}
                                       label={member.status.label}
@@ -111,12 +138,13 @@ export const MemberTable = () => {
                                   {member.memberNumber ?? '-'} · {formatWhatsapp(member.whatsapp)}
                               </p>
                               <p className="text-sm">
-                                  {[member.regency && abbreviateRegency(member.regency), member.province].filter(Boolean).join(', ')}
+                                  <Domicile member={member} />
                               </p>
                               <p className="text-muted-foreground text-xs">
                                   {member.preference ? member.preference.label : 'Preferensi belum diisi'} · Ikut {member.joinedEvents}, hadir{' '}
                                   {member.attendedEvents} · Bergabung {formatTableDate(member.joinedAt)}
                               </p>
+                              <MemberActions member={member} />
                           </li>
                       ))}
             </ul>

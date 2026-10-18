@@ -15,6 +15,7 @@ Status: **di MySQL (langkah 13)**. Diimplementasi di `bbb-api` dan dipakai `web-
 | `POST` | `/api/admin/events/{id}/cancel` | -> `EventDetail`; `422` bila bukan `published` |
 | `POST` | `/api/admin/events/{id}/close` | -> `EventDetail`; `422` bila bukan `published` |
 | `GET` | `/api/admin/events/{id}/participants?search&page&perPage` | `{ items: EventParticipant[], meta, summary }` |
+| `GET` | `/api/admin/events/{id}/participants/export?search` | `text/csv` (`peserta-{slug}.csv`): Nomor, Nama, Email, WhatsApp, Jenis, Didaftarkan, Didaftarkan oleh, Status; semua peserta yang cocok dengan pencarian, tanpa paginasi, tanpa peserta yang membatalkan; dicatat di log audit (Ekspor data); sel yang diawali `= + - @` diberi awalan `'` |
 | `POST` | `/api/admin/events/{id}/participants` | `{ memberId }` atau `{ name, email, whatsapp }` -> `EventParticipant` (`201`) |
 | `PUT` | `/api/admin/events/{id}/participants/{participantId}/attendance` | `{ present: boolean }` -> `{ participant, summary }` |
 
