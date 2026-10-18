@@ -11,6 +11,11 @@ import type { EventForm } from '@/hooks/useEventForm';
 import { cn } from '@/lib/utils';
 import type { SelectOption } from '@/types/api';
 
+// Mobile Safari draws datetime-local with its own width and a taller box (iOS ignores w-full and h-11 unless the native
+// look is turned off), so the box is reset to match the other 44px fields and the inner value is left-aligned.
+const DATETIME_INPUT_CLASS =
+    'bg-card h-11 min-w-0 max-w-full appearance-none py-0 text-left [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit]:p-0';
+
 interface EventFormSectionsProps {
     form: EventForm;
     formats: SelectOption[];
@@ -149,7 +154,7 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
                             value={fields.startsAt}
                             aria-required="true"
                             onChange={(event) => setField('startsAt', event.target.value)}
-                            className="bg-card h-11"
+                            className={DATETIME_INPUT_CLASS}
                             data-test-id={`${testId}_input_starts_at`}
                         />
                     </FormField>
@@ -160,7 +165,7 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
                             value={fields.endsAt}
                             aria-required="true"
                             onChange={(event) => setField('endsAt', event.target.value)}
-                            className="bg-card h-11"
+                            className={DATETIME_INPUT_CLASS}
                             data-test-id={`${testId}_input_ends_at`}
                         />
                     </FormField>
