@@ -24,7 +24,7 @@ Launch target: 30 October 2026. Admin-only app; member/public work remains in we
 - [ ] Agree admin session/auth/capabilities contract with the API, including 401/403, redirect destination and shared-cookie behavior. (Draft in docs/contracts/admin-auth.md, implemented as dummy `/api/admin/*`; awaiting approval.)
 - [x] Allow both 5173 and 5174 origins in API local CORS/Sanctum; do not break member redirects. (`.env.example` updated; FRONTEND_URL unchanged.)
 - [x] Login (email + password, adapted from member artboard 1a) and route guard; verified at 1360px against the real dummy API.
-- [x] Admin shell/sidebar (left drawer below 1024px) and capability-gated navigation (Superadmin group hidden for plain admins; Member/Kegiatan/Permintaan Keluar/Admin/Pengaturan/Log render PlaceholderPage until their flows land).
+- [x] Admin shell/sidebar (left drawer below 1024px) and capability-gated navigation (admin biasa hanya Dashboard dan Kegiatan; Member/Permintaan Keluar/Admin/Pengaturan/Log khusus superadmin).
 - [x] Dashboard (artboard 8) with dummy `GET /api/admin/dashboard` (docs/contracts/admin-dashboard.md) and Pest tests; checked at 1360px as superadmin and admin. Loading/error/401 states built; error/401 not yet exercised in a browser.
 
 ## 2. Admin flows

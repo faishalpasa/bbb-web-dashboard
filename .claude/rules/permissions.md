@@ -7,8 +7,8 @@ Authorization is server-authoritative. Hiding a button is not authorization; the
 | Role | Scope |
 | --- | --- |
 | `member` | Own profile, own registrations, attendance, and exit request |
-| `admin` | Member and event operations, participants, exit-request review |
-| `superadmin` | All admin abilities plus admin management, settings, and audit logs |
+| `admin` | Dashboard, event operations, and participants |
+| `superadmin` | All admin abilities plus members, exit-request review, admin management, settings, and audit logs |
 
 ## UI rules
 

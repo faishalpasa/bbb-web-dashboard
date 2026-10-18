@@ -15,9 +15,16 @@ export interface NavigationItem {
 
 export const MAIN_NAVIGATION: NavigationItem[] = [
     { key: 'dashboard', label: 'Dashboard', to: ROUTES.dashboard, icon: LayoutDashboard },
-    { key: 'members', label: 'Member', to: ROUTES.members, icon: Users },
-    { key: 'events', label: 'Kegiatan', to: ROUTES.events, icon: CalendarDays },
-    { key: 'exit_requests', label: 'Permintaan Keluar', to: ROUTES.exitRequests, icon: LogOut, badge: 'pendingExitRequests' },
+    { key: 'members', label: 'Member', to: ROUTES.members, icon: Users, capability: 'manageMembers' },
+    { key: 'events', label: 'Kegiatan', to: ROUTES.events, icon: CalendarDays, capability: 'manageEvents' },
+    {
+        key: 'exit_requests',
+        label: 'Permintaan Keluar',
+        to: ROUTES.exitRequests,
+        icon: LogOut,
+        capability: 'reviewExitRequests',
+        badge: 'pendingExitRequests',
+    },
 ];
 
 export const SUPERADMIN_NAVIGATION: NavigationItem[] = [

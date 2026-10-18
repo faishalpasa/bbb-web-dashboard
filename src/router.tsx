@@ -3,6 +3,7 @@ import { createRootRouteWithContext, createRoute, createRouter, lazyRouteCompone
 import type { AppContextValue } from '@/app-context';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { ROUTES } from '@/constants/route';
+import type { AdminCapabilities } from '@/types/auth';
 
 // Route guards read the session through the app context, which RouterProvider receives as `context`.
 export interface RouterContext {
@@ -14,6 +15,15 @@ const requireSession = async ({ context }: { context: RouterContext }) => {
 
     if (!session) throw redirect({ to: ROUTES.login });
 };
+
+const requireCapability =
+    (capability: keyof AdminCapabilities) =>
+    async ({ context }: { context: RouterContext }) => {
+        const session = await context.auth.ensureSession();
+
+        if (!session) throw redirect({ to: ROUTES.login });
+        if (!session.can[capability]) throw redirect({ to: ROUTES.dashboard });
+    };
 
 // Signed-in admins have no business on the sign-in screen.
 const redirectIfSignedIn = async ({ context }: { context: RouterContext }) => {
@@ -52,72 +62,84 @@ const dashboardRoute = createRoute({
 const membersRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.members,
+    beforeLoad: requireCapability('manageMembers'),
     component: lazyRouteComponent(() => import('@/pages/admin/members'), 'PageMembers'),
 });
 
 const memberNewRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.memberNew,
+    beforeLoad: requireCapability('manageMembers'),
     component: lazyRouteComponent(() => import('@/pages/admin/members/new'), 'PageMemberNew'),
 });
 
 const memberDetailRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.memberDetail,
+    beforeLoad: requireCapability('manageMembers'),
     component: lazyRouteComponent(() => import('@/pages/admin/members/[id]'), 'PageMemberDetail'),
 });
 
 const memberEditRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.memberEdit,
+    beforeLoad: requireCapability('manageMembers'),
     component: lazyRouteComponent(() => import('@/pages/admin/members/[id]/edit'), 'PageMemberEdit'),
 });
 
 const eventsRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.events,
+    beforeLoad: requireCapability('manageEvents'),
     component: lazyRouteComponent(() => import('@/pages/admin/events'), 'PageEvents'),
 });
 
 const eventNewRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.eventNew,
+    beforeLoad: requireCapability('manageEvents'),
     component: lazyRouteComponent(() => import('@/pages/admin/events/new'), 'PageEventNew'),
 });
 
 const eventDetailRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.eventDetail,
+    beforeLoad: requireCapability('manageEvents'),
     component: lazyRouteComponent(() => import('@/pages/admin/events/[id]'), 'PageEventDetail'),
 });
 
 const eventEditRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.eventEdit,
+    beforeLoad: requireCapability('manageEvents'),
     component: lazyRouteComponent(() => import('@/pages/admin/events/[id]/edit'), 'PageEventEdit'),
 });
 
 const exitRequestsRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.exitRequests,
+    beforeLoad: requireCapability('reviewExitRequests'),
     component: lazyRouteComponent(() => import('@/pages/admin/exit-requests'), 'PageExitRequests'),
 });
 
 const settingsRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.settings,
+    beforeLoad: requireCapability('manageSettings'),
     component: lazyRouteComponent(() => import('@/pages/admin/settings'), 'PageSettings'),
 });
 
 const adminsRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.admins,
+    beforeLoad: requireCapability('manageAdmins'),
     component: lazyRouteComponent(() => import('@/pages/admin/admins'), 'PageAdmins'),
 });
 
 const auditLogsRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.auditLogs,
+    beforeLoad: requireCapability('viewAuditLog'),
     component: lazyRouteComponent(() => import('@/pages/admin/audit-logs'), 'PageAuditLogs'),
 });
 

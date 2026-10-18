@@ -37,9 +37,9 @@ interface AdminLoginInput {
 interface AdminSession {
     user: { id: string; name: string; email: string; role: AdminRole };
     can: {
-        manageMembers: boolean; // semua admin: tambah/edit/nonaktifkan member
+        manageMembers: boolean; // superadmin: tambah/edit/nonaktifkan member
         manageEvents: boolean; // semua admin: kelola kegiatan dan peserta
-        reviewExitRequests: boolean; // semua admin: setujui atau tolak permintaan keluar
+        reviewExitRequests: boolean; // superadmin: setujui atau tolak permintaan keluar
         manageAdmins: boolean; // menu Admin (superadmin)
         manageSettings: boolean; // menu Pengaturan (superadmin)
         viewAuditLog: boolean; // menu Log (superadmin)
@@ -53,5 +53,5 @@ interface AdminSession {
 - Admin dan member memakai token terpisah (`typ` `admin` dan `member`); rute admin menolak token member dan sebaliknya. Klaim `sub` token admin adalah UUID admin. API **memuat admin dari database pada setiap request**: admin yang dinonaktifkan atau dihapus langsung `401` (termasuk `POST /api/auth/refresh`), dan peran dibaca ulang sehingga perubahan peran berlaku seketika; tidak perlu menunggu token habis. State dummy endpoint admin lain masih disimpan di session store server yang dikunci klaim `sid`. Logout admin mencabut token admin saja (token member di `/api/admin/logout` dijawab `401`).
 - Tujuan redirect setelah login: `/` (Dashboard). Redirect ke halaman asal sebelum 401 belum diputuskan.
 - Akun pengembangan (seeder `AdminSeeder`, hanya environment `local`/`testing`, bukan credential production): `superadmin@bbb.test` / `superadmin123`, `admin@bbb.test` / `admin123`, `wahyuni.sari@bbb.org` / `admin123`, dan `tuti.handayani@bbb.org` (nonaktif). Admin lain dibuat lewat undangan (`admin-superadmin.md`). Email dicocokkan tanpa memperhatikan huruf besar/kecil dan spasi di tepi.
-- `badges.pendingExitRequests` dihitung dari permintaan keluar `pending` di `exit_requests` (sama dengan layar Permintaan Keluar).
+- `badges.pendingExitRequests` dihitung dari permintaan keluar `pending` di `exit_requests` untuk superadmin; admin biasa selalu menerima `0`.
 - Remember me, lupa password admin, dan rate limit login belum ada desainnya; tidak dibuat.

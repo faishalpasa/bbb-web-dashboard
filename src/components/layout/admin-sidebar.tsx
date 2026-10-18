@@ -68,6 +68,7 @@ export const SidebarContent = ({ testPrefix, onNavigate }: SidebarContentProps) 
 
     if (!session) return null;
 
+    const mainItems = MAIN_NAVIGATION.filter((item) => !item.capability || session.can[item.capability]);
     const superadminItems = SUPERADMIN_NAVIGATION.filter((item) => item.capability && session.can[item.capability]);
 
     return (
@@ -79,7 +80,7 @@ export const SidebarContent = ({ testPrefix, onNavigate }: SidebarContentProps) 
 
             <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-2" aria-label="Menu utama">
                 <div className="grid gap-1">
-                    {MAIN_NAVIGATION.map((item) => (
+                    {mainItems.map((item) => (
                         <SidebarItem key={item.key} item={item} session={session} testPrefix={testPrefix} onNavigate={onNavigate} />
                     ))}
                 </div>
