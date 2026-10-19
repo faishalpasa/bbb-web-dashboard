@@ -1,6 +1,7 @@
 import { PERMISSIONS as P } from '@/constants/permission';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Link } from '@tanstack/react-router';
+import { Eye, Pencil } from 'lucide-react';
 
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { Button } from '@/components/ui/button';
@@ -17,8 +18,44 @@ const quotaOf = (event: EventListItem): string => `${event.registered}/${event.c
 const attendedOf = (event: EventListItem): string => (event.attended === null ? '-' : String(event.attended));
 const isEditable = (event: EventListItem): boolean => event.status.value === 'draft' || event.status.value === 'published';
 
+interface EventActionsProps {
+    event: EventListItem;
+    canEdit: boolean;
+    canViewParticipants: boolean;
+}
+
+const EventActions = ({ event, canEdit, canViewParticipants }: EventActionsProps) => (
+    <div className="flex items-center justify-end gap-2">
+        <Button asChild variant="outline" size="icon" className="bg-card size-9">
+            <Link
+                to={ROUTES.eventDetail}
+                params={{ eventId: event.id }}
+                aria-label={canViewParticipants ? `Lihat peserta ${event.title}` : `Lihat detail ${event.title}`}
+                title={canViewParticipants ? 'Lihat peserta' : 'Lihat detail'}
+                data-test-id={`events_link_participants_${event.id}`}
+            >
+                <Eye />
+            </Link>
+        </Button>
+        {canEdit && (
+            <Button asChild variant="outline" size="icon" className="bg-card size-9">
+                <Link
+                    to={ROUTES.eventEdit}
+                    params={{ eventId: event.id }}
+                    aria-label={`Edit kegiatan ${event.title}`}
+                    title="Edit kegiatan"
+                    data-test-id={`events_link_edit_${event.id}`}
+                >
+                    <Pencil />
+                </Link>
+            </Button>
+        )}
+    </div>
+);
+
 export const EventTable = () => {
     const { can } = usePermissions();
+    const canViewParticipants = can(P.EVENT_PARTICIPANT_VIEW);
     const canEdit = (event: EventListItem) => can(P.EVENT_UPDATE) && isEditable(event);
     const { list, isLoading, query, goToPage } = usePageContext();
     const items = list?.items ?? [];
@@ -36,7 +73,7 @@ export const EventTable = () => {
                             <th className="px-3 py-3 text-right font-semibold">Terdaftar</th>
                             <th className="px-3 py-3 text-right font-semibold">Hadir</th>
                             <th className="px-3 py-3 font-semibold">Status</th>
-                            <th className="py-3 pr-4 pl-3" />
+                            <th className="py-3 pr-4 pl-3 text-right font-semibold">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -75,25 +112,8 @@ export const EventTable = () => {
                                               data-test-id={`events_badge_status_${event.id}`}
                                           />
                                       </td>
-                                      <td className="space-x-3 py-3 pr-4 pl-3 text-right whitespace-nowrap">
-                                          <Link
-                                              to={ROUTES.eventDetail}
-                                              params={{ eventId: event.id }}
-                                              className="font-semibold underline underline-offset-4"
-                                              data-test-id={`events_link_participants_${event.id}`}
-                                          >
-                                              {can(P.EVENT_PARTICIPANT_VIEW) ? 'Peserta' : 'Detail'}
-                                          </Link>
-                                          {canEdit(event) && (
-                                              <Link
-                                                  to={ROUTES.eventEdit}
-                                                  params={{ eventId: event.id }}
-                                                  className="font-semibold underline underline-offset-4"
-                                                  data-test-id={`events_link_edit_${event.id}`}
-                                              >
-                                                  Edit
-                                              </Link>
-                                          )}
+                                      <td className="py-2 pr-4 pl-3">
+                                          <EventActions event={event} canEdit={canEdit(event)} canViewParticipants={canViewParticipants} />
                                       </td>
                                   </tr>
                               ))}
@@ -111,14 +131,7 @@ export const EventTable = () => {
                     : items.map((event) => (
                           <li key={event.id} className="border-border space-y-2 border-t p-4" data-test-id={`events_card_${event.id}`}>
                               <div className="flex items-start justify-between gap-3">
-                                  <Link
-                                      to={ROUTES.eventDetail}
-                                      params={{ eventId: event.id }}
-                                      className="font-semibold underline underline-offset-4"
-                                      data-test-id={`events_card_link_detail_${event.id}`}
-                                  >
-                                      {event.title}
-                                  </Link>
+                                  <p className="font-semibold">{event.title}</p>
                                   <StatusBadge
                                       tone={EVENT_STATUS_TONES[event.status.value]}
                                       label={event.status.label}
@@ -130,16 +143,7 @@ export const EventTable = () => {
                                   {event.format.label} · {event.allowsNonMember ? 'External' : 'Internal'} · Terdaftar {quotaOf(event)} · Hadir{' '}
                                   {attendedOf(event)}
                               </p>
-                              {canEdit(event) && (
-                                  <Link
-                                      to={ROUTES.eventEdit}
-                                      params={{ eventId: event.id }}
-                                      className="text-sm font-semibold underline underline-offset-4"
-                                      data-test-id={`events_card_link_edit_${event.id}`}
-                                  >
-                                      Edit
-                                  </Link>
-                              )}
+                              <EventActions event={event} canEdit={canEdit(event)} canViewParticipants={canViewParticipants} />
                           </li>
                       ))}
             </ul>
