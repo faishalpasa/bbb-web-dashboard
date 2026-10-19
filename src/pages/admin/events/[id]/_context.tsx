@@ -1,18 +1,22 @@
-import { useParams } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
+import { PERMISSIONS as P } from '@/constants/permission';
+import { ROUTES } from '@/constants/route';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
     getEvent,
+    getEventMemberOptions,
     getEventParticipants,
     getEventParticipantsExport,
+    postCancelEvent,
     postCloseEvent,
+    postDuplicateEvent,
     postEventParticipant,
     putParticipantAttendance,
 } from '@/services/event';
-import { getMembers } from '@/services/member';
 import type { LoadFailure } from '@/types/api';
-import type { EventDetail, EventParticipantList, ParticipantInput, ParticipantSummary } from '@/types/event';
-import type { MemberListItem } from '@/types/member';
+import type { EventDetail, EventMemberOption, EventParticipantList, ParticipantInput, ParticipantSummary } from '@/types/event';
 import { copyToClipboard } from '@/utils/clipboard';
 import { errorMessage, fieldErrorMessage, toLoadFailure } from '@/utils/error';
 import { normalizeWhatsapp as normalizeGuestWhatsapp } from '@/utils/string';
@@ -49,7 +53,7 @@ interface PageContextValue {
     isAddDialogOpen: boolean;
     addTab: AddParticipantTab;
     memberSearch: string;
-    memberResults: MemberListItem[];
+    memberResults: EventMemberOption[];
     isSearchingMembers: boolean;
     guestFields: GuestFields;
     guestErrors: GuestErrors;
@@ -62,6 +66,13 @@ interface PageContextValue {
     copyText: (text: string, label: string) => Promise<void>;
     setCloseDialogOpen: (open: boolean) => void;
     closeEvent: () => Promise<void>;
+    duplicateEvent: () => Promise<void>;
+    isDuplicating: boolean;
+    cancelEvent: () => Promise<void>;
+    isCancelling: boolean;
+    isCancelDialogOpen: boolean;
+    setCancelDialogOpen: (open: boolean) => void;
+    cancelError: string | null;
     openAddDialog: () => void;
     closeAddDialog: () => void;
     setAddTab: (tab: AddParticipantTab) => void;
@@ -77,6 +88,11 @@ const PageContext = createContext<PageContextValue | null>(null);
 const EMPTY_GUEST: GuestFields = { name: '', email: '', whatsapp: '' };
 
 export const PageContextProvider = ({ children }: PropsWithChildren) => {
+    const navigate = useNavigate();
+    const { can } = usePermissions();
+    const canViewParticipants = can(P.EVENT_PARTICIPANT_VIEW);
+    const canAddParticipants = can(P.EVENT_PARTICIPANT_CREATE);
+    const canEditEvent = can(P.EVENT_UPDATE);
     const { eventId } = useParams({ strict: false });
     const [event, setEvent] = useState<EventDetail | null>(null);
     const [failure, setFailure] = useState<LoadFailure | null>(null);
@@ -94,10 +110,14 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [isCloseDialogOpen, setCloseDialogOpenState] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
     const [closeError, setCloseError] = useState<string | null>(null);
+    const [isDuplicating, setIsDuplicating] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [isCancelDialogOpen, setCancelDialogOpen] = useState(false);
+    const [cancelError, setCancelError] = useState<string | null>(null);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [addTab, setAddTab] = useState<AddParticipantTab>('member');
     const [memberSearch, setMemberSearch] = useState('');
-    const [memberResults, setMemberResults] = useState<MemberListItem[]>([]);
+    const [memberResults, setMemberResults] = useState<EventMemberOption[]>([]);
     const [isSearchingMembers, setIsSearchingMembers] = useState(false);
     const [guestFields, setGuestFields] = useState<GuestFields>(EMPTY_GUEST);
     const [guestErrors, setGuestErrors] = useState<GuestErrors>({});
@@ -126,9 +146,13 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     }, [eventId, reloadToken]);
 
     useEffect(() => {
-        if (!eventId) return;
-
         const requestId = ++latestParticipantsRequest.current;
+        if (!eventId || !canViewParticipants) {
+            setParticipants(null);
+            setSummary(null);
+            setIsLoadingParticipants(false);
+            return;
+        }
 
         const load = async () => {
             setIsLoadingParticipants(true);
@@ -149,7 +173,10 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         };
 
         void load();
-    }, [eventId, search, page, reloadToken]);
+        return () => {
+            latestParticipantsRequest.current = requestId + 1;
+        };
+    }, [eventId, search, page, reloadToken, canViewParticipants]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -161,29 +188,23 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     }, [searchText]);
 
     useEffect(() => {
-        if (!isAddDialogOpen || addTab !== 'member' || !memberSearch.trim()) {
+        if (!canAddParticipants || !eventId || !isAddDialogOpen || addTab !== 'member' || memberSearch.trim().length < 2) {
             setMemberResults([]);
+            setIsSearchingMembers(false);
 
             return;
         }
 
         let isCancelled = false;
+        setMemberResults([]);
+        setIsSearchingMembers(true);
+        setAddError(null);
 
         const timer = window.setTimeout(async () => {
-            setIsSearchingMembers(true);
-
             try {
-                const response = await getMembers({
-                    search: memberSearch.trim(),
-                    status: '',
-                    provinceCode: '',
-                    preference: '',
-                    attendance: '',
-                    page: 1,
-                    perPage: MEMBER_SEARCH_LIMIT,
-                });
+                const response = await getEventMemberOptions(eventId, memberSearch.trim());
 
-                if (!isCancelled) setMemberResults(response.data.items);
+                if (!isCancelled) setMemberResults(response.data.items.slice(0, MEMBER_SEARCH_LIMIT));
             } catch (error) {
                 if (!isCancelled) setAddError(errorMessage(error));
             } finally {
@@ -195,7 +216,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             isCancelled = true;
             window.clearTimeout(timer);
         };
-    }, [isAddDialogOpen, addTab, memberSearch]);
+    }, [isAddDialogOpen, addTab, memberSearch, eventId, canAddParticipants]);
 
     const refreshEvent = useCallback(async () => {
         if (!eventId) return;
@@ -317,6 +338,37 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         }
     }, [event, eventId, search]);
 
+    const duplicateEvent = useCallback(async () => {
+        if (!eventId) return;
+        setIsDuplicating(true);
+        setNotice(null);
+        try {
+            const response = await postDuplicateEvent(eventId);
+            void navigate({ to: canEditEvent ? ROUTES.eventEdit : ROUTES.eventDetail, params: { eventId: response.data.id } });
+        } catch (error) {
+            setNotice({ tone: 'error', text: errorMessage(error) });
+        } finally {
+            setIsDuplicating(false);
+        }
+    }, [eventId, canEditEvent, navigate]);
+
+    const cancelEvent = useCallback(async () => {
+        if (!eventId) return;
+        setIsCancelling(true);
+        setCancelError(null);
+        try {
+            const response = await postCancelEvent(eventId);
+            setEvent(response.data);
+            setCancelDialogOpen(false);
+            setReloadToken((token) => token + 1);
+            setNotice({ tone: 'success', text: 'Kegiatan dibatalkan.' });
+        } catch (error) {
+            setCancelError(errorMessage(error));
+        } finally {
+            setIsCancelling(false);
+        }
+    }, [eventId]);
+
     const value = useMemo<PageContextValue>(
         () => ({
             event,
@@ -334,6 +386,13 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             isCloseDialogOpen,
             isClosing,
             closeError,
+            duplicateEvent,
+            isDuplicating,
+            cancelEvent,
+            isCancelling,
+            isCancelDialogOpen,
+            setCancelDialogOpen,
+            cancelError,
             isAddDialogOpen,
             addTab,
             memberSearch,
@@ -411,6 +470,12 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             isCloseDialogOpen,
             isClosing,
             closeError,
+            duplicateEvent,
+            isDuplicating,
+            cancelEvent,
+            isCancelling,
+            isCancelDialogOpen,
+            cancelError,
             isAddDialogOpen,
             addTab,
             memberSearch,

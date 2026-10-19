@@ -4,7 +4,7 @@ Launch target: 30 October 2026. Admin-only app; member/public work remains in we
 
 ## Handoff (16 October 2026)
 
-RBAC dashboard (19 Oktober 2026): target kontrak `docs/contracts/admin-rbac.md`, rencana `../bbb-api/docs/plans/admin-rbac.md`. A–B selesai, middleware permission API C operasional terverifikasi (480 Pest + Pint); keputusan penyaringan statistik dashboard masih pending. UI/session baru D–F belum berjalan. Kontrak 403 kini permission_denied; satu admin satu role, katalog permission hanya lewat migration API.
+RBAC dashboard (19 Oktober 2026): kontrak `docs/contracts/admin-rbac.md`, rencana `../bbb-api/docs/plans/admin-rbac.md`. A–B dan D–E selesai; C operasional terverifikasi, keputusan penyaringan statistik pending. Guard halaman/sidebar/aksi, landing 403/no-access dan revalidasi session memakai permissions. Label Admin di bawah logo dihapus desktop/mobile sesuai owner. API 493 Pest + Pint; 9 tes RBAC FE + typecheck/lint/format/build lulus; smoke lokal view-only, empty, URL 403 dan revoke peserta. F belum berjalan: pengelolaan role memakai tree switch parent/child sesuai arahan owner, tanpa permission creation UI. Katalog permission hanya lewat migration API. Deploy dev: `../bbb-api/docs/deployment-rbac-dev.md`.
 
 - Local path: `/Users/pasa/Projects/BBB/web-dashboard`; origin: `git@github.com:faishalpasa/bbb-web-dashboard.git`; working branch: `development`.
 - Git initialized on `development`, origin connected. User authorized the initial scaffold commit/push on 16 October 2026. Check `git status` and `git log` for current publication state; continue working on `development`.

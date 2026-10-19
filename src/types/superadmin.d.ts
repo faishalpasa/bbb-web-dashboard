@@ -1,4 +1,5 @@
 import type { Identifier, PaginatedCollection, SelectOption } from '@/types/api';
+import type { AdminRoleSummary } from '@/types/auth';
 
 export interface AdminSettings {
     registrationCloseMinutes: number;
@@ -21,10 +22,11 @@ export interface AdminAccount {
     id: Identifier;
     name: string;
     email: string;
-    role: { value: 'superadmin' | 'admin'; label: string };
+    role: { value: string; label: string };
+    roleInfo: AdminRoleSummary;
     status: { value: AdminAccountStatus; label: string };
     isCurrentUser: boolean;
-    actions: { canDeactivate: boolean; canActivate: boolean };
+    actions: { canDeactivate: boolean; canActivate: boolean; canChangeRole: boolean };
 }
 
 export interface AdminInvitationResult extends AdminAccount {
@@ -34,6 +36,7 @@ export interface AdminInvitationResult extends AdminAccount {
 export interface AdminInviteInput {
     name: string;
     email: string;
+    roleId: string;
 }
 
 export type AuditLogType = 'export' | 'settings' | 'admins' | 'members';

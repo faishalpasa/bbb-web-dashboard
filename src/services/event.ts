@@ -4,6 +4,7 @@ import type {
     EventInput,
     EventList,
     EventListQuery,
+    EventMemberOption,
     EventOptions,
     EventParticipant,
     EventParticipantList,
@@ -16,6 +17,18 @@ import { toServiceError } from '@/utils/error';
 
 const compactParams = (query: object): Record<string, string | number> =>
     Object.fromEntries(Object.entries(query).filter(([, value]) => value !== '' && value !== undefined));
+
+export const getEventMemberOptions = async (eventId: string, search: string): Promise<ServiceResponse<{ items: EventMemberOption[] }>> => {
+    try {
+        const { data } = await axiosClient.get<ApiEnvelope<{ items: EventMemberOption[] }>>(
+            `/admin/events/${encodeURIComponent(eventId)}/member-options`,
+            { params: { search } },
+        );
+        return { data: data.data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
 
 export const getEvents = async (query: EventListQuery): Promise<ServiceResponse<EventList>> => {
     try {

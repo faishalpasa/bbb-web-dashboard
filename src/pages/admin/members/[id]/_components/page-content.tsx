@@ -1,13 +1,14 @@
 import { Link } from '@tanstack/react-router';
 
-import { useAppContext } from '@/app-context';
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { WhatsappButton } from '@/components/molecules/whatsapp-button';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MEMBER_STATUS_TONES } from '@/constants/member';
+import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
+import { usePermissions } from '@/hooks/usePermissions';
 import { memberGreetingMessage, whatsappChatUrl } from '@/utils/string';
 
 import { usePageContext } from '../_context';
@@ -18,9 +19,8 @@ import { MemberStats } from './member-stats';
 import { StatusDialogs } from './status-dialogs';
 
 export const PageContent = () => {
-    const { session } = useAppContext();
+    const { can } = usePermissions();
     const { member, failure, isLoading, resetMessage, isSendingReset, sendResetPassword, openStatusDialog, reload } = usePageContext();
-    const canManageMembers = session?.can.manageMembers ?? false;
 
     if (failure) {
         return (
@@ -84,43 +84,39 @@ export const PageContent = () => {
                                 data-test-id="member_detail_link_chat"
                             />
                         )}
-                        {canManageMembers && (
-                            <>
-                                {member.actions.canEdit && (
-                                    <Button asChild variant="outline" className="bg-card">
-                                        <Link to={ROUTES.memberEdit} params={{ memberId: member.id }} data-test-id="member_detail_link_edit">
-                                            Edit
-                                        </Link>
-                                    </Button>
-                                )}
-                                {member.actions.canResetPassword && (
-                                    <Button
-                                        variant="outline"
-                                        className="bg-card"
-                                        disabled={isSendingReset}
-                                        title="Kirim link reset password ke email member"
-                                        onClick={() => void sendResetPassword()}
-                                        data-test-id="member_detail_button_reset_password"
-                                    >
-                                        {isSendingReset ? 'Mengirim…' : 'Reset Password'}
-                                    </Button>
-                                )}
-                                {member.actions.canDeactivate && (
-                                    <Button
-                                        variant="outline"
-                                        className="bg-card border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
-                                        onClick={() => openStatusDialog('deactivate')}
-                                        data-test-id="member_detail_button_deactivate"
-                                    >
-                                        Nonaktifkan
-                                    </Button>
-                                )}
-                                {member.actions.canActivate && (
-                                    <Button onClick={() => openStatusDialog('activate')} data-test-id="member_detail_button_activate">
-                                        Aktifkan
-                                    </Button>
-                                )}
-                            </>
+                        {can(P.MEMBER_UPDATE) && member.actions.canEdit && (
+                            <Button asChild variant="outline" className="bg-card">
+                                <Link to={ROUTES.memberEdit} params={{ memberId: member.id }} data-test-id="member_detail_link_edit">
+                                    Edit
+                                </Link>
+                            </Button>
+                        )}
+                        {can(P.MEMBER_RESET_PASSWORD) && member.actions.canResetPassword && (
+                            <Button
+                                variant="outline"
+                                className="bg-card"
+                                disabled={isSendingReset}
+                                title="Kirim link reset password ke email member"
+                                onClick={() => void sendResetPassword()}
+                                data-test-id="member_detail_button_reset_password"
+                            >
+                                {isSendingReset ? 'Mengirim…' : 'Reset Password'}
+                            </Button>
+                        )}
+                        {can(P.MEMBER_DEACTIVATE) && member.actions.canDeactivate && (
+                            <Button
+                                variant="outline"
+                                className="bg-card border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
+                                onClick={() => openStatusDialog('deactivate')}
+                                data-test-id="member_detail_button_deactivate"
+                            >
+                                Nonaktifkan
+                            </Button>
+                        )}
+                        {can(P.MEMBER_ACTIVATE) && member.actions.canActivate && (
+                            <Button onClick={() => openStatusDialog('activate')} data-test-id="member_detail_button_activate">
+                                Aktifkan
+                            </Button>
                         )}
                     </div>
                 </div>
@@ -135,7 +131,7 @@ export const PageContent = () => {
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.4fr_1fr]">
                 <div className="space-y-4">
                     <MemberProfile />
-                    {canManageMembers && <InternalNote />}
+                    <InternalNote />
                 </div>
                 <div className="space-y-4">
                     <MemberStats />

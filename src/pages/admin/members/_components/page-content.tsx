@@ -1,10 +1,11 @@
 import { Link } from '@tanstack/react-router';
 import { Download } from 'lucide-react';
 
-import { useAppContext } from '@/app-context';
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { Button } from '@/components/ui/button';
+import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
+import { usePermissions } from '@/hooks/usePermissions';
 import { formatNumber } from '@/utils/number';
 
 import { usePageContext } from '../_context';
@@ -12,9 +13,9 @@ import { MemberFilters } from './member-filters';
 import { MemberTable } from './member-table';
 
 export const PageContent = () => {
-    const { session } = useAppContext();
+    const { can } = usePermissions();
     const { list, failure, isExporting, exportError, exportMembers, reload } = usePageContext();
-    const canManageMembers = session?.can.manageMembers ?? false;
+    const canManageMembers = can(P.MEMBER_CREATE);
 
     return (
         <div className="space-y-4">
@@ -35,10 +36,12 @@ export const PageContent = () => {
                             </Link>
                         </Button>
                     )}
-                    <Button variant="outline" onClick={() => void exportMembers()} disabled={isExporting} data-test-id="members_button_export">
-                        <Download aria-hidden="true" />
-                        {isExporting ? 'Menyiapkan…' : 'Ekspor Excel'}
-                    </Button>
+                    {can(P.MEMBER_EXPORT) && (
+                        <Button variant="outline" onClick={() => void exportMembers()} disabled={isExporting} data-test-id="members_button_export">
+                            <Download aria-hidden="true" />
+                            {isExporting ? 'Menyiapkan…' : 'Ekspor Excel'}
+                        </Button>
+                    )}
                 </div>
             </header>
 

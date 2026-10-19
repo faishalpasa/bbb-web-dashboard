@@ -1,13 +1,19 @@
 import { createContext, type FormEventHandler, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { useAppContext } from '@/app-context';
+import { PERMISSIONS as P } from '@/constants/permission';
+import { usePermissions } from '@/hooks/usePermissions';
+import { getAdminRoleOptions, putAdminRole } from '@/services/role';
 import { getAdmins, postActivateAdmin, postAdmin, postDeactivateAdmin } from '@/services/superadmin';
 import type { LoadFailure } from '@/types/api';
+import type { AdminRoleSummary } from '@/types/auth';
 import type { AdminAccount, AdminInvitationResult } from '@/types/superadmin';
 import { errorMessage, fieldErrorMessage, toLoadFailure } from '@/utils/error';
 
 interface InviteErrors {
     name?: string;
     email?: string;
+    roleId?: string;
 }
 
 interface PageContextValue {
@@ -16,14 +22,25 @@ interface PageContextValue {
     isLoading: boolean;
     notice: { tone: 'success' | 'error'; text: string } | null;
     invitation: AdminInvitationResult | null;
-    inviteFields: { name: string; email: string };
+    inviteFields: { name: string; email: string; roleId: string };
     inviteErrors: InviteErrors;
     isInviting: boolean;
     deactivating: AdminAccount | null;
     deactivateError: string | null;
     isDeactivating: boolean;
     pendingActivationId: string | null;
-    setInviteField: (name: 'name' | 'email', value: string) => void;
+    setInviteField: (name: 'name' | 'email' | 'roleId', value: string) => void;
+    roleOptions: AdminRoleSummary[];
+    roleOptionsError: string | null;
+    isLoadingRoles: boolean;
+    changingRole: AdminAccount | null;
+    nextRoleId: string;
+    roleChangeError: string | null;
+    isChangingRole: boolean;
+    openRoleChange: (admin: AdminAccount) => void;
+    closeRoleChange: () => void;
+    setNextRoleId: (id: string) => void;
+    confirmRoleChange: () => Promise<void>;
     handleInvite: FormEventHandler<HTMLFormElement>;
     openDeactivate: (admin: AdminAccount) => void;
     closeDeactivate: () => void;
@@ -35,12 +52,23 @@ interface PageContextValue {
 const PageContext = createContext<PageContextValue | null>(null);
 
 export const PageContextProvider = ({ children }: PropsWithChildren) => {
+    const { can } = usePermissions();
+    const { session } = useAppContext();
+    const grantSignature = session?.permissions.join(',') ?? '';
+    const canDelegate = can(P.ADMIN_INVITE) || can(P.ADMIN_ROLE_UPDATE);
     const [admins, setAdmins] = useState<AdminAccount[]>([]);
     const [failure, setFailure] = useState<LoadFailure | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [notice, setNotice] = useState<PageContextValue['notice']>(null);
     const [invitation, setInvitation] = useState<AdminInvitationResult | null>(null);
-    const [inviteFields, setInviteFields] = useState({ name: '', email: '' });
+    const [inviteFields, setInviteFields] = useState({ name: '', email: '', roleId: '' });
+    const [roleOptions, setRoleOptions] = useState<AdminRoleSummary[]>([]);
+    const [roleOptionsError, setRoleOptionsError] = useState<string | null>(null);
+    const [isLoadingRoles, setIsLoadingRoles] = useState(false);
+    const [changingRole, setChangingRole] = useState<AdminAccount | null>(null);
+    const [nextRoleId, setNextRoleId] = useState('');
+    const [roleChangeError, setRoleChangeError] = useState<string | null>(null);
+    const [isChangingRole, setIsChangingRole] = useState(false);
     const [inviteErrors, setInviteErrors] = useState<InviteErrors>({});
     const [isInviting, setIsInviting] = useState(false);
     const [deactivating, setDeactivating] = useState<AdminAccount | null>(null);
@@ -48,6 +76,33 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [isDeactivating, setIsDeactivating] = useState(false);
     const [pendingActivationId, setPendingActivationId] = useState<string | null>(null);
     const [reloadToken, setReloadToken] = useState(0);
+
+    useEffect(() => {
+        let cancelled = false;
+        if (!canDelegate) {
+            setRoleOptions([]);
+            setIsLoadingRoles(false);
+            return;
+        }
+        setIsLoadingRoles(true);
+        setRoleOptionsError(null);
+        void getAdminRoleOptions()
+            .then((response) => {
+                if (!cancelled) setRoleOptions(response.data.items);
+            })
+            .catch((error: unknown) => {
+                if (!cancelled) {
+                    setRoleOptions([]);
+                    setRoleOptionsError(errorMessage(error));
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoadingRoles(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [canDelegate, reloadToken, grantSignature]);
 
     useEffect(() => {
         const load = async () => {
@@ -73,6 +128,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         if (!inviteFields.name.trim()) next.name = 'Nama harus diisi.';
         if (!inviteFields.email.trim()) next.email = 'Email harus diisi.';
+        if (!inviteFields.roleId) next.roleId = 'Role harus dipilih.';
 
         setInviteErrors(next);
 
@@ -83,17 +139,21 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         setInvitation(null);
 
         try {
-            const response = await postAdmin({ name: inviteFields.name.trim(), email: inviteFields.email.trim() });
+            const response = await postAdmin({ name: inviteFields.name.trim(), email: inviteFields.email.trim(), roleId: inviteFields.roleId });
 
             setInvitation(response.data);
-            setInviteFields({ name: '', email: '' });
+            setInviteFields({ name: '', email: '', roleId: '' });
             setReloadToken((token) => token + 1);
         } catch (error) {
-            const fieldErrors: InviteErrors = { name: fieldErrorMessage(error, 'name'), email: fieldErrorMessage(error, 'email') };
+            const fieldErrors: InviteErrors = {
+                name: fieldErrorMessage(error, 'name'),
+                email: fieldErrorMessage(error, 'email'),
+                roleId: fieldErrorMessage(error, 'roleId'),
+            };
 
             setInviteErrors(fieldErrors);
 
-            if (!fieldErrors.name && !fieldErrors.email) setNotice({ tone: 'error', text: errorMessage(error) });
+            if (!fieldErrors.name && !fieldErrors.email && !fieldErrors.roleId) setNotice({ tone: 'error', text: errorMessage(error) });
         } finally {
             setIsInviting(false);
         }
@@ -132,6 +192,22 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         }
     }, []);
 
+    const confirmRoleChange = useCallback(async () => {
+        if (!changingRole || !nextRoleId || isChangingRole || isLoadingRoles || !roleOptions.some((role) => role.id === nextRoleId)) return;
+        setIsChangingRole(true);
+        setRoleChangeError(null);
+        try {
+            await putAdminRole(changingRole.id, nextRoleId);
+            setChangingRole(null);
+            setNotice({ tone: 'success', text: `Role ${changingRole.name} berhasil diubah. Akses berlaku pada request berikutnya.` });
+            setReloadToken((value) => value + 1);
+        } catch (error) {
+            setRoleChangeError(fieldErrorMessage(error, 'roleId') ?? errorMessage(error));
+        } finally {
+            setIsChangingRole(false);
+        }
+    }, [changingRole, nextRoleId, isChangingRole, isLoadingRoles, roleOptions]);
+
     const value = useMemo<PageContextValue>(
         () => ({
             admins,
@@ -141,6 +217,22 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             invitation,
             inviteFields,
             inviteErrors,
+            roleOptions,
+            roleOptionsError,
+            isLoadingRoles,
+            changingRole,
+            nextRoleId,
+            roleChangeError,
+            isChangingRole,
+            setNextRoleId,
+            confirmRoleChange,
+            openRoleChange: (admin) => {
+                setChangingRole(admin);
+                setNextRoleId(admin.roleInfo.id);
+                setRoleChangeError(null);
+                setReloadToken((value) => value + 1);
+            },
+            closeRoleChange: () => setChangingRole(null),
             isInviting,
             deactivating,
             deactivateError,
@@ -171,6 +263,14 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             invitation,
             inviteFields,
             inviteErrors,
+            roleOptions,
+            roleOptionsError,
+            isLoadingRoles,
+            changingRole,
+            nextRoleId,
+            roleChangeError,
+            isChangingRole,
+            confirmRoleChange,
             isInviting,
             deactivating,
             deactivateError,

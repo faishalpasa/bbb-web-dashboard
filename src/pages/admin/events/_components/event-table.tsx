@@ -1,3 +1,5 @@
+import { PERMISSIONS as P } from '@/constants/permission';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Link } from '@tanstack/react-router';
 
 import { StatusBadge } from '@/components/molecules/status-badge';
@@ -13,9 +15,11 @@ import { usePageContext } from '../_context';
 const scheduleOf = (event: EventListItem): string => (event.startsAt ? formatEventDateTime(event.startsAt, event.timezone) : EVENT_NO_SCHEDULE_LABEL);
 const quotaOf = (event: EventListItem): string => `${event.registered}/${event.capacity ?? '-'}`;
 const attendedOf = (event: EventListItem): string => (event.attended === null ? '-' : String(event.attended));
-const canEdit = (event: EventListItem): boolean => event.status.value === 'draft' || event.status.value === 'published';
+const isEditable = (event: EventListItem): boolean => event.status.value === 'draft' || event.status.value === 'published';
 
 export const EventTable = () => {
+    const { can } = usePermissions();
+    const canEdit = (event: EventListItem) => can(P.EVENT_UPDATE) && isEditable(event);
     const { list, isLoading, query, goToPage } = usePageContext();
     const items = list?.items ?? [];
     const meta = list?.meta;
@@ -78,7 +82,7 @@ export const EventTable = () => {
                                               className="font-semibold underline underline-offset-4"
                                               data-test-id={`events_link_participants_${event.id}`}
                                           >
-                                              Peserta
+                                              {can(P.EVENT_PARTICIPANT_VIEW) ? 'Peserta' : 'Detail'}
                                           </Link>
                                           {canEdit(event) && (
                                               <Link

@@ -3,15 +3,17 @@ import { createContext, type PropsWithChildren, useCallback, useContext, useEffe
 import { ROUTES } from '@/constants/route';
 import { getSession, postLogout } from '@/services/auth';
 import type { AdminSession } from '@/types/auth';
-import { setUnauthorizedHandler } from '@/utils/api';
-import { clearToken } from '@/utils/token';
+import { setSessionUpdatedHandler, setUnauthorizedHandler } from '@/utils/api';
+import { isServiceError } from '@/utils/error';
+import { SessionCache } from '@/utils/session-cache';
+import { clearToken, currentToken } from '@/utils/token';
 
 export interface AppContextValue {
     appName: string;
     session: AdminSession | null;
     setSession: (session: AdminSession | null) => void;
     // Resolves the current session once and reuses it; route guards call this before every protected page.
-    ensureSession: () => Promise<AdminSession | null>;
+    ensureSession: (force?: boolean) => Promise<AdminSession | null>;
     // Re-reads the session, for numbers that change after an action (the exit request badge).
     refreshSession: () => Promise<void>;
     handleLogout: () => Promise<void>;
@@ -20,49 +22,64 @@ export interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null);
 
 const fetchSession = async (): Promise<AdminSession | null> => {
+    if (!currentToken()) return null;
     try {
         const response = await getSession();
 
         return response.data;
-    } catch {
-        return null;
+    } catch (error) {
+        if (isServiceError(error) && error.httpStatus === 401) return null;
+        throw error;
     }
 };
 
 export const AppContextProvider = ({ children }: PropsWithChildren) => {
     const [session, setSessionState] = useState<AdminSession | null>(null);
-    const sessionRequest = useRef<Promise<AdminSession | null> | null>(null);
+    const cache = useRef(new SessionCache(fetchSession));
 
     const setSession = useCallback((nextSession: AdminSession | null) => {
-        sessionRequest.current = Promise.resolve(nextSession);
+        cache.current.replace(nextSession);
         setSessionState(nextSession);
     }, []);
 
-    const ensureSession = useCallback(() => {
-        sessionRequest.current ??= fetchSession().then((resolved) => {
+    const ensureSession = useCallback((force = false) => {
+        return cache.current.get(force).then((resolved) => {
             setSessionState(resolved);
 
             return resolved;
         });
-
-        return sessionRequest.current;
     }, []);
 
     useEffect(() => {
         // A full navigation drops every cached page and the cached session along with it.
         setUnauthorizedHandler(() => {
+            clearToken();
+            setSession(null);
             if (window.location.pathname !== ROUTES.login) window.location.assign(ROUTES.login);
         });
+        setSessionUpdatedHandler(setSession);
 
-        return () => setUnauthorizedHandler(null);
-    }, []);
+        return () => {
+            setUnauthorizedHandler(null);
+            setSessionUpdatedHandler(null);
+        };
+    }, [setSession]);
 
     const refreshSession = useCallback(async () => {
-        const refreshed = await fetchSession();
+        await ensureSession(true);
+    }, [ensureSession]);
 
-        // A failed refresh keeps the current session; the 401 handler already deals with a lost one.
-        if (refreshed) setSession(refreshed);
-    }, [setSession]);
+    useEffect(() => {
+        const refresh = () => {
+            if (document.visibilityState === 'visible') void ensureSession(true).catch(() => undefined);
+        };
+        window.addEventListener('focus', refresh);
+        document.addEventListener('visibilitychange', refresh);
+        return () => {
+            window.removeEventListener('focus', refresh);
+            document.removeEventListener('visibilitychange', refresh);
+        };
+    }, [ensureSession]);
 
     const handleLogout = useCallback(async () => {
         try {

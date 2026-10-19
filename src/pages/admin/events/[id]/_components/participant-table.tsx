@@ -1,6 +1,5 @@
 import { Check, Download, X } from 'lucide-react';
 
-import { useAppContext } from '@/app-context';
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { WhatsappButton } from '@/components/molecules/whatsapp-button';
@@ -9,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PARTICIPANT_STATUS_TONES } from '@/constants/event';
+import { PERMISSIONS as P } from '@/constants/permission';
+import { usePermissions } from '@/hooks/usePermissions';
 import type { EventParticipant } from '@/types/event';
 import { formatRegisteredAt } from '@/utils/date';
 import { attendanceConfirmationMessage, formatWhatsapp, whatsappChatUrl } from '@/utils/string';
@@ -23,10 +24,10 @@ interface AttendanceActionProps {
 }
 
 const AttendanceAction = ({ participant }: AttendanceActionProps) => {
-    const { session } = useAppContext();
+    const { can } = usePermissions();
     const { event, pendingParticipantIds, toggleAttendance } = usePageContext();
     const isPending = pendingParticipantIds.includes(participant.id);
-    const canMark = (session?.can.manageEvents ?? false) && (event?.actions.canMarkAttendance ?? false);
+    const canMark = can(P.EVENT_PARTICIPANT_ATTENDANCE_UPDATE) && (event?.actions.canMarkAttendance ?? false);
 
     if (!canMark) return null;
 
@@ -84,6 +85,7 @@ const ParticipantActions = ({ participant }: AttendanceActionProps) => (
 );
 
 export const ParticipantTable = () => {
+    const { can } = usePermissions();
     const {
         participants,
         participantsFailure,
@@ -122,16 +124,18 @@ export const ParticipantTable = () => {
                         data-test-id="event_detail_input_search"
                     />
                 </div>
-                <Button
-                    variant="outline"
-                    className="bg-card"
-                    disabled={isExporting || isLoadingParticipants || items.length === 0}
-                    onClick={() => void exportParticipants()}
-                    data-test-id="event_detail_button_export"
-                >
-                    <Download aria-hidden="true" />
-                    {isExporting ? 'Menyiapkan…' : 'Ekspor Excel'}
-                </Button>
+                {can(P.EVENT_PARTICIPANT_EXPORT) && (
+                    <Button
+                        variant="outline"
+                        className="bg-card"
+                        disabled={isExporting || isLoadingParticipants || items.length === 0}
+                        onClick={() => void exportParticipants()}
+                        data-test-id="event_detail_button_export"
+                    >
+                        <Download aria-hidden="true" />
+                        {isExporting ? 'Menyiapkan…' : 'Ekspor Excel'}
+                    </Button>
+                )}
             </div>
 
             {participantsFailure ? (

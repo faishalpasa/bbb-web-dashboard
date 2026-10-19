@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { formatWhatsapp } from '@/utils/string';
 
 import { type AddParticipantTab, usePageContext } from '../_context';
 
@@ -83,7 +82,7 @@ export const AddParticipantDialog = () => {
                                     value={memberSearch}
                                     autoComplete="off"
                                     onChange={(event) => setMemberSearch(event.target.value)}
-                                    placeholder="Nama, email, atau nomor member"
+                                    placeholder="Nama atau nomor member, minimal 2 karakter"
                                     className="bg-card h-11"
                                     data-test-id="event_detail_dialog_input_member_search"
                                 />
@@ -93,22 +92,20 @@ export const AddParticipantDialog = () => {
                                     <li key={member.id} className="border-border flex items-center justify-between gap-3 rounded-md border px-3 py-2">
                                         <div className="min-w-0 text-sm">
                                             <p className="truncate font-medium">{member.name}</p>
-                                            <p className="text-muted-foreground font-mono text-xs">
-                                                {member.memberNumber ?? '-'} · {formatWhatsapp(member.whatsapp)}
-                                            </p>
+                                            <p className="text-muted-foreground font-mono text-xs">{member.memberNumber ?? '-'}</p>
                                         </div>
                                         <Button
                                             size="sm"
-                                            disabled={isAdding || member.status.value !== 'active'}
+                                            disabled={isAdding}
                                             onClick={() => void addMember(member.id)}
                                             data-test-id={`event_detail_dialog_button_add_member_${member.id}`}
                                         >
-                                            {member.status.value === 'active' ? 'Tambah' : member.status.label}
+                                            Tambah
                                         </Button>
                                     </li>
                                 ))}
                             </ul>
-                            {memberSearch.trim() && !isSearchingMembers && memberResults.length === 0 && (
+                            {memberSearch.trim().length >= 2 && !isSearchingMembers && memberResults.length === 0 && (
                                 <p className="text-muted-foreground text-sm" data-test-id="event_detail_dialog_member_empty">
                                     Member tidak ditemukan.
                                 </p>

@@ -8,6 +8,7 @@ import { MAIN_NAVIGATION, type NavigationItem, SUPERADMIN_NAVIGATION } from '@/c
 import { ROUTES } from '@/constants/route';
 import { cn } from '@/lib/utils';
 import type { AdminSession } from '@/types/auth';
+import { can } from '@/utils/permission';
 
 const initialsOf = (name: string): string =>
     name
@@ -30,7 +31,7 @@ const SidebarItem = ({ item, session, testPrefix, onNavigate }: SidebarItemProps
     return (
         <Link
             to={item.to}
-            onClick={onNavigate}
+            onClick={() => onNavigate?.()}
             activeOptions={{ exact: item.to === ROUTES.dashboard }}
             className="text-foreground hover:bg-secondary/70 flex min-h-10 items-center gap-2.5 rounded-md px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors"
             activeProps={{ className: 'bg-secondary', 'aria-current': 'page' }}
@@ -68,14 +69,13 @@ export const SidebarContent = ({ testPrefix, onNavigate }: SidebarContentProps) 
 
     if (!session) return null;
 
-    const mainItems = MAIN_NAVIGATION.filter((item) => !item.capability || session.can[item.capability]);
-    const superadminItems = SUPERADMIN_NAVIGATION.filter((item) => item.capability && session.can[item.capability]);
+    const mainItems = MAIN_NAVIGATION.filter((item) => can(session, item.permission));
+    const superadminItems = SUPERADMIN_NAVIGATION.filter((item) => can(session, item.permission));
 
     return (
         <div className="flex h-full min-h-0 flex-1 flex-col" data-test-id={`${testPrefix}_root`}>
             <div className="space-y-1 px-4 pt-5 pb-4">
                 <BrandLogo className="w-[150px]" />
-                <p className="text-muted-foreground text-xs font-medium">Admin</p>
             </div>
 
             <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-2" aria-label="Menu utama">
@@ -87,7 +87,7 @@ export const SidebarContent = ({ testPrefix, onNavigate }: SidebarContentProps) 
 
                 {superadminItems.length > 0 && (
                     <div className="grid gap-1">
-                        <p className="text-muted-foreground px-2.5 pb-1 text-[11px] font-semibold tracking-wider uppercase">Superadmin</p>
+                        <p className="text-muted-foreground px-2.5 pb-1 text-[11px] font-semibold tracking-wider uppercase">Pengelolaan</p>
                         {superadminItems.map((item) => (
                             <SidebarItem key={item.key} item={item} session={session} testPrefix={testPrefix} onNavigate={onNavigate} />
                         ))}
@@ -107,7 +107,7 @@ export const SidebarContent = ({ testPrefix, onNavigate }: SidebarContentProps) 
                         {session.user.name}
                     </p>
                     <p className="text-muted-foreground text-xs" data-test-id={`${testPrefix}_text_user_role`}>
-                        {ADMIN_ROLE_LABELS[session.user.role]}
+                        {session.role?.label ?? ADMIN_ROLE_LABELS[session.user.role] ?? session.user.role}
                     </p>
                 </div>
                 <button

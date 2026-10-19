@@ -1,10 +1,11 @@
-import { useAppContext } from '@/app-context';
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PERMISSIONS as P } from '@/constants/permission';
+import { usePermissions } from '@/hooks/usePermissions';
 import { cn } from '@/lib/utils';
 import { formatLongDate } from '@/utils/date';
 
@@ -12,7 +13,7 @@ import { usePageContext } from '../_context';
 import { RejectForm } from './reject-form';
 
 export const PageContent = () => {
-    const { session } = useAppContext();
+    const { can } = usePermissions();
     const {
         list,
         failure,
@@ -30,7 +31,6 @@ export const PageContent = () => {
         closeReject,
         reload,
     } = usePageContext();
-    const canReview = session?.can.reviewExitRequests ?? false;
     const items = list?.items ?? [];
 
     return (
@@ -106,11 +106,13 @@ export const PageContent = () => {
                                 </p>
                             </div>
 
-                            {canReview && (
-                                <div className="flex gap-2">
+                            <div className="flex gap-2">
+                                {can(P.EXIT_REQUEST_APPROVE) && (
                                     <Button onClick={() => openApprove(request)} data-test-id={`exit_requests_button_approve_${request.id}`}>
                                         Setujui
                                     </Button>
+                                )}
+                                {can(P.EXIT_REQUEST_REJECT) && (
                                     <Button
                                         variant="outline"
                                         className="bg-card"
@@ -119,14 +121,14 @@ export const PageContent = () => {
                                     >
                                         Tolak
                                     </Button>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </article>
                     ))}
                 </div>
             )}
 
-            <Dialog open={rejecting !== null} onOpenChange={(open) => !open && !isRejecting && closeReject()}>
+            <Dialog open={can(P.EXIT_REQUEST_REJECT) && rejecting !== null} onOpenChange={(open) => !open && !isRejecting && closeReject()}>
                 <DialogContent data-test-id="exit_requests_reject_dialog">
                     <DialogHeader>
                         <DialogTitle>Tolak permintaan {rejecting?.member.name}</DialogTitle>
@@ -138,7 +140,7 @@ export const PageContent = () => {
             </Dialog>
 
             <ConfirmationDialog
-                open={approving !== null}
+                open={can(P.EXIT_REQUEST_APPROVE) && approving !== null}
                 onClose={closeApprove}
                 onConfirm={() => void confirmApprove()}
                 title="Setujui permintaan keluar?"

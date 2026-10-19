@@ -11,6 +11,7 @@ interface ConfirmationDialogProps {
     description: string;
     confirmLabel: string;
     isSubmitting: boolean;
+    isConfirmDisabled?: boolean;
     error: string | null;
     isDestructive?: boolean;
     cancelLabel?: string;
@@ -26,6 +27,7 @@ export const ConfirmationDialog = ({
     description,
     confirmLabel,
     isSubmitting,
+    isConfirmDisabled = false,
     error,
     isDestructive = false,
     cancelLabel = 'Tidak jadi',
@@ -49,7 +51,7 @@ export const ConfirmationDialog = ({
                     className="h-11 w-full font-semibold"
                     variant={isDestructive ? 'destructive' : 'default'}
                     onClick={onConfirm}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isConfirmDisabled}
                     data-test-id={`${testId}_button_confirm`}
                 >
                     {isSubmitting ? 'Memproses…' : confirmLabel}

@@ -29,5 +29,8 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
+      - name: RBAC regression tests
+        run: npm run test:rbac
+
       - name: Build
         run: npm run build

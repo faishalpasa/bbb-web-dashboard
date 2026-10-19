@@ -1,5 +1,7 @@
 import axios, { isAxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 
+import type { ApiEnvelope } from '@/types/api';
+import type { AdminSession } from '@/types/auth';
 import { clearToken, currentToken, isAuthToken, setToken } from '@/utils/token';
 
 // The API prefix differs per environment: the Laravel API is hosted separately from this app.
@@ -17,6 +19,15 @@ export const axiosClient = axios.create({
 
 // A session that expires while the app is open ends on the sign-in screen. The app registers what that means.
 let unauthorizedHandler: (() => void) | null = null;
+let permissionDeniedHandler: (() => void) | null = null;
+let sessionUpdatedHandler: ((session: AdminSession) => void) | null = null;
+
+export const setPermissionDeniedHandler = (handler: (() => void) | null) => {
+    permissionDeniedHandler = handler;
+};
+export const setSessionUpdatedHandler = (handler: ((session: AdminSession) => void) | null) => {
+    sessionUpdatedHandler = handler;
+};
 
 export const setUnauthorizedHandler = (handler: (() => void) | null) => {
     unauthorizedHandler = handler;
@@ -61,7 +72,7 @@ const refreshToken = (): Promise<boolean> => {
     }
 
     refreshRequest ??= axios
-        .post<unknown>(`${API_BASE_URL}/auth/refresh`, null, {
+        .post<ApiEnvelope<AdminSession>>(`${API_BASE_URL}/auth/refresh`, null, {
             headers: {
                 Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -69,17 +80,21 @@ const refreshToken = (): Promise<boolean> => {
             },
         })
         .then((response) => {
+            // A logout or another login may have happened while refresh was in flight.
+            if (currentToken()?.accessToken !== token.accessToken) return currentToken() !== null;
             captureToken(response);
+            sessionUpdatedHandler?.(response.data.data);
 
             return true;
         })
         .catch((error: unknown) => {
+            if (currentToken()?.accessToken !== token.accessToken) return currentToken() !== null;
             // A refusal ends the session; a network failure or a 5xx must not log anyone out.
             if (isAxiosError(error) && error.response && error.response.status < 500) {
                 clearToken();
+                return false;
             }
-
-            return false;
+            throw error;
         })
         .finally(() => {
             refreshRequest = null;
@@ -95,6 +110,17 @@ axiosClient.interceptors.response.use(captureToken, async (error: unknown) => {
 
     const config: RetriableRequestConfig = error.config;
     const status = error.response?.status;
+    // CSV exports use responseType=blob even when the API returns a JSON refusal.
+    if (status === 403 && error.response?.data instanceof Blob) {
+        try {
+            error.response.data = JSON.parse(await error.response.data.text());
+        } catch {
+            // A non-JSON response is left to the normal service error handler.
+        }
+    }
+    if (status === 403 && error.response?.data?.code === 'permission_denied' && !config.url?.includes('/admin/session')) {
+        permissionDeniedHandler?.();
+    }
     const sentAuthorization = String(config.headers.get('Authorization') ?? '');
 
     // A request that carried a token and got 401 means the token expired or was revoked: renew it once and repeat the request.

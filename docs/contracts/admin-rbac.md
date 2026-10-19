@@ -1,8 +1,8 @@
 # Admin RBAC contract
 
-Status: **planned, tahap A**. Keputusan pemilik 19 Oktober 2026: satu akun admin satu role; role dan assignment permission dikelola lewat dashboard; katalog permission hanya ditambah lewat migration database. Dokumen ini adalah target implementasi, belum mengganti perilaku runtime kontrak admin lama. Salinan harus identik di API dan dashboard.
+Status: **A–B dan D–E terimplementasi; C operasional terverifikasi dengan keputusan agregat dashboard pending; F masih target**. Keputusan pemilik 19 Oktober 2026: satu akun admin satu role; role dan assignment permission dikelola lewat dashboard; katalog permission hanya ditambah lewat migration database. Salinan harus identik di API dan dashboard.
 
-Implementasi parsial tahap C: schema/backfill B tersedia dan endpoint operasional existing kini memeriksa permission per aksi + dependency view. Lookup peserta minimal dan badge berbasis exit-request-view sudah aktif. Session fields baru, permission/role management endpoints, role assignment UI dan kompatibilitas can baru tetap target D–F. dashboard-view kini melindungi endpoint dashboard, tetapi penyaringan per bagian menunggu keputusan di akhir dokumen. Ketentuan permission/error di dokumen ini mengesampingkan pembatasan role lama pada kontrak admin lain.
+Schema/backfill B tersedia; endpoint operasional memeriksa permission per aksi + dependency view. Lookup peserta minimal dan badge berbasis exit-request-view aktif. Tahap D mengembalikan role/permissions efektif dan can konservatif pada semua pembentuk session. Permission/role management endpoint dan assignment UI masih target F; guard FE per aksi, landing 403/no-access dan revalidasi session tersedia di E. dashboard-view melindungi endpoint dashboard, penyaringan per bagian menunggu keputusan. Ketentuan permission/error di sini mengesampingkan pembatasan role lama pada kontrak admin lain.
 
 ## Model dan sumber kebenaran
 
@@ -64,13 +64,13 @@ Menambah peserta member lewat picker tidak boleh diam-diam memberi member-view k
 
 ## Session dan kompatibilitas
 
-Target tambahan pada AdminSession di login, GET session, refresh admin, dan accept invitation:
+Tambahan AdminSession yang sudah diimplementasikan di login, GET session, refresh admin, dan accept invitation:
 
 ```ts
 interface RoleSummary { id: string; name: string; label: string }
 interface RbacSessionFields {
     role: RoleSummary;
-    permissions: string[]; // nama unik, urut alfabet
+    permissions: string[]; // nama efektif yang dikenali resolver + dependency lengkap, unik, urut alfabet
 }
 ```
 
@@ -126,7 +126,7 @@ Sidebar/list/detail memakai view; create/edit route memakai view + aksi. Tombol 
 
 Route terlarang menampilkan 403. Login memilih halaman pertama yang diizinkan; akun tanpa view mendapatkan halaman "Akun belum memiliki akses" dengan logout, tanpa redirect loop. Session direvalidasi pada navigasi bila cache >60 detik, saat focus kembali, setelah assignment sendiri dari server diketahui, serta saat 403 permission_denied. Request bersama dideduplikasi; kegagalan jaringan bukan logout, 403 tidak memicu refresh token atau mengulang mutasi.
 
-Halaman Role: list, buat/edit label + checklist permission per grup, badge sistem, konfirmasi hapus; UI menyediakan dependency validation dan penjelasan read-only. Halaman Admin: pilih role saat undang, tampilkan role label dan dialog ubah role. Tidak ada tombol membuat permission.
+Halaman Role (tahap F): list `/roles`, buat `/roles/new` dan detail/edit `/roles/$roleId` sebagai halaman terpisah; tree permission per modul berupa checkbox bertingkat (modul → View → aksi turunan, parent indeterminate bila sebagian aktif), badge sistem, konfirmasi hapus. Keputusan pemilik 19 Oktober 2026: parent Member ON/OFF mengaktifkan/menonaktifkan seluruh child yang assignable; tampilkan penanda sebagian aktif bila hanya sebagian child ON. Toggle aksi ON menyalakan dependency view; view OFF mematikan seluruh aksi turunannya. Permission yang tidak assignable tetap disabled dan tidak boleh ikut dinyalakan parent; jelaskan read-only. Label child ramah dibaca (Member View, Member Create, Member Update, dst.), value tetap nama katalog migration. Member Delete hanya contoh bentuk tree, bukan penambahan permission baru (katalog saat ini memakai Activate/Deactivate). Halaman Admin: pilih role saat undang, tampilkan role label dan dialog ubah role. Tidak ada tombol membuat permission.
 
 ## Keputusan terbuka sebelum otorisasi dashboard tahap C
 

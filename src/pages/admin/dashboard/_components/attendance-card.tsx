@@ -1,3 +1,5 @@
+import { PermissionGate } from '@/components/molecules/permission-gate';
+import { PERMISSIONS as P } from '@/constants/permission';
 import { Link } from '@tanstack/react-router';
 
 import { ROUTES } from '@/constants/route';
@@ -39,14 +41,16 @@ export const AttendanceCard = () => {
                     <p className="text-muted-foreground text-sm">
                         Rata-rata {attendance.averageEventCount} kegiatan terakhir: {attendance.averagePercent}% hadir.
                     </p>
-                    <Link
-                        to={ROUTES.eventDetail}
-                        params={{ eventId: attendance.eventId }}
-                        className="text-sm font-semibold underline underline-offset-4"
-                        data-test-id="dashboard_link_attendance_participants"
-                    >
-                        Lihat peserta
-                    </Link>
+                    <PermissionGate permission={P.EVENT_PARTICIPANT_VIEW}>
+                        <Link
+                            to={ROUTES.eventDetail}
+                            params={{ eventId: attendance.eventId }}
+                            className="text-sm font-semibold underline underline-offset-4"
+                            data-test-id="dashboard_link_attendance_participants"
+                        >
+                            Lihat peserta
+                        </Link>
+                    </PermissionGate>
                 </div>
             ) : (
                 <p className="text-muted-foreground px-4 py-6 text-sm" data-test-id="dashboard_text_attendance_empty">

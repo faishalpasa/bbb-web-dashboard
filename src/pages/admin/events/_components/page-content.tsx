@@ -1,19 +1,20 @@
 import { Link } from '@tanstack/react-router';
 
-import { useAppContext } from '@/app-context';
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { Button } from '@/components/ui/button';
 import { EVENT_TABS } from '@/constants/event';
+import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
+import { usePermissions } from '@/hooks/usePermissions';
 import { cn } from '@/lib/utils';
 
 import { usePageContext } from '../_context';
 import { EventTable } from './event-table';
 
 export const PageContent = () => {
-    const { session } = useAppContext();
+    const { can } = usePermissions();
     const { query, list, failure, setStatus, reload } = usePageContext();
-    const canManageEvents = session?.can.manageEvents ?? false;
+    const canManageEvents = can(P.EVENT_CREATE);
 
     return (
         <div className="space-y-4">

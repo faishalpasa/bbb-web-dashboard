@@ -1,13 +1,14 @@
 import { Link } from '@tanstack/react-router';
 
-import { useAppContext } from '@/app-context';
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EVENT_STATUS_TONES } from '@/constants/event';
+import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
+import { usePermissions } from '@/hooks/usePermissions';
 import { formatEventRange } from '@/utils/date';
 import { publicEventUrl } from '@/utils/event';
 
@@ -16,7 +17,7 @@ import { AddParticipantDialog } from './add-participant-dialog';
 import { ParticipantTable } from './participant-table';
 
 export const PageContent = () => {
-    const { session } = useAppContext();
+    const { can } = usePermissions();
     const {
         event,
         failure,
@@ -31,8 +32,14 @@ export const PageContent = () => {
         openAddDialog,
         copyText,
         reload,
+        duplicateEvent,
+        isDuplicating,
+        cancelEvent,
+        isCancelling,
+        isCancelDialogOpen,
+        setCancelDialogOpen,
+        cancelError,
     } = usePageContext();
-    const canManageEvents = session?.can.manageEvents ?? false;
 
     if (failure) {
         return (
@@ -78,7 +85,7 @@ export const PageContent = () => {
                     <Link to={ROUTES.events} className="underline underline-offset-4" data-test-id="event_detail_link_breadcrumb_events">
                         Kegiatan
                     </Link>
-                    <span className="text-muted-foreground"> / Peserta</span>
+                    <span className="text-muted-foreground"> / {can(P.EVENT_PARTICIPANT_VIEW) ? 'Peserta' : 'Detail'}</span>
                 </nav>
 
                 <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
@@ -97,32 +104,40 @@ export const PageContent = () => {
                         </p>
                     </div>
 
-                    {canManageEvents && (
-                        <div className="flex flex-wrap gap-2">
-                            {event.actions.canEdit && (
-                                <Button asChild variant="outline" className="bg-card">
-                                    <Link to={ROUTES.eventEdit} params={{ eventId: event.id }} data-test-id="event_detail_link_edit">
-                                        Edit Kegiatan
-                                    </Link>
-                                </Button>
-                            )}
-                            {event.actions.canAddParticipants && (
-                                <Button
-                                    variant="outline"
-                                    className="bg-card"
-                                    onClick={openAddDialog}
-                                    data-test-id="event_detail_button_add_participant"
-                                >
-                                    Tambah Peserta
-                                </Button>
-                            )}
-                            {event.actions.canClose && (
-                                <Button onClick={() => setCloseDialogOpen(true)} data-test-id="event_detail_button_close">
-                                    Tutup Acara
-                                </Button>
-                            )}
-                        </div>
-                    )}
+                    <div className="flex flex-wrap gap-2">
+                        {can(P.EVENT_UPDATE) && event.actions.canEdit && (
+                            <Button asChild variant="outline" className="bg-card">
+                                <Link to={ROUTES.eventEdit} params={{ eventId: event.id }} data-test-id="event_detail_link_edit">
+                                    Edit Kegiatan
+                                </Link>
+                            </Button>
+                        )}
+                        {can(P.EVENT_PARTICIPANT_CREATE) && event.actions.canAddParticipants && (
+                            <Button variant="outline" className="bg-card" onClick={openAddDialog} data-test-id="event_detail_button_add_participant">
+                                Tambah Peserta
+                            </Button>
+                        )}
+                        {can(P.EVENT_CLOSE) && event.actions.canClose && (
+                            <Button onClick={() => setCloseDialogOpen(true)} data-test-id="event_detail_button_close">
+                                Tutup Acara
+                            </Button>
+                        )}
+                        {can(P.EVENT_DUPLICATE) && (
+                            <Button
+                                variant="outline"
+                                disabled={isDuplicating}
+                                onClick={() => void duplicateEvent()}
+                                data-test-id="event_detail_button_duplicate"
+                            >
+                                {isDuplicating ? 'Menduplikasi…' : 'Duplikat Kegiatan'}
+                            </Button>
+                        )}
+                        {can(P.EVENT_CANCEL) && event.actions.canCancel && (
+                            <Button variant="outline" onClick={() => setCancelDialogOpen(true)} data-test-id="event_detail_button_cancel">
+                                Batalkan Kegiatan
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </header>
 
@@ -187,11 +202,24 @@ export const PageContent = () => {
                 </section>
             </div>
 
-            <ParticipantTable />
-            <AddParticipantDialog />
+            {can(P.EVENT_PARTICIPANT_VIEW) && <ParticipantTable />}
+            {can(P.EVENT_PARTICIPANT_CREATE) && <AddParticipantDialog />}
 
             <ConfirmationDialog
-                open={isCloseDialogOpen}
+                open={can(P.EVENT_CANCEL) && isCancelDialogOpen}
+                onClose={() => setCancelDialogOpen(false)}
+                onConfirm={() => void cancelEvent()}
+                title="Batalkan kegiatan?"
+                description="Seluruh peserta terdaftar akan diberi tahu lewat email."
+                confirmLabel="Batalkan Kegiatan"
+                cancelLabel="Kembali"
+                isSubmitting={isCancelling}
+                error={cancelError}
+                isDestructive
+                data-test-id="event_detail_dialog_cancel"
+            />
+            <ConfirmationDialog
+                open={can(P.EVENT_CLOSE) && isCloseDialogOpen}
                 onClose={() => setCloseDialogOpen(false)}
                 onConfirm={() => void closeEvent()}
                 title="Tutup acara?"

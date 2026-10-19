@@ -6,12 +6,15 @@ import { AlertMessage } from '@/components/molecules/alert-message';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { EventFormSections } from '@/components/molecules/event-form-sections';
 import { EventTypeCard } from '@/components/molecules/event-type-card';
+import { PermissionGate } from '@/components/molecules/permission-gate';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EVENT_STATUS_TONES } from '@/constants/event';
+import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
+import { usePermissions } from '@/hooks/usePermissions';
 import { formatEventDateTime } from '@/utils/date';
 
 import { usePageContext } from '../_context';
@@ -53,6 +56,7 @@ export const PageContent = () => {
 };
 
 const EditForm = () => {
+    const { can } = usePermissions();
     const { eventId } = useParams({ strict: false });
     const {
         event,
@@ -139,16 +143,18 @@ const EditForm = () => {
                         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
                             {isDraft ? (
                                 <>
-                                    <Button
-                                        type="button"
-                                        className="h-11 w-full font-semibold"
-                                        disabled={isSubmitting}
-                                        onClick={() => void save(true)}
-                                        data-test-id="event_edit_button_publish"
-                                    >
-                                        {isSubmitting && <LoaderCircle className="animate-spin" />}
-                                        Publikasikan
-                                    </Button>
+                                    <PermissionGate permission={P.EVENT_PUBLISH}>
+                                        <Button
+                                            type="button"
+                                            className="h-11 w-full font-semibold"
+                                            disabled={isSubmitting}
+                                            onClick={() => void save(true)}
+                                            data-test-id="event_edit_button_publish"
+                                        >
+                                            {isSubmitting && <LoaderCircle className="animate-spin" />}
+                                            Publikasikan
+                                        </Button>
+                                    </PermissionGate>
                                     <Button
                                         type="submit"
                                         variant="outline"
@@ -171,7 +177,7 @@ const EditForm = () => {
                                 </Button>
                             )}
                             <EventActionsMenu
-                                canCancel={event.actions.canCancel}
+                                canCancel={can(P.EVENT_CANCEL) && event.actions.canCancel}
                                 isDuplicating={isDuplicating}
                                 onDuplicate={() => void duplicate()}
                                 onCopyAnnouncement={() => void copyAnnouncement()}
@@ -208,7 +214,7 @@ const EditForm = () => {
             </div>
 
             <ConfirmationDialog
-                open={isCancelDialogOpen}
+                open={can(P.EVENT_CANCEL) && isCancelDialogOpen}
                 onClose={() => setCancelDialogOpen(false)}
                 onConfirm={() => void cancelEvent()}
                 title="Batalkan kegiatan?"
@@ -233,6 +239,7 @@ interface EventActionsMenuProps {
 }
 
 const EventActionsMenu = ({ canCancel, isDuplicating, onDuplicate, onCopyAnnouncement, onCancel }: EventActionsMenuProps) => {
+    const { can } = usePermissions();
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
@@ -295,16 +302,18 @@ const EventActionsMenu = ({ canCancel, isDuplicating, onDuplicate, onCopyAnnounc
                     data-test-id="event_edit_menu_more"
                 >
                     <p className="text-muted-foreground px-3 py-2 text-xs font-semibold tracking-wide uppercase">Lainnya</p>
-                    <button
-                        type="button"
-                        role="menuitem"
-                        className="hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring w-full rounded-sm px-3 py-2 text-left text-sm outline-hidden focus-visible:ring-2"
-                        disabled={isDuplicating}
-                        onClick={() => runAction(onDuplicate)}
-                        data-test-id="event_edit_button_duplicate"
-                    >
-                        {isDuplicating ? 'Menduplikasi…' : 'Duplikat kegiatan'}
-                    </button>
+                    {can(P.EVENT_DUPLICATE) && (
+                        <button
+                            type="button"
+                            role="menuitem"
+                            className="hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring w-full rounded-sm px-3 py-2 text-left text-sm outline-hidden focus-visible:ring-2"
+                            disabled={isDuplicating}
+                            onClick={() => runAction(onDuplicate)}
+                            data-test-id="event_edit_button_duplicate"
+                        >
+                            {isDuplicating ? 'Menduplikasi…' : 'Duplikat kegiatan'}
+                        </button>
+                    )}
                     <button
                         type="button"
                         role="menuitem"

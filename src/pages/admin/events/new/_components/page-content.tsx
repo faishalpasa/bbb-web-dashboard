@@ -4,10 +4,12 @@ import { LoaderCircle } from 'lucide-react';
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { EventFormSections } from '@/components/molecules/event-form-sections';
 import { EventTypeCard } from '@/components/molecules/event-type-card';
+import { PermissionGate } from '@/components/molecules/permission-gate';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { Button } from '@/components/ui/button';
 import { EVENT_STATUS_TONES } from '@/constants/event';
+import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
 
 import { usePageContext } from '../_context';
@@ -47,16 +49,18 @@ export const PageContent = () => {
                         <StatusBadge tone={EVENT_STATUS_TONES.draft} label="Draf" data-test-id="event_new_badge_status" />
                         <p className="text-sm">Kegiatan berstatus draf belum terlihat oleh member.</p>
                         <div className="grid gap-2">
-                            <Button
-                                type="button"
-                                className="h-11 w-full font-semibold"
-                                disabled={isSubmitting}
-                                onClick={() => void save(true)}
-                                data-test-id="event_new_button_publish"
-                            >
-                                {isSubmitting && <LoaderCircle className="animate-spin" />}
-                                Publikasikan
-                            </Button>
+                            <PermissionGate permission={P.EVENT_PUBLISH}>
+                                <Button
+                                    type="button"
+                                    className="h-11 w-full font-semibold"
+                                    disabled={isSubmitting}
+                                    onClick={() => void save(true)}
+                                    data-test-id="event_new_button_publish"
+                                >
+                                    {isSubmitting && <LoaderCircle className="animate-spin" />}
+                                    Publikasikan
+                                </Button>
+                            </PermissionGate>
                             <Button
                                 type="submit"
                                 variant="outline"

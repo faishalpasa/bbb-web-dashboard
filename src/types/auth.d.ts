@@ -7,7 +7,14 @@ export interface AuthToken {
     expiresAt: string;
 }
 
-export type AdminRole = 'admin' | 'superadmin';
+// Stable role name from the API, including roles configured through the dashboard.
+export type AdminRole = string;
+
+export interface AdminRoleSummary {
+    id: Identifier;
+    name: string;
+    label: string;
+}
 
 export interface AdminUser {
     id: Identifier;
@@ -32,6 +39,8 @@ export interface AdminBadges {
 
 export interface AdminSession {
     user: AdminUser;
+    role: AdminRoleSummary;
+    permissions: string[];
     can: AdminCapabilities;
     badges: AdminBadges;
 }

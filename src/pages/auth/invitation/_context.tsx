@@ -6,6 +6,7 @@ import { ROUTES } from '@/constants/route';
 import { getInvitation, postAcceptInvitation } from '@/services/superadmin';
 import type { InvitationDetail } from '@/types/superadmin';
 import { errorMessage, fieldErrorMessage, isServiceError } from '@/utils/error';
+import { landingRoute } from '@/utils/permission';
 
 type InvitationState = 'loading' | 'ready' | 'invalid';
 
@@ -77,7 +78,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             const response = await postAcceptInvitation(token.current, password);
 
             setSession(response.data);
-            void navigate({ to: ROUTES.dashboard });
+            void navigate({ to: landingRoute(response.data) });
         } catch (error) {
             const fieldError = fieldErrorMessage(error, 'password');
 

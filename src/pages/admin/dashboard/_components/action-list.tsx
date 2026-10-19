@@ -1,3 +1,5 @@
+import { useAppContext } from '@/app-context';
+import { canVisitSection } from '@/utils/permission';
 import { Link } from '@tanstack/react-router';
 
 import { Button } from '@/components/ui/button';
@@ -8,6 +10,7 @@ import { Panel } from './panel';
 
 export const ActionList = () => {
     const { actionRows } = usePageContext();
+    const { session } = useAppContext();
 
     return (
         <Panel title="Perlu Tindakan" data-test-id="dashboard_panel_actions">
@@ -31,11 +34,13 @@ export const ActionList = () => {
                                 <p className="text-sm font-medium">{row.title}</p>
                                 <p className="text-muted-foreground text-sm">{row.hint}</p>
                             </div>
-                            <Button asChild variant="outline" size="sm" className="shrink-0">
-                                <Link to={row.to} data-test-id={`dashboard_link_action_${row.key}`}>
-                                    {row.buttonLabel}
-                                </Link>
-                            </Button>
+                            {canVisitSection(session, row.to) && (
+                                <Button asChild variant="outline" size="sm" className="shrink-0">
+                                    <Link to={row.to} data-test-id={`dashboard_link_action_${row.key}`}>
+                                        {row.buttonLabel}
+                                    </Link>
+                                </Button>
+                            )}
                         </li>
                     ))}
                 </ul>

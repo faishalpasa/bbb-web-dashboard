@@ -102,3 +102,9 @@ export interface ParticipantListQuery {
 }
 
 export type ParticipantInput = { memberId: string } | { name: string; email: string; whatsapp: string };
+
+export interface EventMemberOption {
+    id: Identifier;
+    name: string;
+    memberNumber: string | null;
+}
