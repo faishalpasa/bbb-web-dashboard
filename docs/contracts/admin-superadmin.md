@@ -70,15 +70,14 @@ interface AuditLogEntry {
     id: string;
     at: string; // ISO 8601 UTC
     actor: string; // nama admin
-    type: { value: 'export' | 'settings' | 'admins' | 'members'; label: string }; // Ekspor data, Ubah pengaturan, Kelola admin, Kelola member
+    type: { value: 'export' | 'settings' | 'admins' | 'members' | 'events'; label: string }; // Ekspor data, Ubah pengaturan, Kelola admin, Kelola member, Kelola kegiatan
     detail: string; // kalimat Indonesia siap tampil
 }
 ```
 
-Terbaru di atas (waktu tercatat, lalu urutan pencatatan di detik yang sama), hanya baca (tidak ada endpoint tulis; `POST`/`PUT`/`PATCH`/`DELETE` dijawab `405`). Query: `type` (salah satu dari `types`; nilai tak dikenal memberi daftar kosong), `page`, `perPage` (default 20, minimal 1, maks. 100). `types` selalu berisi empat tipe dalam urutan tetap, meski belum ada entri. Yang dicatat: ekspor member (dengan filter dan jumlah baris), perubahan pengaturan (satu entri per kolom yang berubah, tidak ada entri bila tidak ada perubahan), pembuatan/penonaktifan/pengaktifan admin, serta penonaktifan dan pengaktifan kembali member. Entri ditulis dalam transaksi yang sama dengan aksinya (aksi yang ditolak atau gagal tidak meninggalkan entri). `actor` adalah nama admin saat aksi terjadi dan tidak berubah bila admin diganti namanya atau dihapus.
+Terbaru di atas (waktu tercatat, lalu urutan pencatatan di detik yang sama), hanya baca (tidak ada endpoint tulis; `POST`/`PUT`/`PATCH`/`DELETE` dijawab `405`). Query: `type` (salah satu dari `types`; nilai tak dikenal memberi daftar kosong), `page`, `perPage` (default 20, minimal 1, maks. 100). `types` selalu berisi lima tipe dalam urutan tetap, meski belum ada entri. Yang dicatat: ekspor member/peserta (dengan filter dan jumlah baris), perubahan pengaturan (satu entri per kolom yang berubah, tidak ada entri bila tidak ada perubahan), pembuatan/penonaktifan/pengaktifan admin, penonaktifan/pengaktifan kembali member, serta pengelolaan kegiatan. Log kegiatan meliputi membuat, mengubah/menerbitkan, menggandakan, membatalkan, menutup, menambah peserta oleh admin, dan mengubah tanda kehadiran. Entri ditulis dalam transaksi yang sama dengan aksinya (aksi yang ditolak atau gagal tidak meninggalkan entri). `actor` adalah nama admin saat aksi terjadi dan tidak berubah bila admin diganti namanya atau dihapus.
 
 ## Terbuka
 
 - Layar lupa password admin tidak ada di desain; kalimat "Pakai Lupa password di halaman masuk" pada 13c tidak ditampilkan.
-- Ekspor peserta kegiatan belum ada di dashboard, jadi belum masuk log.
 - Daftar admin tidak punya aksi kirim ulang undangan; admin berstatus "Diundang" yang undangannya hilang perlu dibuat ulang setelah fitur itu diputuskan.

@@ -39,7 +39,7 @@ export interface AdminInviteInput {
     roleId: string;
 }
 
-export type AuditLogType = 'export' | 'settings' | 'admins' | 'members';
+export type AuditLogType = 'export' | 'settings' | 'admins' | 'members' | 'events';
 
 export interface AuditLogEntry {
     id: Identifier;

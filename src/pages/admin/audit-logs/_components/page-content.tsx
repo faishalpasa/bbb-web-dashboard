@@ -18,7 +18,7 @@ export const PageContent = () => {
         <div className="space-y-4">
             <header>
                 <h1 className="text-2xl font-semibold">Log</h1>
-                <p className="text-muted-foreground text-sm">Riwayat ekspor data, perubahan pengaturan, dan kelola admin. Hanya superadmin.</p>
+                <p className="text-muted-foreground text-sm">Riwayat perubahan data dan tindakan admin. Hanya superadmin.</p>
             </header>
 
             <section className="border-border bg-card overflow-hidden rounded-lg border" data-test-id="audit_logs_root" aria-busy={isLoading}>

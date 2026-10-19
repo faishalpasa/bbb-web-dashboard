@@ -36,6 +36,7 @@ Status: **di MySQL (langkah 13)**. Diimplementasi di `bbb-api` dan dipakai `web-
 - Banner lama dihapus dari disk bila tidak ada kegiatan lain (termasuk salinan/terhapus) yang masih memakainya; `duplicate` memakai file yang sama.
 - `slug` (link `/e/{slug}`) dibuat dari judul bila kosong dan harus unik; `attendanceCode` dibuat acak bila kosong, disimpan huruf besar.
 - Waktu dikirim dan diterima sebagai ISO 8601 UTC; `timezone` (`WIB|WITA|WIT`) dipakai untuk menampilkan dan mengisi jam.
+- Aksi admin yang berhasil—membuat, mengubah/menerbitkan, menggandakan, membatalkan, menutup, menambah peserta, dan mengubah tanda kehadiran—dicatat sebagai log audit tipe `events` ("Kelola kegiatan") dalam transaksi yang sama. Aksi yang ditolak atau gagal tidak meninggalkan log. Ekspor peserta tetap dicatat sebagai tipe `export`.
 
 ## Bentuk data
 
