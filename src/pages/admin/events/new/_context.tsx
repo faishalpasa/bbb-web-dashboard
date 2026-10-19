@@ -37,11 +37,15 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     }, []);
 
     const save = async (publish: boolean) => {
+        if (isSubmitting) return;
         setSubmitError(null);
 
         const input = form.buildInput(publish);
 
-        if (!input) return;
+        if (!input) {
+            setSubmitError('Periksa isian formulir yang ditandai di bawah.');
+            return;
+        }
 
         setIsSubmitting(true);
 
@@ -50,7 +54,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
             void navigate({ to: ROUTES.eventDetail, params: { eventId: response.data.id } });
         } catch (error) {
-            if (!form.applyServerErrors(error)) setSubmitError(errorMessage(error));
+            setSubmitError(form.applyServerErrors(error) ? 'Periksa isian formulir yang ditandai di bawah.' : errorMessage(error));
         } finally {
             setIsSubmitting(false);
         }

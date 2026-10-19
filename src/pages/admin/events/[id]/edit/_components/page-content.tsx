@@ -127,7 +127,13 @@ const EditForm = () => {
             )}
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.7fr_1fr]">
-                <EventFormSections form={form} formats={options?.formats ?? []} timezones={options?.timezones ?? []} data-test-id="event_edit" />
+                <EventFormSections
+                    form={form}
+                    formats={options?.formats ?? []}
+                    timezones={options?.timezones ?? []}
+                    disabled={isSubmitting}
+                    data-test-id="event_edit"
+                />
 
                 <div className="space-y-4 lg:sticky lg:top-6">
                     <section className="border-border bg-card space-y-3 rounded-lg border p-5" data-test-id="event_edit_status">
@@ -147,7 +153,7 @@ const EditForm = () => {
                                         <Button
                                             type="button"
                                             className="h-11 w-full font-semibold"
-                                            disabled={isSubmitting}
+                                            disabled={isSubmitting || form.registration.requiresReload}
                                             onClick={() => void save(true)}
                                             data-test-id="event_edit_button_publish"
                                         >
@@ -159,7 +165,7 @@ const EditForm = () => {
                                         type="submit"
                                         variant="outline"
                                         className="bg-card col-span-2 h-11 w-full"
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || form.registration.requiresReload}
                                         data-test-id="event_edit_button_save_draft"
                                     >
                                         Simpan Draf
@@ -169,7 +175,7 @@ const EditForm = () => {
                                 <Button
                                     type="submit"
                                     className="h-11 w-full font-semibold"
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || form.registration.requiresReload}
                                     data-test-id="event_edit_button_save"
                                 >
                                     {isSubmitting && <LoaderCircle className="animate-spin" />}

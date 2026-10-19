@@ -30,12 +30,7 @@ interface PermissionTreeProps {
 }
 
 export const PermissionTree = ({ catalog, selected, disabled, onToggle, onToggleGroup }: PermissionTreeProps) => (
-    <div
-        className="border-border max-h-[560px] space-y-3 overflow-y-auto rounded-lg border p-4"
-        role="tree"
-        aria-label="Permission"
-        data-test-id="roles_permission_tree"
-    >
+    <div className="max-h-[560px] space-y-3 overflow-y-auto pr-2" role="tree" aria-label="Permission" data-test-id="roles_permission_tree">
         {[...new Set(catalog.map((option) => option.group))].map((group) => {
             const state = permissionGroupState(catalog, selected, group);
             const key = group.toLowerCase().replaceAll(' ', '_');

@@ -77,8 +77,30 @@ const WhatsappAction = ({ participant }: AttendanceActionProps) => {
     );
 };
 
+// Answers load on demand, so the row only needs the permission that guards the participant list itself.
+const DetailAction = ({ participant }: AttendanceActionProps) => {
+    const { can } = usePermissions();
+    const { openDetail } = usePageContext();
+
+    if (!can(P.EVENT_PARTICIPANT_VIEW)) return null;
+
+    return (
+        <Button
+            variant="outline"
+            size="sm"
+            className="bg-card"
+            onClick={() => openDetail(participant)}
+            aria-label={`Lihat detail ${participant.name}`}
+            data-test-id={`event_detail_button_detail_${participant.id}`}
+        >
+            Detail
+        </Button>
+    );
+};
+
 const ParticipantActions = ({ participant }: AttendanceActionProps) => (
     <div className="flex items-center justify-end gap-2">
+        <DetailAction participant={participant} />
         <WhatsappAction participant={participant} />
         <AttendanceAction participant={participant} />
     </div>

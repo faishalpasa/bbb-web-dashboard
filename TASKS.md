@@ -1,5 +1,14 @@
 # BBB BFF admin implementation checklist
 
+## Track baru: Registration Form kegiatan (19 Oktober 2026)
+
+- [x] Tahap 1 — keputusan utama dan kontrak target didokumentasikan; kontrak shared di `docs/contracts/event-registration-form.md`, plan enam tahap di `../bbb-api/docs/plans/event-registration-form.md`. Salinan kontrak diverifikasi identik di tiga repo. Ini acceptance dokumentasi saja, bukan klaim fitur sudah aktif.
+- [x] Tahap 2 (backend lokal) — migration/model/factory, default/backfill, create/edit/duplicate konfigurasi, versi/lock, batas field yang disetujui dan guard sementara writer lama. Full Pest 574 / 4.400 assertions + Pint; dua FE typecheck/lint/format/build dan 16 tes RBAC dashboard lulus. MySQL lokal sudah dimigrasikan, hash baris domain lama tetap; bukan bukti deploy Hostinger/MariaDB atau UI form baru. Rincian di `../bbb-api/docs/plans/event-registration-form.md`.
+- [x] Tahap 3 (dashboard lokal) — builder empat tipe, drag-and-drop + keyboard/tombol urutan, required/opsi/preview, validasi, version conflict/reload dan locked state. 12 tes builder + 16 RBAC serta typecheck/lint/format/build lulus; browser create/edit/simpan/reload/duplikasi dan MySQL terverifikasi. Layout mobile diperiksa; gesture sentuh perangkat asli belum diuji. Tidak ada deployment.
+- [ ] Tahap 4–6 — pendaftaran member/publik/admin, detail jawaban modal/bottom sheet + warna warning/danger, verifikasi dan panduan cutover. Jangan mulai tahap lain tanpa instruksi pemilik.
+
+Catatan: handoff historis di bawah tidak menggantikan keputusan baru. Backend konfigurasi dan builder tersedia lokal; submit jawaban baru belum diimplementasikan. Jangan deploy custom form sebelum tahap 4 siap. Data historis dipertahankan, tanpa jawaban palsu.
+
 Launch target: 30 October 2026. Admin-only app; member/public work remains in web-app. Check items only after verification.
 
 ## Handoff (16 October 2026)

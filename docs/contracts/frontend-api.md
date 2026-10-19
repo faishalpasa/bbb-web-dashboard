@@ -1,5 +1,7 @@
 # Frontend API contract v1
 
+Perubahan kegiatan (19 Oktober 2026): [Registration Form](event-registration-form.md). Backend konfigurasi admin tahap 2 tersedia lokal (belum deploy); form member/publik, custom answers dan detail jawaban masih target tahap 4/5. Bagian pendaftaran existing di bawah tetap berlaku untuk event tanpa custom field; writer lama menolak event dengan custom field melalui pengaman 422 registration_form_required sampai flow submit baru siap.
+
 Status: **di MySQL (langkah 21)**. Contract ini menjadi boundary antara web app (repo `bbb-web-app`) dan Laravel API (repo `bbb-api`). Kedua repo menyimpan salinan yang sama; ubah keduanya bersamaan. Nama field dan perilaku yang tertulis di sini berasal dari keputusan produk yang sudah dikonfirmasi; nilai enum yang belum final dikirim sebagai pasangan `value` dan label Indonesia agar frontend tidak menebak aturan bisnis.
 
 ## Transport

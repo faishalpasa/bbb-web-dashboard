@@ -4,7 +4,14 @@ export interface ApiEnvelope<T> {
     data: T;
 }
 
-export type ApiErrorCode = 'token_expired' | 'token_used' | 'token_invalid' | 'permission_denied';
+export type ApiErrorCode =
+    | 'token_expired'
+    | 'token_used'
+    | 'token_invalid'
+    | 'permission_denied'
+    | 'registration_form_changed'
+    | 'registration_form_locked'
+    | 'registration_form_required';
 
 export interface ApiErrorResponse {
     message?: string;

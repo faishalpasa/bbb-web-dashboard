@@ -47,6 +47,8 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     useEffect(() => {
         if (!eventId) return;
 
+        let cancelled = false;
+
         const load = async () => {
             setIsLoading(true);
             setFailure(null);
@@ -56,16 +58,21 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             try {
                 const [eventResponse, optionsResponse] = await Promise.all([getEvent(eventId), getEventOptions()]);
 
+                if (cancelled) return;
+
                 setEvent(eventResponse.data);
                 setOptions(optionsResponse.data);
             } catch (error) {
-                setFailure(toLoadFailure(error));
+                if (!cancelled) setFailure(toLoadFailure(error));
             } finally {
-                setIsLoading(false);
+                if (!cancelled) setIsLoading(false);
             }
         };
 
         void load();
+        return () => {
+            cancelled = true;
+        };
     }, [eventId, reloadToken]);
 
     const duplicate = async () => {
@@ -136,7 +143,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     return (
         <PageContext.Provider value={value}>
             {event ? (
-                <EventEditFormProvider key={event.id} event={event}>
+                <EventEditFormProvider key={`${event.id}:${reloadToken}`} event={event}>
                     {children}
                 </EventEditFormProvider>
             ) : (

@@ -50,7 +50,7 @@ export const RoleForm = ({ editor }: RoleFormProps) => {
                         noValidate
                         data-test-id="roles_form"
                     >
-                        <div className="space-y-4">
+                        <section className="border-border bg-card space-y-4 rounded-lg border p-4 sm:p-5" data-test-id="roles_section_identity">
                             <RequiredNote />
                             {readOnlyReason && (
                                 <p className="bg-secondary/70 rounded-md p-3 text-sm" role="status" data-test-id="roles_read_only">
@@ -66,6 +66,7 @@ export const RoleForm = ({ editor }: RoleFormProps) => {
                             >
                                 <Input
                                     id="roleName"
+                                    className="bg-card"
                                     value={fields.name}
                                     onChange={(event) => editor.setField('name', event.target.value)}
                                     disabled={!isCreating || !canSave || isBusy}
@@ -77,6 +78,7 @@ export const RoleForm = ({ editor }: RoleFormProps) => {
                             <FormField id="roleLabel" label="Label role" error={errors.label} data-test-id="roles_label">
                                 <Input
                                     id="roleLabel"
+                                    className="bg-card"
                                     value={fields.label}
                                     onChange={(event) => editor.setField('label', event.target.value)}
                                     disabled={!canSave || isBusy}
@@ -110,8 +112,8 @@ export const RoleForm = ({ editor }: RoleFormProps) => {
                                     </Button>
                                 )}
                             </div>
-                        </div>
-                        <div className="space-y-2">
+                        </section>
+                        <section className="border-border bg-card space-y-2 rounded-lg border p-4 sm:p-5" data-test-id="roles_section_permissions">
                             <h2 className="font-semibold">Permission</h2>
                             <p className="text-muted-foreground text-sm">
                                 Centang modul untuk mengaktifkan semua izin di dalamnya. Aksi ikut mengaktifkan View; mematikan View mematikan aksi
@@ -130,7 +132,7 @@ export const RoleForm = ({ editor }: RoleFormProps) => {
                                 onToggle={editor.toggle}
                                 onToggleGroup={editor.toggleGroup}
                             />
-                        </div>
+                        </section>
                     </form>
                 )
             )}

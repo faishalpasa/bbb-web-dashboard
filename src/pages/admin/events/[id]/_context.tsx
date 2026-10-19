@@ -16,10 +16,9 @@ import {
     putParticipantAttendance,
 } from '@/services/event';
 import type { LoadFailure } from '@/types/api';
-import type { EventDetail, EventMemberOption, EventParticipantList, ParticipantInput, ParticipantSummary } from '@/types/event';
+import type { EventDetail, EventMemberOption, EventParticipant, EventParticipantList, ParticipantInput, ParticipantSummary } from '@/types/event';
 import { copyToClipboard } from '@/utils/clipboard';
 import { errorMessage, fieldErrorMessage, toLoadFailure } from '@/utils/error';
-import { normalizeWhatsapp as normalizeGuestWhatsapp } from '@/utils/string';
 
 const SEARCH_DEBOUNCE_MS = 350;
 const MEMBER_SEARCH_LIMIT = 5;
@@ -51,6 +50,7 @@ interface PageContextValue {
     isClosing: boolean;
     closeError: string | null;
     isAddDialogOpen: boolean;
+    detailParticipant: EventParticipant | null;
     addTab: AddParticipantTab;
     memberSearch: string;
     memberResults: EventMemberOption[];
@@ -74,12 +74,13 @@ interface PageContextValue {
     setCancelDialogOpen: (open: boolean) => void;
     cancelError: string | null;
     openAddDialog: () => void;
+    openDetail: (participant: EventParticipant) => void;
+    closeDetail: () => void;
     closeAddDialog: () => void;
     setAddTab: (tab: AddParticipantTab) => void;
     setMemberSearch: (value: string) => void;
     setGuestField: (name: keyof GuestFields, value: string) => void;
-    addMember: (memberId: string) => Promise<void>;
-    addGuest: () => Promise<void>;
+    submitParticipant: (input: ParticipantInput) => Promise<unknown>;
     reload: () => void;
 }
 
@@ -115,6 +116,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [isCancelDialogOpen, setCancelDialogOpen] = useState(false);
     const [cancelError, setCancelError] = useState<string | null>(null);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [detailParticipant, setDetailParticipant] = useState<EventParticipant | null>(null);
     const [addTab, setAddTab] = useState<AddParticipantTab>('member');
     const [memberSearch, setMemberSearch] = useState('');
     const [memberResults, setMemberResults] = useState<EventMemberOption[]>([]);
@@ -394,6 +396,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             setCancelDialogOpen,
             cancelError,
             isAddDialogOpen,
+            detailParticipant,
             addTab,
             memberSearch,
             memberResults,
@@ -421,6 +424,8 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 setIsAddDialogOpen(true);
             },
             closeAddDialog: () => setIsAddDialogOpen(false),
+            openDetail: setDetailParticipant,
+            closeDetail: () => setDetailParticipant(null),
             setAddTab: (tab) => {
                 setAddError(null);
                 setAddTab(tab);
@@ -430,28 +435,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 setGuestFields((current) => ({ ...current, [name]: valueText }));
                 setGuestErrors((current) => ({ ...current, [name]: undefined }));
             },
-            addMember: async (memberId) => {
-                await submitParticipant({ memberId });
-            },
-            addGuest: async () => {
-                const nextErrors: GuestErrors = {};
-
-                if (!guestFields.name.trim()) nextErrors.name = 'Nama harus diisi.';
-                if (!guestFields.email.trim()) nextErrors.email = 'Email harus diisi.';
-                if (!guestFields.whatsapp.trim()) nextErrors.whatsapp = 'Nomor WhatsApp harus diisi.';
-
-                if (Object.keys(nextErrors).length > 0) {
-                    setGuestErrors(nextErrors);
-
-                    return;
-                }
-
-                await submitParticipant({
-                    name: guestFields.name.trim(),
-                    email: guestFields.email.trim(),
-                    whatsapp: normalizeGuestWhatsapp(guestFields.whatsapp),
-                });
-            },
+            submitParticipant,
             reload: () => setReloadToken((token) => token + 1),
         }),
         [
@@ -477,6 +461,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             isCancelDialogOpen,
             cancelError,
             isAddDialogOpen,
+            detailParticipant,
             addTab,
             memberSearch,
             memberResults,

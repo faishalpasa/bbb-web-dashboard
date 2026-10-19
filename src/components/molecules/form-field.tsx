@@ -26,6 +26,6 @@ export const FormField = ({ id, label, hint, isOptional = false, error, children
                 {hint}
             </p>
         )}
-        <InputError message={error} data-test-id={`${testId}_error`} />
+        <InputError id={`${id}-error`} message={error} data-test-id={`${testId}_error`} />
     </div>
 );

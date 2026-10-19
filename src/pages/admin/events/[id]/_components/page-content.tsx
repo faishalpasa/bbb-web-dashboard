@@ -14,6 +14,7 @@ import { publicEventUrl } from '@/utils/event';
 
 import { usePageContext } from '../_context';
 import { AddParticipantDialog } from './add-participant-dialog';
+import { ParticipantDetailDialog } from './participant-detail-dialog';
 import { ParticipantTable } from './participant-table';
 
 export const PageContent = () => {
@@ -124,7 +125,7 @@ export const PageContent = () => {
                         )}
                         {can(P.EVENT_DUPLICATE) && (
                             <Button
-                                variant="outline"
+                                variant="warning"
                                 disabled={isDuplicating}
                                 onClick={() => void duplicateEvent()}
                                 data-test-id="event_detail_button_duplicate"
@@ -133,7 +134,7 @@ export const PageContent = () => {
                             </Button>
                         )}
                         {can(P.EVENT_CANCEL) && event.actions.canCancel && (
-                            <Button variant="outline" onClick={() => setCancelDialogOpen(true)} data-test-id="event_detail_button_cancel">
+                            <Button variant="destructive" onClick={() => setCancelDialogOpen(true)} data-test-id="event_detail_button_cancel">
                                 Batalkan Kegiatan
                             </Button>
                         )}
@@ -204,6 +205,7 @@ export const PageContent = () => {
 
             {can(P.EVENT_PARTICIPANT_VIEW) && <ParticipantTable />}
             {can(P.EVENT_PARTICIPANT_CREATE) && <AddParticipantDialog />}
+            {can(P.EVENT_PARTICIPANT_VIEW) && <ParticipantDetailDialog />}
 
             <ConfirmationDialog
                 open={can(P.EVENT_CANCEL) && isCancelDialogOpen}

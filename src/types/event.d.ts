@@ -1,4 +1,5 @@
 import type { Identifier, PaginatedCollection, SelectOption } from '@/types/api';
+import type { AdminRegistrationForm, RegistrationFormDefinition } from '@/types/registration-form';
 
 export type EventStatus = 'draft' | 'published' | 'completed' | 'cancelled';
 export type EventTimezone = 'WIB' | 'WITA' | 'WIT';
@@ -41,6 +42,7 @@ export interface EventDetail extends EventListItem {
     publicPath: string;
     present: number;
     registration: { closesAt: string | null; adminAddUntil: string | null };
+    registrationForm: AdminRegistrationForm;
     actions: {
         canEdit: boolean;
         canPublish: boolean;
@@ -68,6 +70,7 @@ export interface EventInput {
     allowsNonMember: boolean;
     attendanceCode: string | null;
     publish: boolean;
+    registrationForm?: RegistrationFormDefinition;
 }
 
 export interface EventParticipant {
@@ -79,6 +82,12 @@ export interface EventParticipant {
     registeredAt: string;
     source: 'self' | 'admin';
     status: { value: ParticipantStatus; label: string };
+}
+
+export interface ParticipantDetail {
+    participant: EventParticipant;
+    // null for people who registered before the form existed; never reconstructed from their profile.
+    registrationResponse: import('@/types/registration-form').RegistrationResponse | null;
 }
 
 export interface ParticipantSummary {
@@ -101,7 +110,8 @@ export interface ParticipantListQuery {
     page: number;
 }
 
-export type ParticipantInput = { memberId: string } | { name: string; email: string; whatsapp: string };
+export type ParticipantInput = import('@/types/registration-form').RegistrationSubmissionInput &
+    ({ memberId: string } | { name: string; email: string; consentAcknowledged: boolean });
 
 export interface EventMemberOption {
     id: Identifier;

@@ -1,6 +1,7 @@
 import { type ChangeEvent, useRef } from 'react';
 
 import { FormField } from '@/components/molecules/form-field';
+import { RegistrationFormBuilder } from '@/components/molecules/registration-form-builder';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +21,7 @@ interface EventFormSectionsProps {
     form: EventForm;
     formats: SelectOption[];
     timezones: SelectOption[];
+    disabled?: boolean;
     'data-test-id': string;
 }
 
@@ -51,7 +53,7 @@ const ToggleRow = ({ id, label, description, checked, onChange, 'data-test-id': 
     </div>
 );
 
-export const EventFormSections = ({ form, formats, timezones, 'data-test-id': testId }: EventFormSectionsProps) => {
+export const EventFormSections = ({ form, formats, timezones, disabled = false, 'data-test-id': testId }: EventFormSectionsProps) => {
     const { fields, errors, isUploadingBanner, isGeneratingCode, codeError, setField, setTitle, regenerateCode, uploadBanner } = form;
     const bannerInput = useRef<HTMLInputElement>(null);
 
@@ -64,7 +66,8 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
     };
 
     return (
-        <div className="space-y-4">
+        <fieldset disabled={disabled} className="min-w-0 space-y-4">
+            <legend className="sr-only">Data kegiatan</legend>
             <Section title="Informasi" data-test-id={`${testId}_information`}>
                 <FormField id="title" label="Judul" error={errors.title} data-test-id={`${testId}_title`}>
                     <Input
@@ -324,6 +327,7 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
                     </div>
                 </FormField>
             </Section>
-        </div>
+            <RegistrationFormBuilder builder={form.registration} disabled={disabled} />
+        </fieldset>
     );
 };

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { EVENT_DEFAULT_CAPACITY, EVENT_DEFAULT_TIMEZONE } from '@/constants/event';
+import { useRegistrationFormBuilder } from '@/hooks/useRegistrationFormBuilder';
 import { postEventBanner, postRandomAttendanceCode } from '@/services/event';
 import type { EventDetail, EventFormat, EventInput, EventTimezone } from '@/types/event';
 import { fromLocalInput, toLocalInput } from '@/utils/date';
@@ -96,6 +97,7 @@ const fieldsFromEvent = (event: EventDetail): EventFormFields => ({
 
 // Shared by the create and edit event screens: field state, the title -> link follow-along, banner upload and the random code.
 export const useEventForm = (event?: EventDetail) => {
+    const registration = useRegistrationFormBuilder(event?.registrationForm, Boolean(event));
     const [fields, setFields] = useState<EventFormFields>(() => (event ? fieldsFromEvent(event) : EMPTY_FIELDS));
     const [errors, setErrors] = useState<EventFormErrors>({});
     const [isSlugEdited, setIsSlugEdited] = useState(Boolean(event));
@@ -160,11 +162,14 @@ export const useEventForm = (event?: EventDetail) => {
 
     // Only the title is required to keep a draft; the API enforces everything else when publishing.
     const buildInput = (publish: boolean): EventInput | null => {
+        const registrationForm = registration.buildInput();
         if (!fields.title.trim()) {
             setErrors({ title: 'Judul harus diisi.' });
 
             return null;
         }
+
+        if (registrationForm === null) return null;
 
         setErrors({});
 
@@ -186,6 +191,7 @@ export const useEventForm = (event?: EventDetail) => {
             allowsNonMember: fields.allowsNonMember,
             attendanceCode: fields.attendanceCode.trim() || null,
             publish,
+            ...(registrationForm ? { registrationForm } : {}),
         };
     };
 
@@ -200,11 +206,13 @@ export const useEventForm = (event?: EventDetail) => {
 
         setErrors(nextErrors);
 
-        return Object.keys(nextErrors).length > 0;
+        const hasRegistrationErrors = registration.applyServerErrors(error);
+        return Object.keys(nextErrors).length > 0 || hasRegistrationErrors;
     };
 
     return {
         fields,
+        registration,
         errors,
         isUploadingBanner,
         isGeneratingCode,

@@ -41,7 +41,13 @@ export const PageContent = () => {
             {submitError && <AlertMessage data-test-id="event_new_alert_error">{submitError}</AlertMessage>}
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.7fr_1fr]">
-                <EventFormSections form={form} formats={options?.formats ?? []} timezones={options?.timezones ?? []} data-test-id="event_new" />
+                <EventFormSections
+                    form={form}
+                    formats={options?.formats ?? []}
+                    timezones={options?.timezones ?? []}
+                    disabled={isSubmitting}
+                    data-test-id="event_new"
+                />
 
                 <div className="space-y-4 lg:sticky lg:top-6">
                     <section className="border-border bg-card space-y-3 rounded-lg border p-5" data-test-id="event_new_status">
@@ -53,7 +59,7 @@ export const PageContent = () => {
                                 <Button
                                     type="button"
                                     className="h-11 w-full font-semibold"
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || form.registration.requiresReload}
                                     onClick={() => void save(true)}
                                     data-test-id="event_new_button_publish"
                                 >
@@ -65,7 +71,7 @@ export const PageContent = () => {
                                 type="submit"
                                 variant="outline"
                                 className="bg-card h-11 w-full"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || form.registration.requiresReload}
                                 data-test-id="event_new_button_save_draft"
                             >
                                 Simpan Draf

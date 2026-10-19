@@ -8,6 +8,7 @@ import type {
     EventOptions,
     EventParticipant,
     EventParticipantList,
+    ParticipantDetail,
     ParticipantInput,
     ParticipantListQuery,
     ParticipantSummary,
@@ -147,6 +148,17 @@ export const getEventParticipants = async (eventId: string, query: ParticipantLi
 };
 
 // Every participant that matches the search, as the CSV the API builds (no pagination).
+export const getEventParticipantDetail = async (eventId: string, participantId: string): Promise<ServiceResponse<ParticipantDetail>> => {
+    try {
+        const { data } = await axiosClient.get<ApiEnvelope<ParticipantDetail>>(
+            `/admin/events/${encodeURIComponent(eventId)}/participants/${encodeURIComponent(participantId)}`,
+        );
+        return { data: data.data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
 export const getEventParticipantsExport = async (eventId: string, search: string): Promise<ServiceResponse<Blob>> => {
     try {
         const { data } = await axiosClient.get<Blob>(`/admin/events/${eventId}/participants/export`, {
@@ -155,6 +167,21 @@ export const getEventParticipantsExport = async (eventId: string, search: string
         });
 
         return { data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
+export const getParticipantRegistrationForm = async (
+    eventId: string,
+    memberId: string,
+): Promise<ServiceResponse<import('@/types/registration-form').RegistrationFormData>> => {
+    try {
+        const { data } = await axiosClient.get<ApiEnvelope<import('@/types/registration-form').RegistrationFormData>>(
+            `/admin/events/${eventId}/registration-form`,
+            { params: { memberId } },
+        );
+        return { data: data.data, status: true };
     } catch (error) {
         throw toServiceError(error);
     }

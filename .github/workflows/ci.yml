@@ -32,5 +32,9 @@ jobs:
       - name: RBAC regression tests
         run: npm run test:rbac
 
+      - name: Event form builder regression tests
+        run: npm run test:event-form
+
       - name: Build
-        run: npm run build
+        # Registration input/renderer checks do not replace the real API/browser smoke test.
+        run: npm run test:registration && npm run build
