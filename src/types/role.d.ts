@@ -4,6 +4,7 @@ export interface PermissionOption {
     id: string;
     name: string;
     label: string;
+    description: string;
     group: string;
     requires: string[];
     isAssignable: boolean;

@@ -57,7 +57,7 @@ export const PermissionTree = ({ catalog, selected, disabled, onToggle, onToggle
                     <ul>
                         {rowsOf(catalog, group).map(({ option, depth }) => (
                             <li key={option.id} style={{ paddingLeft: `${(depth + 1) * 24}px` }}>
-                                <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
+                                <label className="flex min-h-11 cursor-pointer items-center gap-3 py-1 text-sm">
                                     <Checkbox
                                         checked={selected.includes(option.id)}
                                         disabled={disabled || !canEnablePermission(catalog, option.id)}
@@ -65,8 +65,18 @@ export const PermissionTree = ({ catalog, selected, disabled, onToggle, onToggle
                                         aria-label={option.label}
                                         data-test-id={`roles_checkbox_${option.name.replaceAll('-', '_')}`}
                                     />
-                                    <span>{option.label}</span>
-                                    {!option.isAssignable && <span className="text-muted-foreground text-xs">Di luar izin akun Anda.</span>}
+                                    <span className="min-w-0">
+                                        <span className="block">{option.label}</span>
+                                        {option.description && (
+                                            <span
+                                                className="text-muted-foreground block text-xs"
+                                                data-test-id={`roles_description_${option.name.replaceAll('-', '_')}`}
+                                            >
+                                                {option.description}
+                                            </span>
+                                        )}
+                                        {!option.isAssignable && <span className="text-muted-foreground block text-xs">Di luar izin akun Anda.</span>}
+                                    </span>
                                 </label>
                             </li>
                         ))}
