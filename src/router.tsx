@@ -138,6 +138,13 @@ const adminsRoute = createRoute({
     component: lazyRouteComponent(() => import('@/pages/admin/admins'), 'PageAdmins'),
 });
 
+const adminNewRoute = createRoute({
+    getParentRoute: () => adminLayoutRoute,
+    path: ROUTES.adminNew,
+    beforeLoad: requirePermission(P.ADMIN_VIEW, P.ADMIN_INVITE),
+    component: lazyRouteComponent(() => import('@/pages/admin/admins/new'), 'PageAdminNew'),
+});
+
 const rolesRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.roles,
@@ -210,6 +217,7 @@ export const router = createRouter({
             exitRequestsRoute,
             settingsRoute,
             adminsRoute,
+            adminNewRoute,
             rolesRoute,
             roleNewRoute,
             roleDetailRoute,
