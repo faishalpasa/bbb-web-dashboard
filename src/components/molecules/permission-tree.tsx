@@ -2,22 +2,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { PermissionOption } from '@/types/role';
 import { canEnablePermission, permissionGroupState } from '@/utils/permission-tree';
 
-interface TreeRow {
-    option: PermissionOption;
-    depth: number;
-}
-
-// An action nests under the permission it requires inside the same module, so View sits above Create/Update.
-const rowsOf = (catalog: readonly PermissionOption[], group: string): TreeRow[] => {
+// Dependencies determine ordering and selection behavior, not visual hierarchy; every permission is a peer inside its module.
+const rowsOf = (catalog: readonly PermissionOption[], group: string): PermissionOption[] => {
     const options = catalog.filter((option) => option.group === group);
     const names = new Set(options.map((option) => option.name));
     const parentOf = (option: PermissionOption) => option.requires.find((name) => names.has(name));
-    const rows: TreeRow[] = [];
-    const visit = (option: PermissionOption, depth: number) => {
-        rows.push({ option, depth });
-        options.filter((child) => parentOf(child) === option.name).forEach((child) => visit(child, depth + 1));
+    const rows: PermissionOption[] = [];
+    const visit = (option: PermissionOption) => {
+        rows.push(option);
+        options.filter((child) => parentOf(child) === option.name).forEach(visit);
     };
-    options.filter((option) => !parentOf(option)).forEach((option) => visit(option, 0));
+    options.filter((option) => !parentOf(option)).forEach(visit);
     return rows;
 };
 
@@ -50,8 +45,8 @@ export const PermissionTree = ({ catalog, selected, disabled, onToggle, onToggle
                         </span>
                     </label>
                     <ul>
-                        {rowsOf(catalog, group).map(({ option, depth }) => (
-                            <li key={option.id} style={{ paddingLeft: `${(depth + 1) * 24}px` }}>
+                        {rowsOf(catalog, group).map((option) => (
+                            <li key={option.id} className="pl-6">
                                 <label className="flex min-h-11 cursor-pointer items-center gap-3 py-1 text-sm">
                                     <Checkbox
                                         checked={selected.includes(option.id)}
