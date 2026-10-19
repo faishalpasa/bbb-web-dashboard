@@ -1,5 +1,7 @@
 # Admin superadmin contract
 
+RBAC tahap C: otorisasi endpoint admin yang sudah ada mengikuti matriks permission di `admin-rbac.md`, menggantikan pembatasan role admin/superadmin yang disebut pada bagian historis dokumen ini. Permission kurang menghasilkan 403 `{ message: "Anda tidak memiliki izin untuk melakukan tindakan ini.", code: "permission_denied" }`. Session `role`/`permissions` baru dan UI pengelolaan role masih tahap D–F. Statistik lintas modul dashboard masih mengikuti perilaku existing sampai keputusan penyaringan dikonfirmasi.
+
 Status: **di MySQL (langkah 17)** untuk artboard 12a-12c dan 13a-13c: pengaturan, kelola admin, undangan admin, dan log. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Akun admin, undangan, audit log, dan pengaturan memakai MySQL (langkah 10, 12, 17); pengaturan tersimpan di `app_settings`.
 
 Semua endpoint di bawah, kecuali undangan, butuh sesi **superadmin**: tanpa sesi `401`, admin biasa `403 { message: "Hanya superadmin yang bisa mengakses halaman ini." }`. Menyembunyikan menu hanya kemudahan; API yang memutuskan.

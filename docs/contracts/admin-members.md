@@ -1,5 +1,7 @@
 # Admin member management contract (DRAFT)
 
+RBAC tahap C: otorisasi endpoint admin yang sudah ada mengikuti matriks permission di `admin-rbac.md`, menggantikan pembatasan role admin/superadmin yang disebut pada bagian historis dokumen ini. Permission kurang menghasilkan 403 `{ message: "Anda tidak memiliki izin untuk melakukan tindakan ini.", code: "permission_denied" }`. Session `role`/`permissions` baru dan UI pengelolaan role masih tahap D–F. Statistik lintas modul dashboard masih mengikuti perilaku existing sampai keputusan penyaringan dikonfirmasi.
+
 Status: **di MySQL** untuk artboard 9a-9e. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Semua endpoint butuh token admin (`401` tanpa token atau dengan token member; semua admin, bukan hanya superadmin). Data member memakai MySQL sejak langkah 11; `id` adalah UUID string. Hanya audit log ekspor yang masih dummy per sesi (langkah 12).
 
 | Method | URL | Result |
