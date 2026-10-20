@@ -74,6 +74,8 @@ interface PageContextValue {
     isCancelling: boolean;
     isCancelDialogOpen: boolean;
     setCancelDialogOpen: (open: boolean) => void;
+    cancelReason: string;
+    setCancelReason: (reason: string) => void;
     cancelError: string | null;
     openAddDialog: () => void;
     openDetail: (participant: EventParticipant) => void;
@@ -118,6 +120,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [isCancelling, setIsCancelling] = useState(false);
     const [isCancelDialogOpen, setCancelDialogOpen] = useState(false);
     const [cancelError, setCancelError] = useState<string | null>(null);
+    const [cancelReason, setCancelReason] = useState('');
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [detailParticipant, setDetailParticipant] = useState<EventParticipant | null>(null);
     const [addTab, setAddTab] = useState<AddParticipantTab>('member');
@@ -362,9 +365,10 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         setIsCancelling(true);
         setCancelError(null);
         try {
-            const response = await postCancelEvent(eventId);
+            const response = await postCancelEvent(eventId, cancelReason);
             setEvent(response.data);
             setCancelDialogOpen(false);
+            setCancelReason('');
             setReloadToken((token) => token + 1);
             setNotice({ tone: 'success', text: 'Kegiatan dibatalkan.' });
         } catch (error) {
@@ -372,7 +376,13 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         } finally {
             setIsCancelling(false);
         }
-    }, [eventId]);
+    }, [eventId, cancelReason]);
+
+    const changeCancelDialog = useCallback((open: boolean) => {
+        setCancelError(null);
+        if (!open) setCancelReason('');
+        setCancelDialogOpen(open);
+    }, []);
 
     const value = useMemo<PageContextValue>(
         () => ({
@@ -397,7 +407,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             cancelEvent,
             isCancelling,
             isCancelDialogOpen,
-            setCancelDialogOpen,
+            setCancelDialogOpen: changeCancelDialog,
+            cancelReason,
+            setCancelReason,
             cancelError,
             isAddDialogOpen,
             detailParticipant,
@@ -468,6 +480,8 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             cancelEvent,
             isCancelling,
             isCancelDialogOpen,
+            changeCancelDialog,
+            cancelReason,
             cancelError,
             isAddDialogOpen,
             detailParticipant,

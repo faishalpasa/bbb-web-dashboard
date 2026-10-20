@@ -22,6 +22,8 @@ interface PageContextValue {
     cancelError: string | null;
     isDuplicating: boolean;
     setCancelDialogOpen: (open: boolean) => void;
+    cancelReason: string;
+    setCancelReason: (reason: string) => void;
     duplicate: () => Promise<void>;
     copyAnnouncement: () => Promise<void>;
     cancelEvent: () => Promise<void>;
@@ -41,6 +43,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [isCancelDialogOpen, setCancelDialogOpen] = useState(false);
     const [isCancelling, setIsCancelling] = useState(false);
     const [cancelError, setCancelError] = useState<string | null>(null);
+    const [cancelReason, setCancelReason] = useState('');
     const [isDuplicating, setIsDuplicating] = useState(false);
     const [reloadToken, setReloadToken] = useState(0);
 
@@ -111,7 +114,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         setCancelError(null);
 
         try {
-            await postCancelEvent(eventId);
+            await postCancelEvent(eventId, cancelReason);
             void navigate({ to: ROUTES.eventDetail, params: { eventId } });
         } catch (error) {
             setCancelError(errorMessage(error));
@@ -132,8 +135,11 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         isDuplicating,
         setCancelDialogOpen: (open) => {
             setCancelError(null);
+            if (!open) setCancelReason('');
             setCancelDialogOpen(open);
         },
+        cancelReason,
+        setCancelReason,
         duplicate,
         copyAnnouncement,
         cancelEvent,

@@ -91,9 +91,13 @@ export const postDuplicateEvent = async (eventId: string): Promise<ServiceRespon
     }
 };
 
-export const postCancelEvent = async (eventId: string): Promise<ServiceResponse<EventDetail>> => {
+export const postCancelEvent = async (eventId: string, reason = ''): Promise<ServiceResponse<EventDetail>> => {
     try {
-        const { data } = await axiosClient.post<ApiEnvelope<EventDetail>>(`/admin/events/${eventId}/cancel`);
+        const note = reason.trim();
+        const { data } = await axiosClient.post<ApiEnvelope<EventDetail>>(
+            `/admin/events/${eventId}/cancel`,
+            note === '' ? undefined : { reason: note },
+        );
 
         return { data: data.data, status: true };
     } catch (error) {

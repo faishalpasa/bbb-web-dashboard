@@ -3,6 +3,7 @@ import { EllipsisVertical, LoaderCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { AlertMessage } from '@/components/molecules/alert-message';
+import { CancelReasonField } from '@/components/molecules/cancel-reason-field';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { EventFormSections } from '@/components/molecules/event-form-sections';
 import { EventTypeCard } from '@/components/molecules/event-type-card';
@@ -65,6 +66,8 @@ const EditForm = () => {
         isCancelDialogOpen,
         isCancelling,
         cancelError,
+        cancelReason,
+        setCancelReason,
         isDuplicating,
         setCancelDialogOpen,
         duplicate,
@@ -231,7 +234,14 @@ const EditForm = () => {
                 error={cancelError}
                 isDestructive
                 data-test-id="event_edit_dialog_cancel"
-            />
+            >
+                <CancelReasonField
+                    value={cancelReason}
+                    onChange={setCancelReason}
+                    disabled={isCancelling}
+                    data-test-id="event_edit_dialog_cancel_reason"
+                />
+            </ConfirmationDialog>
         </form>
     );
 };

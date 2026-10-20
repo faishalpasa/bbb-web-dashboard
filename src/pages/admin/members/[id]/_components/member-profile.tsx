@@ -28,7 +28,12 @@ export const MemberProfile = () => {
 
     if (!member) return null;
 
-    const domicile = [member.district?.label, member.regency?.label, `${member.province?.label ?? ''} ${member.postalCode}`.trim()]
+    const domicile = [
+        member.village?.label,
+        member.district?.label,
+        member.regency?.label,
+        `${member.province?.label ?? ''} ${member.postalCode}`.trim(),
+    ]
         .filter(Boolean)
         .join(', ');
 

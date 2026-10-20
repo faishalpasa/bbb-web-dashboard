@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 
 import { AlertMessage } from '@/components/molecules/alert-message';
+import { CancelReasonField } from '@/components/molecules/cancel-reason-field';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,8 @@ export const PageContent = () => {
         isCancelDialogOpen,
         setCancelDialogOpen,
         cancelError,
+        cancelReason,
+        setCancelReason,
     } = usePageContext();
 
     if (failure) {
@@ -219,7 +222,14 @@ export const PageContent = () => {
                 error={cancelError}
                 isDestructive
                 data-test-id="event_detail_dialog_cancel"
-            />
+            >
+                <CancelReasonField
+                    value={cancelReason}
+                    onChange={setCancelReason}
+                    disabled={isCancelling}
+                    data-test-id="event_detail_dialog_cancel_reason"
+                />
+            </ConfirmationDialog>
             <ConfirmationDialog
                 open={can(P.EVENT_CLOSE) && isCloseDialogOpen}
                 onClose={() => setCloseDialogOpen(false)}
