@@ -1,5 +1,9 @@
 # BBB BFF admin implementation checklist
 
+## Cleanup tooling masterlist (20 Oktober 2026)
+
+- [x] Atas konfirmasi pemilik bahwa import selesai: hapus CTA Preview Masterlist, route/page/context, service/type/constant dan permission khusus import. Tambah/edit/filter/ekspor Member, RBAC lain dan pagination tetap; 55 tes + typecheck/lint/format/build lulus. Kontrak arsip retirement identik lintas repo. Tidak browser smoke karena server lokal sudah dimatikan sesuai instruksi; belum commit/push/deploy. Ledger/audit/data member/profil dipertahankan; migration permission API baru diperlukan pada deploy.
+
 ## Perbaikan responsif Member (20 Oktober 2026)
 
 - [x] Filter mobile satu kolom tanpa implicit track/overlap, aksi header dapat turun baris, dan pilihan preferensi pada komponen tambah/edit dapat wrap di dalam kartu. Checklist React menjaga perubahan CSS saja tanpa state, dependency, permission atau kontrak baru. 61 tes dashboard (termasuk 3 regression utility layout), typecheck/lint/format/build dan diff check lulus. Browser lokal dengan sesi admin/API nyata: daftar pada 360/390/768/1360 px, provinsi berlabel panjang pada 390 px, form tambah pada 360/390/1360 px; tidak ada overflow halaman dan pilihan tetap di dalam kartu. Tidak submit/ekspor/mengubah data, belum uji Safari/perangkat fisik atau deploy; edit memakai komponen yang sama, bukan klaim flow edit diuji penuh.

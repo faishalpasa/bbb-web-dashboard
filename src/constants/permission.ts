@@ -3,7 +3,6 @@ export const PERMISSIONS = {
     DASHBOARD_VIEW: 'dashboard-view',
     MEMBER_VIEW: 'member-view',
     MEMBER_CREATE: 'member-create',
-    MEMBER_IMPORT_PREVIEW: 'member-import-preview',
     MEMBER_UPDATE: 'member-update',
     MEMBER_EXPORT: 'member-export',
     MEMBER_ACTIVATE: 'member-activate',

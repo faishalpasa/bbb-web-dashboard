@@ -77,7 +77,7 @@ test('all dashboard tables and equivalent mobile lists share numbered pagination
     for (const path of [
         'members/_components/member-table.tsx', 'events/_components/event-table.tsx',
         'events/[id]/_components/participant-table.tsx', 'audit-logs/_components/page-content.tsx',
-        'members/import/_components/page-content.tsx', 'admins/_components/page-content.tsx',
+        'admins/_components/page-content.tsx',
         'members/[id]/_components/member-history.tsx', 'roles/_components/page-content.tsx',
         'exit-requests/_components/page-content.tsx',
     ]) {

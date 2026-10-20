@@ -1,5 +1,7 @@
 # Admin RBAC contract
 
+Cleanup masterlist (20 Oktober 2026): tooling sekali pakai dicabut setelah pemilik menyatakan import selesai. Migration 2026_10_20_000007 menghapus permission member-import-preview beserta grant-nya; katalog operasional kembali 35 permission. Session tidak mengirim permission itu dan dashboard tidak punya route/upload/CTA import. Ledger/audit dan flow claim akun migrated tetap.
+
 Status: **A–B dan D–E terimplementasi; C operasional terverifikasi dengan keputusan agregat dashboard pending; F masih target**. Keputusan pemilik 19 Oktober 2026: satu akun admin satu role; role dan assignment permission dikelola lewat dashboard; katalog permission hanya ditambah lewat migration database. Salinan harus identik di API dan dashboard.
 
 Schema/backfill B tersedia; endpoint operasional memeriksa permission per aksi + dependency view. Lookup peserta minimal dan badge berbasis exit-request-view aktif. Tahap D mengembalikan role/permissions efektif dan can konservatif pada semua pembentuk session. Permission/role management endpoint dan assignment UI masih target F; guard FE per aksi, landing 403/no-access dan revalidasi session tersedia di E. dashboard-view melindungi endpoint dashboard, penyaringan per bagian menunggu keputusan. Ketentuan permission/error di sini mengesampingkan pembatasan role lama pada kontrak admin lain.
@@ -23,7 +25,6 @@ Semua route di bawah berawalan `/api/admin`. Aksi memerlukan view modul terkait 
 | dashboard-view | GET /dashboard |
 | member-view | GET /members, /members/{id}, /members/options |
 | member-create | POST /members |
-| member-import-preview | POST /member-import-previews, GET /member-import-previews/{id}; juga member-view, hasil owner-only, dry-run tanpa import |
 | member-update | PUT /members/{id} |
 | member-export | GET /members/export |
 | member-activate | POST /members/{id}/activate |

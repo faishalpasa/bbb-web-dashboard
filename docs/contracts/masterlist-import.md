@@ -1,5 +1,7 @@
 # Masterlist import mock contract (historis)
 
+> RETIRED — 20 Oktober 2026. Pemilik menyatakan import selesai dan menyetujui pencabutan tooling. Dokumen ini arsip, bukan API/CLI aktif atau izin mengulang import. Preview/upload UI, kedua endpoint member-import-previews, command import/prune, parser, disk masterlist dan permission member-import-preview dicabut. Ledger/audit, data member, katalog/minat, dan flow claim/completion tetap dipertahankan. File staging/backup belum dihapus oleh perubahan kode ini. Migration 2026_10_20_000007 mencabut grant katalog di target deploy; jangan rollback/re-run migration import lama.
+
 Kontrak runtime preview di [masterlist-preview.md](masterlist-preview.md), eksekusi tahap 5 melalui CLI di [masterlist-execution.md](masterlist-execution.md). Bagian HTTP confirm/result di bawah tetap arsip mock, **tidak diimplementasikan**; keputusan profil migrated dan data real pada kontrak baru mengesampingkan placeholder validasi lama. Tooling migrasi ini sekali pakai dan akan dicabut setelah import/rekonsiliasi disetujui.
 
 Status: **mock v1**. This enables frontend work before an anonymized real masterlist sample exists. It is not a claim about the final spreadsheet columns.

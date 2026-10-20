@@ -17,7 +17,7 @@ test('member search spans two columns only from the two-column breakpoint', asyn
 test('member header actions can wrap without expanding the mobile page', async () => {
     const page = await source('pages/admin/members/_components/page-content.tsx');
     assert.match(page, /flex w-full min-w-0 flex-wrap gap-2 sm:w-auto/);
-    for (const action of ['MEMBER_IMPORT_PREVIEW', 'MEMBER_CREATE', 'MEMBER_EXPORT']) {
+    for (const action of ['MEMBER_CREATE', 'MEMBER_EXPORT']) {
         assert.ok(page.includes(`P.${action}`));
     }
 });

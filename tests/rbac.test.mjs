@@ -25,17 +25,15 @@ const { can, canAll, canAny, canVisitSection, landingRoute, SessionCache, SESSIO
 const session = (permissions = [], role = 'custom') => ({ user: { id: 'qa', role }, role: { id: 'qa-role', name: role, label: 'QA' }, permissions });
 const deferred = () => { let resolve; const promise = new Promise((done) => { resolve = done; }); return { promise, resolve }; };
 
-test('36 permission names exactly match the API contract catalog; no role-name grants', async () => {
+test('35 permission names exactly match the API contract catalog; no role-name grants', async () => {
     const contract = await readFile(new URL('../docs/contracts/admin-rbac.md', import.meta.url), 'utf8');
     const catalog = [...contract.matchAll(/^\| ([a-z]+(?:-[a-z]+)+) \|/gm)].map((match) => match[1]);
     assert.deepEqual(Object.values(P).sort(), catalog.sort());
-    assert.equal(Object.keys(P).length, 36);
+    assert.equal(Object.keys(P).length, 35);
     assert.equal(can(session([], 'superadmin'), P.MEMBER_CREATE), false);
     assert.equal(can(null, P.MEMBER_VIEW), false);
     assert.equal(can({ permissions: undefined }, P.MEMBER_VIEW), false);
     assert.equal(can(session(['*', 'unknown']), P.MEMBER_VIEW), false);
-    assert.equal(can(session([P.MEMBER_CREATE]), P.MEMBER_IMPORT_PREVIEW), false);
-    assert.equal(can(session([P.MEMBER_IMPORT_PREVIEW]), P.MEMBER_IMPORT_PREVIEW), true);
 });
 test('view-only, partial and empty sessions choose permitted landings and sections', () => {
     const s = session([P.EVENT_VIEW, P.EVENT_PARTICIPANT_VIEW]);

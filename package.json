@@ -4,7 +4,6 @@
   "scripts": {
     "test:registration": "node --test --test-force-exit tests/registration-submission.test.mjs",
     "test:reading-profile": "node --test --test-force-exit tests/reading-profile.test.mjs",
-    "test:masterlist-preview": "node --test --test-force-exit tests/masterlist-preview.test.mjs",
     "test:pagination": "node --test --test-force-exit tests/pagination.test.mjs",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

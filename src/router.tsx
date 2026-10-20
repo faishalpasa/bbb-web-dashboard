@@ -75,16 +75,6 @@ const memberNewRoute = createRoute({
     component: lazyRouteComponent(() => import('@/pages/admin/members/new'), 'PageMemberNew'),
 });
 
-const memberImportRoute = createRoute({
-    getParentRoute: () => adminLayoutRoute,
-    path: ROUTES.memberImport,
-    beforeLoad: requirePermission(P.MEMBER_VIEW, P.MEMBER_IMPORT_PREVIEW),
-    validateSearch: (search: Record<string, unknown>): { previewId?: string } => ({
-        previewId: typeof search.previewId === 'string' ? search.previewId : undefined,
-    }),
-    component: lazyRouteComponent(() => import('@/pages/admin/members/import'), 'PageMemberImport'),
-});
-
 const memberDetailRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.memberDetail,
@@ -218,7 +208,6 @@ export const router = createRouter({
             dashboardRoute,
             membersRoute,
             memberNewRoute,
-            memberImportRoute,
             memberDetailRoute,
             memberEditRoute,
             eventsRoute,

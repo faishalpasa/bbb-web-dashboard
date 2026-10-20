@@ -1,5 +1,7 @@
 # Eksekusi masterlist — tahap 5, tooling sekali pakai
 
+> RETIRED — 20 Oktober 2026. Pemilik menyatakan import selesai dan menyetujui pencabutan tooling. Dokumen ini arsip, bukan API/CLI aktif atau izin mengulang import. Preview/upload UI, kedua endpoint member-import-previews, command import/prune, parser, disk masterlist dan permission member-import-preview dicabut. Ledger/audit, data member, katalog/minat, dan flow claim/completion tetap dipertahankan. File staging/backup belum dihapus oleh perubahan kode ini. Migration 2026_10_20_000007 mencabut grant katalog di target deploy; jangan rollback/re-run migration import lama.
+
 20 Oktober 2026. Implementasi CLI, bukan endpoint/CTA import dashboard. Preview tetap mengikuti [masterlist-preview.md](masterlist-preview.md), can_import tetap false. Tidak mengubah envelope/shape API existing. Import sungguhan hanya setelah owner memilih target, file/hash, preview final dan menyetujui backup atau waiver eksplisit serta eksekusi.
 
 ## Otorisasi dan target
