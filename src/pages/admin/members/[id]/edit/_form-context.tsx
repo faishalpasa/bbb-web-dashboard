@@ -5,6 +5,7 @@ import { ROUTES } from '@/constants/route';
 import { type MemberForm, useMemberForm } from '@/hooks/useMemberForm';
 import { putMember } from '@/services/member';
 import type { MemberDetail } from '@/types/member';
+import type { ReadingProfileOptions } from '@/types/reading-profile';
 import { errorMessage } from '@/utils/error';
 
 interface FormContextValue {
@@ -18,12 +19,13 @@ const FormContext = createContext<FormContextValue | null>(null);
 
 interface MemberEditFormProviderProps extends PropsWithChildren {
     member: MemberDetail;
+    options: ReadingProfileOptions;
 }
 
 // Mounted only once the member is loaded, so the form starts from the saved values.
-export const MemberEditFormProvider = ({ member, children }: MemberEditFormProviderProps) => {
+export const MemberEditFormProvider = ({ member, options, children }: MemberEditFormProviderProps) => {
     const navigate = useNavigate();
-    const form = useMemberForm(member);
+    const form = useMemberForm(member, options);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
 

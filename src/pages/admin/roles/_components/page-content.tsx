@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { PermissionGate } from '@/components/molecules/permission-gate';
+import { TablePagination } from '@/components/molecules/table-pagination';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PERMISSIONS as P } from '@/constants/permission';
@@ -9,7 +10,7 @@ import { ROUTES } from '@/constants/route';
 import { usePageContext } from '../_context';
 
 export const PageContent = () => {
-    const { roles, isLoading, failure, reload } = usePageContext();
+    const { roles, pagination, isLoading, failure, reload } = usePageContext();
 
     return (
         <div className="space-y-4">
@@ -39,7 +40,7 @@ export const PageContent = () => {
                     <Skeleton className="h-40" />
                 ) : (
                     <ul className="divide-border divide-y">
-                        {roles.map((role) => (
+                        {pagination.items.map((role) => (
                             <li key={role.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                                 <div className="min-w-0">
                                     <p className="font-medium break-words">
@@ -58,6 +59,19 @@ export const PageContent = () => {
                         ))}
                     </ul>
                 )}
+                <footer className="flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-sm">
+                    <span className="sr-only">{roles.length} role</span>
+                    <TablePagination
+                        total={roles.length}
+                        perPage={pagination.perPage}
+                        onPerPageChange={pagination.setPerPage}
+                        currentPage={pagination.page}
+                        lastPage={pagination.lastPage}
+                        isLoading={isLoading}
+                        onPageChange={pagination.goToPage}
+                        data-test-id="roles_pagination"
+                    />
+                </footer>
             </section>
         </div>
     );

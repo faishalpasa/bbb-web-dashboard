@@ -54,6 +54,7 @@ export interface AuditLogList extends PaginatedCollection<AuditLogEntry> {
 }
 
 export interface AuditLogQuery {
+    perPage?: number;
     type: string;
     page: number;
 }

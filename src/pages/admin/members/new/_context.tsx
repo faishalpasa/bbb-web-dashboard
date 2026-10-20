@@ -33,13 +33,17 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     useEffect(() => {
         const loadPreferences = async () => {
             try {
-                setPreferences((await getMemberOptions()).data.preferences);
+                const { data } = await getMemberOptions();
+                setPreferences(data.preferences);
+                form.reading.setOptions(data.readingProfileOptions);
             } catch {
                 setSubmitError('Pilihan preferensi gagal dimuat. Muat ulang halaman untuk mencoba lagi.');
             }
         };
 
         void loadPreferences();
+        // Options are loaded once, not whenever the form draft changes.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {

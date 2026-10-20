@@ -2,6 +2,7 @@ import { AlertMessage } from '@/components/molecules/alert-message';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { TablePagination } from '@/components/molecules/table-pagination';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PERMISSIONS as P } from '@/constants/permission';
@@ -16,6 +17,7 @@ export const PageContent = () => {
     const { can } = usePermissions();
     const {
         list,
+        pagination,
         failure,
         isLoading,
         notice,
@@ -70,7 +72,7 @@ export const PageContent = () => {
                         </p>
                     )}
 
-                    {items.map((request) => (
+                    {pagination.items.map((request) => (
                         <article
                             key={request.id}
                             className={cn(
@@ -125,6 +127,16 @@ export const PageContent = () => {
                             </div>
                         </article>
                     ))}
+                    <TablePagination
+                        total={list?.items.length ?? 0}
+                        perPage={pagination.perPage}
+                        onPerPageChange={pagination.setPerPage}
+                        currentPage={pagination.page}
+                        lastPage={pagination.lastPage}
+                        isLoading={isLoading}
+                        onPageChange={pagination.goToPage}
+                        data-test-id="exit_requests_pagination"
+                    />
                 </div>
             )}
 

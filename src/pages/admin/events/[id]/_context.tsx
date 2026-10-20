@@ -42,6 +42,7 @@ interface PageContextValue {
     isLoadingParticipants: boolean;
     isExporting: boolean;
     page: number;
+    perPage: number;
     searchText: string;
     summary: ParticipantSummary | null;
     notice: { tone: 'success' | 'error'; text: string } | null;
@@ -61,6 +62,7 @@ interface PageContextValue {
     isAdding: boolean;
     setSearchText: (value: string) => void;
     goToPage: (page: number) => void;
+    changePerPage: (perPage: number) => void;
     toggleAttendance: (participantId: string, present: boolean) => Promise<void>;
     exportParticipants: () => Promise<void>;
     copyText: (text: string, label: string) => Promise<void>;
@@ -102,6 +104,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [participantsFailure, setParticipantsFailure] = useState<LoadFailure | null>(null);
     const [isLoadingParticipants, setIsLoadingParticipants] = useState(true);
     const [page, setPage] = useState(1);
+    const [perPage, setPerPage] = useState(25);
     const [searchText, setSearchText] = useState('');
     const [search, setSearch] = useState('');
     const [summary, setSummary] = useState<ParticipantSummary | null>(null);
@@ -161,7 +164,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             setParticipantsFailure(null);
 
             try {
-                const response = await getEventParticipants(eventId, { search, page });
+                const response = await getEventParticipants(eventId, { search, page, perPage });
 
                 if (requestId !== latestParticipantsRequest.current) return;
 
@@ -178,7 +181,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         return () => {
             latestParticipantsRequest.current = requestId + 1;
         };
-    }, [eventId, search, page, reloadToken, canViewParticipants]);
+    }, [eventId, search, page, perPage, reloadToken, canViewParticipants]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -381,6 +384,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             isLoadingParticipants,
             isExporting,
             page,
+            perPage,
             searchText,
             summary,
             notice,
@@ -407,6 +411,10 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             isAdding,
             setSearchText,
             goToPage: setPage,
+            changePerPage: (size) => {
+                setPerPage(size);
+                setPage(1);
+            },
             toggleAttendance,
             exportParticipants,
             copyText,
@@ -447,6 +455,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             isLoadingParticipants,
             isExporting,
             page,
+            perPage,
             searchText,
             summary,
             notice,

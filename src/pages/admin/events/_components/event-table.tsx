@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { Eye, Pencil } from 'lucide-react';
 
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { TablePagination } from '@/components/molecules/table-pagination';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EVENT_NO_SCHEDULE_LABEL, EVENT_STATUS_TONES } from '@/constants/event';
@@ -57,7 +58,7 @@ export const EventTable = () => {
     const { can } = usePermissions();
     const canViewParticipants = can(P.EVENT_PARTICIPANT_VIEW);
     const canEdit = (event: EventListItem) => can(P.EVENT_UPDATE) && isEditable(event);
-    const { list, isLoading, query, goToPage } = usePageContext();
+    const { list, isLoading, query, goToPage, setPerPage } = usePageContext();
     const items = list?.items ?? [];
     const meta = list?.meta;
 
@@ -155,27 +156,19 @@ export const EventTable = () => {
             )}
 
             <footer className="border-border flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm">
-                <p data-test-id="events_text_range">{meta ? `Menampilkan ${items.length} dari ${meta.total} kegiatan` : ' '}</p>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isLoading || query.page <= 1}
-                        onClick={() => goToPage(query.page - 1)}
-                        data-test-id="events_button_previous"
-                    >
-                        Sebelumnya
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isLoading || !meta || query.page >= meta.lastPage}
-                        onClick={() => goToPage(query.page + 1)}
-                        data-test-id="events_button_next"
-                    >
-                        Berikutnya
-                    </Button>
-                </div>
+                <p className="sr-only" data-test-id="events_text_range">
+                    {meta ? `Menampilkan ${items.length} dari ${meta.total} kegiatan` : ' '}
+                </p>
+                <TablePagination
+                    total={meta?.total ?? 0}
+                    perPage={query.perPage ?? 25}
+                    onPerPageChange={setPerPage}
+                    currentPage={meta?.currentPage ?? query.page}
+                    lastPage={meta?.lastPage ?? 1}
+                    isLoading={isLoading || !meta}
+                    onPageChange={goToPage}
+                    data-test-id="events_pagination"
+                />
             </footer>
         </div>
     );

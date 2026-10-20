@@ -6,6 +6,7 @@ export const ROUTES = {
     invitation: '/invitation',
     members: '/members',
     memberNew: '/members/new',
+    memberImport: '/members/import',
     memberDetail: '/members/$memberId',
     memberEdit: '/members/$memberId/edit',
     events: '/events',

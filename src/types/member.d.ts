@@ -1,4 +1,5 @@
 import type { Identifier, PaginatedCollection, SelectOption } from '@/types/api';
+import type { ReadingProfile, ReadingProfileInput, ReadingProfileOptions } from '@/types/reading-profile';
 import type { DistrictOption, RegionOption, VillageOption } from '@/types/region';
 
 export type MemberAdminStatus = 'active' | 'exit_requested' | 'email_bounced' | 'awaiting_data' | 'inactive';
@@ -34,6 +35,7 @@ export interface MemberListQuery {
 }
 
 export interface MemberOptions {
+    readingProfileOptions: ReadingProfileOptions;
     statuses: SelectOption[];
     preferences: SelectOption[];
     attendance: SelectOption[];
@@ -49,7 +51,7 @@ export interface MemberHistoryItem {
     status: { value: MemberHistoryStatus; label: string };
 }
 
-export interface MemberDetail {
+export interface MemberDetail extends ReadingProfile {
     id: Identifier;
     memberNumber: string | null;
     status: { value: MemberAdminStatus; label: string };
@@ -74,7 +76,7 @@ export interface MemberDetail {
     actions: { canEdit: boolean; canResetPassword: boolean; canDeactivate: boolean; canActivate: boolean };
 }
 
-export interface MemberEditInput {
+export interface MemberEditInput extends ReadingProfileInput {
     name: string;
     birthYear: number;
     whatsapp: string;

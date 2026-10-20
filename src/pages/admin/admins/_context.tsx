@@ -1,7 +1,8 @@
-import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 
 import { useAppContext } from '@/app-context';
 import { PERMISSIONS as P } from '@/constants/permission';
+import { useClientPagination, type ClientPagination } from '@/hooks/useClientPagination';
 import { usePermissions } from '@/hooks/usePermissions';
 import { getAdminRoleOptions, putAdminRole } from '@/services/role';
 import { getAdmins, postActivateAdmin, postDeactivateAdmin } from '@/services/superadmin';
@@ -12,6 +13,7 @@ import { errorMessage, fieldErrorMessage, toLoadFailure } from '@/utils/error';
 
 interface PageContextValue {
     admins: AdminAccount[];
+    pagination: ClientPagination<AdminAccount>;
     failure: LoadFailure | null;
     isLoading: boolean;
     notice: { tone: 'success' | 'error'; text: string } | null;
@@ -45,6 +47,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const grantSignature = session?.permissions.join(',') ?? '';
     const canChangeRole = can(P.ADMIN_ROLE_UPDATE);
     const [admins, setAdmins] = useState<AdminAccount[]>([]);
+    const pagination = useClientPagination(admins, grantSignature);
     const [failure, setFailure] = useState<LoadFailure | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [notice, setNotice] = useState<PageContextValue['notice']>(null);
@@ -157,6 +160,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const value = useMemo<PageContextValue>(
         () => ({
             admins,
+            pagination,
             failure,
             isLoading,
             notice,
@@ -192,6 +196,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         }),
         [
             admins,
+            pagination,
             failure,
             isLoading,
             notice,

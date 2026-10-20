@@ -1,4 +1,6 @@
-# Masterlist import mock contract
+# Masterlist import mock contract (historis)
+
+Kontrak runtime preview di [masterlist-preview.md](masterlist-preview.md), eksekusi tahap 5 melalui CLI di [masterlist-execution.md](masterlist-execution.md). Bagian HTTP confirm/result di bawah tetap arsip mock, **tidak diimplementasikan**; keputusan profil migrated dan data real pada kontrak baru mengesampingkan placeholder validasi lama. Tooling migrasi ini sekali pakai dan akan dicabut setelah import/rekonsiliasi disetujui.
 
 Status: **mock v1**. This enables frontend work before an anonymized real masterlist sample exists. It is not a claim about the final spreadsheet columns.
 

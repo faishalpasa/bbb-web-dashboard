@@ -6,7 +6,7 @@ Schema/backfill B tersedia; endpoint operasional memeriksa permission per aksi +
 
 ## Model dan sumber kebenaran
 
-- `permissions`: UUID `id`, `name` unik (maks. 100 karakter). Nama stabil, lowercase kebab-case. Tidak ada endpoint create/update/delete permission.
+- `permissions`: UUID `id`, `name` unik (maks. 100 karakter), `description` nullable (maks. 255 karakter, bahasa Indonesia, menjelaskan aksi yang diizinkan; diisi migration `2026_10_19_000003`). Nama stabil, lowercase kebab-case. Tidak ada endpoint create/update/delete permission.
 - `roles`: UUID `id`, `name` unik dan stabil (maks. 100 karakter, lowercase kebab-case), `label` (maks. 100 karakter), `is_system`, timestamps UTC.
 - `role_permissions`: FK `role_id` dan `permission_id`, composite primary key. Relasi permission RESTRICT; pivot milik role dihapus bersama role yang boleh dihapus.
 - `admins.role_id`: FK ke roles, RESTRICT; tepat satu role termasuk akun invited/inactive. Nullable hanya selama backfill. Tidak ada permission langsung per admin.
@@ -23,6 +23,7 @@ Semua route di bawah berawalan `/api/admin`. Aksi memerlukan view modul terkait 
 | dashboard-view | GET /dashboard |
 | member-view | GET /members, /members/{id}, /members/options |
 | member-create | POST /members |
+| member-import-preview | POST /member-import-previews, GET /member-import-previews/{id}; juga member-view, hasil owner-only, dry-run tanpa import |
 | member-update | PUT /members/{id} |
 | member-export | GET /members/export |
 | member-activate | POST /members/{id}/activate |
@@ -96,6 +97,7 @@ interface PermissionOption {
     id: string;
     name: string;
     label: string; // dari katalog kode, bukan kolom editable
+    description: string; // dari kolom permissions.description; string kosong bila belum diisi
     group: string; // dari katalog kode
     requires: string[]; // nama permission dependency
     isAssignable: boolean;

@@ -2,6 +2,7 @@ import { Check, Download, X } from 'lucide-react';
 
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { TablePagination } from '@/components/molecules/table-pagination';
 import { WhatsappButton } from '@/components/molecules/whatsapp-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -114,6 +115,8 @@ export const ParticipantTable = () => {
         isLoadingParticipants,
         isExporting,
         page,
+        perPage,
+        changePerPage,
         searchText,
         setSearchText,
         goToPage,
@@ -252,29 +255,19 @@ export const ParticipantTable = () => {
                     )}
 
                     <footer className="border-border flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm">
-                        <p data-test-id="event_detail_text_range">
+                        <p className="sr-only" data-test-id="event_detail_text_range">
                             {meta && meta.total > 0 ? `Menampilkan ${rangeStart} sampai ${rangeEnd} dari ${meta.total} peserta` : 'Tidak ada peserta'}
                         </p>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={isLoadingParticipants || page <= 1}
-                                onClick={() => goToPage(page - 1)}
-                                data-test-id="event_detail_button_previous"
-                            >
-                                Sebelumnya
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={isLoadingParticipants || !meta || page >= meta.lastPage}
-                                onClick={() => goToPage(page + 1)}
-                                data-test-id="event_detail_button_next"
-                            >
-                                Berikutnya
-                            </Button>
-                        </div>
+                        <TablePagination
+                            total={meta?.total ?? 0}
+                            perPage={perPage}
+                            onPerPageChange={changePerPage}
+                            currentPage={meta?.currentPage ?? page}
+                            lastPage={meta?.lastPage ?? 1}
+                            isLoading={isLoadingParticipants || !meta}
+                            onPageChange={goToPage}
+                            data-test-id="event_detail_pagination"
+                        />
                     </footer>
                 </>
             )}

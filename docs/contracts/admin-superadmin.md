@@ -1,5 +1,7 @@
 # Admin superadmin contract
 
+Pagination dashboard (20 Oktober 2026): GET /audit-logs memakai perPage existing (maks. 100); FE default 25 dan opsi 10/20/25/50/100. Koleksi admin dan role tetap dikirim utuh dan dipaginasi client-side. Tidak menambah pagination server atau mengubah bentuk respons kedua koleksi. Footer bersama menampilkan Tampilkan + selector + total di kiri, nomor/ellipsis + panah prev/next di kanan; tanpa tombol first/last. Default API dan envelope existing tetap.
+
 RBAC tahap C–E: otorisasi endpoint admin mengikuti matriks permission di `admin-rbac.md`, menggantikan pembatasan role admin/superadmin yang disebut pada bagian historis dokumen ini. Permission kurang menghasilkan 403 `{ message: "Anda tidak memiliki izin untuk melakukan tindakan ini.", code: "permission_denied" }`. Login/session/refresh/aktivasi undangan sudah mengembalikan role + permissions efektif dan can legacy konservatif. Guard halaman/sidebar/tombol dashboard memakai permission (E); UI/API kelola role masih tahap F. Statistik lintas modul dashboard tetap mengikuti perilaku existing sampai keputusan penyaringan dikonfirmasi.
 
 Status: **di MySQL (langkah 17)** untuk artboard 12a-12c dan 13a-13c: pengaturan, kelola admin, undangan admin, dan log. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Akun admin, undangan, audit log, dan pengaturan memakai MySQL (langkah 10, 12, 17); pengaturan tersimpan di `app_settings`.

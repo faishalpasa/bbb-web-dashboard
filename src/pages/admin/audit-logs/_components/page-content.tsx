@@ -1,5 +1,6 @@
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { TablePagination } from '@/components/molecules/table-pagination';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AUDIT_ALL_TAB, AUDIT_LOG_TONES } from '@/constants/superadmin';
@@ -9,7 +10,7 @@ import { formatLogTime } from '@/utils/date';
 import { usePageContext } from '../_context';
 
 export const PageContent = () => {
-    const { query, list, failure, isLoading, setType, goToPage, reload } = usePageContext();
+    const { query, list, failure, isLoading, setType, goToPage, setPerPage, reload } = usePageContext();
     const items = list?.items ?? [];
     const meta = list?.meta;
     const tabs = [AUDIT_ALL_TAB, ...(list?.types ?? [])];
@@ -114,29 +115,19 @@ export const PageContent = () => {
                         )}
 
                         <footer className="border-border flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm">
-                            <p data-test-id="audit_logs_text_note">Log hanya bisa dibaca dan tidak bisa diubah.</p>
-                            {meta && meta.lastPage > 1 && (
-                                <div className="flex gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={isLoading || query.page <= 1}
-                                        onClick={() => goToPage(query.page - 1)}
-                                        data-test-id="audit_logs_button_previous"
-                                    >
-                                        Sebelumnya
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={isLoading || query.page >= meta.lastPage}
-                                        onClick={() => goToPage(query.page + 1)}
-                                        data-test-id="audit_logs_button_next"
-                                    >
-                                        Berikutnya
-                                    </Button>
-                                </div>
-                            )}
+                            <p className="sr-only" data-test-id="audit_logs_text_note">
+                                Log hanya bisa dibaca dan tidak bisa diubah.
+                            </p>
+                            <TablePagination
+                                total={meta?.total ?? 0}
+                                perPage={query.perPage ?? 25}
+                                onPerPageChange={setPerPage}
+                                currentPage={meta?.currentPage ?? query.page}
+                                lastPage={meta?.lastPage ?? 1}
+                                isLoading={isLoading || !meta}
+                                onPageChange={goToPage}
+                                data-test-id="audit_logs_pagination"
+                            />
                         </footer>
                     </>
                 )}

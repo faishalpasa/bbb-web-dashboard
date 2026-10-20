@@ -1,3 +1,5 @@
+import { useReadingProfile } from '@/hooks/useReadingProfile';
+import type { ReadingProfileOptions } from '@/types/reading-profile';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getDistricts, getProvinces, getRegencies, getVillages } from '@/services/region';
@@ -84,7 +86,8 @@ const fieldsFromMember = (member: MemberDetail): MemberFormFields => ({
 });
 
 // Shared by the create and edit member screens: field state and the region cascade through village.
-export const useMemberForm = (member?: MemberDetail) => {
+export const useMemberForm = (member?: MemberDetail, options: ReadingProfileOptions | null = null) => {
+    const reading = useReadingProfile(member, options);
     const [fields, setFields] = useState<MemberFormFields>(() => (member ? fieldsFromMember(member) : EMPTY_FIELDS));
     const [errors, setErrors] = useState<MemberFormErrors>({});
     const [provinces, setProvinces] = useState<RegionOption[]>([]);
@@ -189,6 +192,7 @@ export const useMemberForm = (member?: MemberDetail) => {
 
     // Mirrors the API rules for quick feedback; the server stays authoritative.
     const validate = (options: { requireEmail: boolean }): MemberEditInput | null => {
+        const readingValid = reading.validate();
         const nextErrors: MemberFormErrors = {};
         const whatsapp = normalizeWhatsapp(fields.whatsapp);
 
@@ -205,9 +209,10 @@ export const useMemberForm = (member?: MemberDetail) => {
 
         setErrors(nextErrors);
 
-        if (Object.keys(nextErrors).length > 0) return null;
+        if (Object.keys(nextErrors).length > 0 || !readingValid) return null;
 
         return {
+            ...reading.buildInput(),
             name: fields.name.trim(),
             birthYear: Number(fields.birthYear),
             whatsapp,
@@ -222,6 +227,7 @@ export const useMemberForm = (member?: MemberDetail) => {
     };
 
     const applyServerErrors = (error: unknown): boolean => {
+        const readingError = reading.applyServerErrors(error);
         const nextErrors: MemberFormErrors = {};
 
         for (const name of SERVER_FIELD_NAMES) {
@@ -235,10 +241,11 @@ export const useMemberForm = (member?: MemberDetail) => {
 
         setErrors(nextErrors);
 
-        return Object.keys(nextErrors).length > 0;
+        return Object.keys(nextErrors).length > 0 || readingError;
     };
 
     return {
+        reading,
         fields,
         errors,
         provinces,

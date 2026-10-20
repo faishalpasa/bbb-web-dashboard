@@ -101,11 +101,13 @@ export interface EventParticipantList extends PaginatedCollection<EventParticipa
 }
 
 export interface EventListQuery {
+    perPage?: number;
     status: string;
     page: number;
 }
 
 export interface ParticipantListQuery {
+    perPage?: number;
     search: string;
     page: number;
 }

@@ -1,4 +1,5 @@
 import { FormField } from '@/components/molecules/form-field';
+import { ReadingProfileSection } from '@/components/molecules/reading-profile-section';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import type { MemberForm } from '@/hooks/useMemberForm';
@@ -6,13 +7,14 @@ import { cn } from '@/lib/utils';
 import type { SelectOption } from '@/types/api';
 
 interface MemberFormSectionsProps {
+    disabled?: boolean;
     form: MemberForm;
     preferences: SelectOption[];
     isEmailEditable: boolean;
     'data-test-id': string;
 }
 
-export const MemberFormSections = ({ form, preferences, isEmailEditable, 'data-test-id': testId }: MemberFormSectionsProps) => {
+export const MemberFormSections = ({ form, preferences, isEmailEditable, disabled, 'data-test-id': testId }: MemberFormSectionsProps) => {
     const {
         fields,
         errors,
@@ -220,6 +222,7 @@ export const MemberFormSections = ({ form, preferences, isEmailEditable, 'data-t
                     </FormField>
                 </div>
             </section>
+            <ReadingProfileSection form={form.reading} disabled={disabled} data-test-id={`${testId}_reading`} />
         </div>
     );
 };

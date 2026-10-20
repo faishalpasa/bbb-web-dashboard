@@ -1,5 +1,19 @@
 # BBB BFF admin implementation checklist
 
+## Track masterlist: profil dan minat bacaan (20 Oktober 2026)
+
+- [x] Kebijakan preview v3: warning berprovenance disetujui tampil Diterima dengan catatan (bukan Valid), summary/pesan profil manual tetap dry-run dan konflik tetap skip. Snapshot lama tetap berlabel Perlu review. 7 tes preview + typecheck/lint/format/build; browser data sintetis 58 accepted notes + 2 skip dan detail profil kosong. Kontrak identik tiga repo; bukan bukti import/hosted deployment. Panduan React menjaga label turunan tanpa state/request baru.
+
+- [x] Tahap 3 lokal: field tambahan opsional, katalog API multi-select + Other kondisional, prefill/edit/render plain text, error/disabled state pada form existing. Kontrak shared `member-reading-profile.md` dan salinan frontend-api identik di tiga repo; admin-members identik API/dashboard. API full Pest 680 / 5.098 + Pint, typecheck/lint/format/build kedua FE dan 10 tes reading-profile per FE lulus. Browser web-app 390px (edit/onboarding/migrasi) + dashboard 1360px (detail/tambah/edit) memakai MySQL nyata; data QA dibersihkan. Tanpa import/commit/push/deploy. Bukti/batas dan penerapan migration lokal di `../bbb-api/docs/plans/member-masterlist-import.md`.
+- [x] Tahap 4 lokal: preview dashboard owner-only, permission khusus, upload/mapping/summary/paging/detail raw/provenance, modal desktop/bottom sheet mobile dan reload; tanpa import aktif. Full API 694 Pest / 5.239 + Pint, dashboard 57 tes dan typecheck/lint/format/build lulus. CSV sintetis 60 baris diuji browser; workbook asli hanya dry-run privat. Batas dan temuan di `../bbb-api/docs/plans/masterlist-preview-verification.md`.
+- [x] Tahap 5a backend: writer melalui CLI sekali pakai, bukan CTA/HTTP import dashboard. Preview envelope/can_import=false tetap, integrity tersegel internal tidak diekspos. Kontrak execution + claim migrated lewat reset link disepakati, frontend-api identik tiga repo. API 747 Pest / 5.681 + Pint, dua FE typecheck/build dan 7 tes preview dashboard lulus. Runbook di `../bbb-api/docs/deployment-masterlist-import.md`.
+- [x] Tahap 5b lokal: backup penuh sebelum/sesudah ledger lolos restore disposable dan hash; 3.712 member imported + 2 skip, 0 pending/mismatch, 24.716 assignment minat cocok, data existing tetap dan retry completed no-op. Browser daftar Member menunjukkan 3.724 data, 149 halaman ukuran 25, halaman 2 menampilkan 26–50. Full API 747 Pest / 5.681 + Pint lulus ulang. Bukti/batas di plan API; tidak ada tombol import baru di FE.
+- [ ] Sisa 5b/5c: claim email/browser dengan identitas QA yang disetujui, rilis + preview/actor/backup/import Hostinger dan rekonsiliasi, baru cleanup permanen setelah kedua target disetujui. Commit/push tiga repo sudah disetujui owner; DB hosting belum disentuh, tooling dipertahankan. Panduan langkah per langkah: `../bbb-api/docs/deployment-masterlist-hostinger.md`.
+
+## Pagination dashboard (20 Oktober 2026)
+
+- [x] Semua tabel/list memakai shared footer shadcn-style: Tampilkan + ukuran 10/20/25/50/100 (default FE 25) + total kiri; prev + nomor/ellipsis + next kanan, tanpa first/last. Ukuran/filter reset halaman 1, loading/batas disabled, nomor mobile diringkas. Member/kegiatan/peserta/log memakai perPage API; admin/role/exit/history client-side atas data utuh. Tujuh tes pagination + typecheck/lint/format/build, browser Kegiatan ukuran 10 -> page 2 (2 dari 12) -> ukuran 25 reset page 1, layout mobile 390px tanpa overflow. Bukan klaim semua ukuran/halaman seluruh modul sudah diuji browser.
+
 ## Track baru: Registration Form kegiatan (19 Oktober 2026)
 
 - [x] Tahap 1 — keputusan utama dan kontrak target didokumentasikan; kontrak shared di `docs/contracts/event-registration-form.md`, plan enam tahap di `../bbb-api/docs/plans/event-registration-form.md`. Salinan kontrak diverifikasi identik di tiga repo. Ini acceptance dokumentasi saja, bukan klaim fitur sudah aktif.

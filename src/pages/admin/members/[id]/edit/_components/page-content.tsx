@@ -88,7 +88,13 @@ const EditForm = ({ memberId, preferences }: EditFormProps) => {
             )}
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.86fr_1fr]">
-                <MemberFormSections form={form} preferences={preferences} isEmailEditable={false} data-test-id="member_edit" />
+                <MemberFormSections
+                    form={form}
+                    preferences={preferences}
+                    isEmailEditable={false}
+                    disabled={isSubmitting}
+                    data-test-id="member_edit"
+                />
 
                 <div className="space-y-4">
                     <section className="border-border bg-card space-y-3 rounded-lg border p-5" data-test-id="member_edit_membership">

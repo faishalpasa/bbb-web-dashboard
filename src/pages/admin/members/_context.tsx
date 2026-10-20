@@ -7,7 +7,7 @@ import { errorMessage, toLoadFailure } from '@/utils/error';
 
 const SEARCH_DEBOUNCE_MS = 350;
 
-const INITIAL_QUERY: MemberListQuery = { search: '', status: '', provinceCode: '', preference: '', attendance: '', page: 1 };
+const INITIAL_QUERY: MemberListQuery = { search: '', status: '', provinceCode: '', preference: '', attendance: '', page: 1, perPage: 25 };
 
 type FilterName = 'status' | 'provinceCode' | 'preference' | 'attendance';
 
@@ -25,6 +25,7 @@ interface PageContextValue {
     setSearchText: (value: string) => void;
     setFilter: (name: FilterName, value: string) => void;
     goToPage: (page: number) => void;
+    setPerPage: (perPage: number) => void;
     reload: () => void;
     exportMembers: () => Promise<void>;
 }
@@ -136,6 +137,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             setSearchText: setSearchTextState,
             setFilter,
             goToPage,
+            setPerPage: (perPage) => setQuery((current) => ({ ...current, perPage, page: 1 })),
             reload: () => setReloadToken((token) => token + 1),
             exportMembers,
         };

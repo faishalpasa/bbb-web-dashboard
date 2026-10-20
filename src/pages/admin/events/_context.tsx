@@ -12,13 +12,14 @@ interface PageContextValue {
     isLoading: boolean;
     setStatus: (status: string) => void;
     goToPage: (page: number) => void;
+    setPerPage: (perPage: number) => void;
     reload: () => void;
 }
 
 const PageContext = createContext<PageContextValue | null>(null);
 
 export const PageContextProvider = ({ children }: PropsWithChildren) => {
-    const [query, setQuery] = useState<EventListQuery>({ status: '', page: 1 });
+    const [query, setQuery] = useState<EventListQuery>({ status: '', page: 1, perPage: 25 });
     const [list, setList] = useState<EventList | null>(null);
     const [failure, setFailure] = useState<LoadFailure | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -53,8 +54,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             list,
             failure,
             isLoading,
-            setStatus: (status) => setQuery({ status, page: 1 }),
+            setStatus: (status) => setQuery((current) => ({ ...current, status, page: 1 })),
             goToPage: (page) => setQuery((current) => ({ ...current, page })),
+            setPerPage: (perPage) => setQuery((current) => ({ ...current, perPage, page: 1 })),
             reload: () => setReloadToken((token) => token + 1),
         }),
         [query, list, failure, isLoading],

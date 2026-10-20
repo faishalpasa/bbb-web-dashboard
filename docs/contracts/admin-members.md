@@ -1,5 +1,9 @@
 # Admin member management contract (DRAFT)
 
+Pagination dashboard (20 Oktober 2026): GET /members menerima perPage seperti implementasi existing (maks. 100). FE mengirim default 25, opsi 10/20/25/50/100, kembali page=1 saat ukuran/filter berubah. Riwayat kegiatan pada detail member tetap dikirim utuh dan dipaginasi client-side. Footer bersama menampilkan Tampilkan + selector + total di kiri, nomor/ellipsis + panah prev/next di kanan; tanpa tombol first/last. Default API dan envelope existing tetap.
+
+Tambahan profil/minat member (20 Oktober 2026): [kontrak shared](member-reading-profile.md). Detail, options dan input create/edit mendapat tambahan opsional; list/CSV dan permission existing tetap.
+
 RBAC tahap C–E: otorisasi endpoint admin mengikuti matriks permission di `admin-rbac.md`, menggantikan pembatasan role admin/superadmin yang disebut pada bagian historis dokumen ini. Permission kurang menghasilkan 403 `{ message: "Anda tidak memiliki izin untuk melakukan tindakan ini.", code: "permission_denied" }`. Login/session/refresh/aktivasi undangan sudah mengembalikan role + permissions efektif dan can legacy konservatif. Guard halaman/sidebar/tombol dashboard memakai permission (E); UI/API kelola role masih tahap F. Statistik lintas modul dashboard tetap mengikuti perilaku existing sampai keputusan penyaringan dikonfirmasi.
 
 Status: **di MySQL** untuk artboard 9a-9e. Diimplementasi di `bbb-api` dan dipakai `web-dashboard`; salinan identik di kedua repo. Auth, envelope, dan error mengikuti `admin-auth.md` dan `frontend-api.md`. Semua endpoint butuh token admin (`401` tanpa token atau dengan token member; semua admin, bukan hanya superadmin). Data member memakai MySQL sejak langkah 11; `id` adalah UUID string. Hanya audit log ekspor yang masih dummy per sesi (langkah 12).

@@ -29,6 +29,13 @@ export const PageContent = () => {
                     )}
                 </div>
                 <div className="flex gap-2">
+                    {can(P.MEMBER_IMPORT_PREVIEW) && (
+                        <Button variant="outline" asChild>
+                            <Link to={ROUTES.memberImport} data-test-id="members_link_import_preview">
+                                Preview Masterlist
+                            </Link>
+                        </Button>
+                    )}
                     {canManageMembers && (
                         <Button asChild>
                             <Link to={ROUTES.memberNew} data-test-id="members_link_create">

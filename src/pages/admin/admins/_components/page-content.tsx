@@ -4,6 +4,7 @@ import { AlertMessage } from '@/components/molecules/alert-message';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { FormField } from '@/components/molecules/form-field';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { TablePagination } from '@/components/molecules/table-pagination';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,6 +19,7 @@ export const PageContent = () => {
     const { can } = usePermissions();
     const {
         admins,
+        pagination,
         failure,
         isLoading,
         notice,
@@ -95,7 +97,7 @@ export const PageContent = () => {
                                                   </td>
                                               </tr>
                                           ))
-                                        : admins.map((admin) => (
+                                        : pagination.items.map((admin) => (
                                               <tr key={admin.id} className="border-border border-t" data-test-id={`admins_row_${admin.id}`}>
                                                   <td className="py-3 pr-3 pl-4 font-medium">{admin.name}</td>
                                                   <td className="px-3 py-3">{admin.email}</td>
@@ -117,7 +119,7 @@ export const PageContent = () => {
                         </div>
 
                         <ul className="md:hidden" data-test-id="admins_cards">
-                            {admins.map((admin) => (
+                            {pagination.items.map((admin) => (
                                 <li
                                     key={admin.id}
                                     className="border-border space-y-1 border-t p-4 first:border-t-0"
@@ -138,6 +140,19 @@ export const PageContent = () => {
                                 </li>
                             ))}
                         </ul>
+                        <footer className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm">
+                            <span className="sr-only">{admins.length} admin</span>
+                            <TablePagination
+                                total={admins.length}
+                                perPage={pagination.perPage}
+                                onPerPageChange={pagination.setPerPage}
+                                currentPage={pagination.page}
+                                lastPage={pagination.lastPage}
+                                isLoading={isLoading}
+                                onPageChange={pagination.goToPage}
+                                data-test-id="admins_pagination"
+                            />
+                        </footer>
                     </section>
                     <p className="bg-secondary/70 rounded-lg p-4 text-sm" data-test-id="admins_text_note">
                         Admin yang keluar dari tim dinonaktifkan, bukan dihapus, supaya riwayat kerjanya tetap punya nama. Superadmin tidak bisa

@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Eye } from 'lucide-react';
 
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { TablePagination } from '@/components/molecules/table-pagination';
 import { WhatsappButton } from '@/components/molecules/whatsapp-button';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -53,7 +54,7 @@ const Domicile = ({ member }: MemberActionsProps) => (
 );
 
 export const MemberTable = () => {
-    const { list, isLoading, rangeStart, rangeEnd, query, goToPage } = usePageContext();
+    const { list, isLoading, rangeStart, rangeEnd, query, goToPage, setPerPage } = usePageContext();
     const items = list?.items ?? [];
     const meta = list?.meta;
 
@@ -156,31 +157,21 @@ export const MemberTable = () => {
             )}
 
             <footer className="border-border flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm">
-                <p data-test-id="members_text_range">
+                <p className="sr-only" data-test-id="members_text_range">
                     {meta && meta.total > 0
                         ? `Menampilkan ${formatNumber(rangeStart)} sampai ${formatNumber(rangeEnd)} dari ${formatNumber(meta.total)} data`
                         : 'Tidak ada data'}
                 </p>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isLoading || query.page <= 1}
-                        onClick={() => goToPage(query.page - 1)}
-                        data-test-id="members_button_previous"
-                    >
-                        Sebelumnya
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isLoading || !meta || query.page >= meta.lastPage}
-                        onClick={() => goToPage(query.page + 1)}
-                        data-test-id="members_button_next"
-                    >
-                        Berikutnya
-                    </Button>
-                </div>
+                <TablePagination
+                    total={meta?.total ?? 0}
+                    perPage={query.perPage ?? 25}
+                    onPerPageChange={setPerPage}
+                    currentPage={meta?.currentPage ?? query.page}
+                    lastPage={meta?.lastPage ?? 1}
+                    isLoading={isLoading || !meta}
+                    onPageChange={goToPage}
+                    data-test-id="members_pagination"
+                />
             </footer>
         </section>
     );
