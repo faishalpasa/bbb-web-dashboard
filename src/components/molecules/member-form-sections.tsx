@@ -1,7 +1,6 @@
 import { FormField } from '@/components/molecules/form-field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
-import { POSTAL_CODE_LENGTH } from '@/constants/member';
 import type { MemberForm } from '@/hooks/useMemberForm';
 import { cn } from '@/lib/utils';
 import type { SelectOption } from '@/types/api';
@@ -218,21 +217,6 @@ export const MemberFormSections = ({ form, preferences, isEmailEditable, 'data-t
                                 </option>
                             ))}
                         </NativeSelect>
-                    </FormField>
-
-                    <FormField id="postalCode" label="Kode pos" error={errors.postalCode} data-test-id={`${testId}_postal_code`}>
-                        <Input
-                            id="postalCode"
-                            inputMode="numeric"
-                            autoComplete="off"
-                            maxLength={POSTAL_CODE_LENGTH}
-                            aria-required="true"
-                            value={fields.postalCode}
-                            onChange={(event) => setField('postalCode', event.target.value.replace(/\D/g, ''))}
-                            placeholder="Terisi otomatis setelah memilih kelurahan"
-                            className="bg-card h-11 font-mono"
-                            data-test-id={`${testId}_input_postal_code`}
-                        />
                     </FormField>
                 </div>
             </section>

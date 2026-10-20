@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { POSTAL_CODE_LENGTH } from '@/constants/member';
 import { getDistricts, getProvinces, getRegencies, getVillages } from '@/services/region';
 import type { MemberDetail, MemberEditInput } from '@/types/member';
 import type { DistrictOption, RegionOption, VillageOption } from '@/types/region';
@@ -180,7 +179,7 @@ export const useMemberForm = (member?: MemberDetail) => {
         }
     };
 
-    // The postal code follows the selected village until the admin types a different one.
+    // The postal code is not typed by hand: it follows the selected village.
     const handleVillageChange = (villageCode: string) => {
         const village = villages.find((option) => option.code === villageCode);
 
@@ -203,8 +202,6 @@ export const useMemberForm = (member?: MemberDetail) => {
         if (!fields.regencyCode) nextErrors.regencyCode = 'Pilih kabupaten atau kota.';
         if (!fields.districtCode) nextErrors.districtCode = 'Pilih kecamatan.';
         if (!fields.villageCode) nextErrors.villageCode = 'Pilih kelurahan.';
-        if (!fields.postalCode) nextErrors.postalCode = 'Kode pos harus diisi.';
-        else if (fields.postalCode.length !== POSTAL_CODE_LENGTH) nextErrors.postalCode = `Kode pos terdiri dari ${POSTAL_CODE_LENGTH} angka.`;
 
         setErrors(nextErrors);
 
@@ -219,7 +216,8 @@ export const useMemberForm = (member?: MemberDetail) => {
             regencyCode: fields.regencyCode,
             districtCode: fields.districtCode,
             villageCode: fields.villageCode,
-            postalCode: fields.postalCode,
+            // There is no postal code field: it always comes from the selected kelurahan.
+            postalCode: villages.find((village) => village.code === fields.villageCode)?.postalCode ?? fields.postalCode,
         };
     };
 
@@ -231,6 +229,9 @@ export const useMemberForm = (member?: MemberDetail) => {
 
             if (message) nextErrors[name] = message;
         }
+
+        // The postal code has no field of its own; a problem with it belongs to the kelurahan it came from.
+        if (nextErrors.postalCode && !nextErrors.villageCode) nextErrors.villageCode = nextErrors.postalCode;
 
         setErrors(nextErrors);
 
