@@ -1,6 +1,6 @@
 # Eksekusi masterlist — tahap 5, tooling sekali pakai
 
-20 Oktober 2026. Implementasi CLI, bukan endpoint/CTA import dashboard. Preview tetap mengikuti [masterlist-preview.md](masterlist-preview.md), can_import tetap false. Tidak mengubah envelope/shape API existing. Import sungguhan hanya setelah owner memilih target, file/hash, preview final dan menyetujui backup/eksekusi.
+20 Oktober 2026. Implementasi CLI, bukan endpoint/CTA import dashboard. Preview tetap mengikuti [masterlist-preview.md](masterlist-preview.md), can_import tetap false. Tidak mengubah envelope/shape API existing. Import sungguhan hanya setelah owner memilih target, file/hash, preview final dan menyetujui backup atau waiver eksplisit serta eksekusi.
 
 ## Otorisasi dan target
 
@@ -24,13 +24,16 @@ Default **preflight read-only**: summary, preview/hash, target, run_id bila ada,
 
 Tambahan untuk write hanya sesudah persetujuan owner:
 `--execute --backup=/ABS_PRIVATE_PATH/baseline.sql --accept-warnings --batches=1`.
+Owner juga menyetujui jalur tanpa backup untuk hosting dev: ganti `--backup=...` dengan **kedua flag** `--without-backup --accept-data-loss`. Tidak ada default bypass: tanpa backup/waiver ditolak, waiver tanpa pengakuan risiko ditolak, --backup bersamaan waiver ditolak, dan --accept-data-loss tanpa --without-backup ditolak. Tetap memerlukan --execute + --accept-warnings; tanpa --execute hanya preflight tanpa write. APP_ENV hosting boleh production walaupun dipakai sebagai dev; target tetap dicek persis, bukan diubah agar melewati guard.
 Setiap batch memproses maksimum 250 pending, default 1 batch, batas 1–40 batch per command. Tidak ada daemon/queue/cron import. Untuk Hostinger mulai 1 batch, ulangi command yang sama sampai pending=0. Tidak membutuhkan proc_open atau Node di runtime importer.
 
-Output write: run_id, status running/completed, total, imported, skipped, pending, updated_existing=0, reconciliation_mismatches, emails_sent=0. Total=imported+skipped+pending. Tidak memuat nama/email/WA/raw. Error nonzero, pesan sanitasi tanpa SQL/exception source. Konflik baru menambah skip, tidak dianggap updated_existing.
+Output write: run_id, status running/completed, total, imported, skipped, pending, updated_existing=0, reconciliation_mismatches, emails_sent=0, **backup_mode=file|waived** (metadata CLI, bukan API/FE). Total=imported+skipped+pending. Tidak memuat nama/email/WA/raw. Error nonzero, pesan sanitasi tanpa SQL/exception source. Konflik baru menambah skip, tidak dianggap updated_existing.
 
 ## Backup dan sequence
 
 Write menolak backup tidak ada/kosong, symlink, di folder public aplikasi, permission group/other terbuka, bukan SQL, atau tanpa database target dan CREATE TABLE users/members/sequences/pivot/dua tabel ledger. Buat full dump `--databases` **sesudah migration ledger**, sebelum write pertama, mode 0600/0400 di luar Git/served directories. Ledger menyimpan SHA-256 backup baseline; retry harus memakai byte backup yang sama. Pemeriksaan ini hanya evidence gate, **bukan bukti dump lengkap/restorable, konsisten terhadap seluruh data, atau benar-benar diverifikasi restore**. Operator wajib memverifikasi backup/restore terpisah dan menjaga retensinya; source/backup tidak boleh publik.
+
+Pengecualian yang disetujui owner: mode waived tidak membaca/membuat file SQL dan tidak berpura-pura punya backup. Ledger existing backup_hash menyimpan marker literal **NO_BACKUP_OWNER_APPROVED**, bukan SHA palsu; hasil CLI backup_mode=waived dan setiap audit batch menyebut waiver owner tanpa PII. Tidak perlu migration baru. Run yang sudah dimulai **tidak bisa berganti mode** file -> waived atau waived -> file, termasuk saat completed/reupload. Retry mode file tetap memerlukan baseline identik; retry waived tetap memerlukan kedua flag risiko di setiap command. Backup tetap dianjurkan; waiver berarti tidak ada restore/undo otomatis untuk batch yang sudah committed. Rollback batch gagal bukan pengganti pemulihan data committed.
 
 Sequence member_number harus >= nomor terbesar existing (termasuk soft delete). Tidak otomatis mengubah atau memutar mundur counter. Jika tidak sehat, berhenti untuk review/perbaikan terpisah. Alokasi selalu AllocateMemberNumber/lockForUpdate dalam transaksi yang sama dengan member.
 
@@ -38,7 +41,7 @@ Sequence member_number harus >= nomor terbesar existing (termasuk soft delete). 
 
 Migration 2026_10_20_000005 menambah dua tabel internal, bukan profil baru:
 
-- member_import_runs: UUID, fingerprint unique, SHA file/plan/backup, preview UUID, actor FK, parser version, total, running/completed, completed_at, timestamps.
+- member_import_runs: UUID, fingerprint unique, SHA file/plan dan backup_hash (SHA backup atau marker waiver di atas), preview UUID, actor FK, parser version, total, running/completed, completed_at, timestamps.
 - member_import_rows: PK(run_id,row_number), candidate SHA, pending/imported/skipped, reason_codes JSON, user/member FK + nomor baru bila imported, processed_at; index status/baris. Tidak menyimpan nama/email/WA/raw/teks profil.
 
 Fingerprint terdiri dari source hash + mapping canonical + parser policy + katalog, sehingga reupload bytes sama tidak membuat run baru. Candidate plan hash tidak bergantung collision summary yang berubah karena akun hasil batch sendiri. Semua baris direncanakan di ledger awal; invalid disimpan skipped, accepted pending. Skip awal tidak dibuka kembali otomatis walaupun konflik kemudian hilang.
@@ -53,7 +56,7 @@ Khusus user **password null + email_verified_at null + member non-soft-deleted b
 
 ## Retry, rekonsiliasi, cleanup
 
-Jika proses terputus, ulangi command sama dengan backup baseline yang sama. Jangan hapus member/ledger/counter. Jika preview expired, upload bytes/mapping sama -> review preview baru -> pakai UUID baru; fingerprint, kandidat/katalog, aktor dan backup wajib tetap identik. Run sama diteruskan, baris imported tidak diadopsi sebagai akun existing/ditulis ulang; konflik baru pada pending tetap skip. Candidate drift/mapping/catalog berubah atau owner tidak aktif memblokir resume; butuh keputusan/review terpisah, bukan bypass.
+Jika proses terputus, ulangi command sama dengan mode backup yang sama (baseline file identik atau kedua flag waiver). Jangan hapus member/ledger/counter. Jika preview expired, upload bytes/mapping sama -> review preview baru -> pakai UUID baru; fingerprint, kandidat/katalog, aktor dan pilihan backup wajib tetap identik. Run sama diteruskan, baris imported tidak diadopsi sebagai akun existing/ditulis ulang; konflik baru pada pending tetap skip. Candidate drift/mapping/catalog berubah atau owner tidak aktif memblokir resume; butuh keputusan/review terpisah, bukan bypass.
 
 result merekonsiliasi total ledger dan keberadaan/pasangan user-member/nomor terhadap data saat ini. Verifikasi profil/status/genre/consent sesudah write dijelaskan runbook; perubahan sah oleh Ibu setelah claim bukan otomatis kerusakan. Tidak ada auto-delete/undo committed batch. Rollback migration menolak ledger berisi run; restore penuh dapat menghapus perubahan sah sesudah backup dan wajib maintenance + persetujuan/review.
 

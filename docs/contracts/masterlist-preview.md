@@ -79,6 +79,6 @@ Entry from Member only with dedicated permission; route /members/import requires
 
 Synthetic fixtures only in automated tests. Actual workbook remains private and unchanged. Local runtime tests do not prove Hostinger limits, PHP extensions, permissions, cron deletion or hosted deployment. OpenSpout v4.32 requires PHP 8.3/8.4/8.5 plus DOM, fileinfo, filter, libxml, XMLReader and ZIP; use existing PHP 8.4 and composer check-platform-reqs on host.
 
-Preview is for review only. Stage 5 still requires exact file/hash, target environment, accepted/skipped row decisions, backup and owner approval. No mass email.
+Preview is for review only. Stage 5 still requires exact file/hash, target environment, accepted/skipped row decisions, and owner approval with either a backup or the explicit --without-backup --accept-data-loss waiver described in masterlist-execution.md. No mass email.
 
 New previews contain sealed internal integrity metadata for the CLI writer; it is never returned by POST/GET. Historical unsealed snapshots remain reviewable but cannot be executed. See masterlist-execution.md for the one-off command, backup/ledger/permissions and approval boundary; can_import stays false because there is no HTTP confirm endpoint.
