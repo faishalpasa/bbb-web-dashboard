@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { POSTAL_CODE_LENGTH } from '@/constants/member';
-import { getDistricts, getProvinces, getRegencies } from '@/services/region';
+import { getDistricts, getProvinces, getRegencies, getVillages } from '@/services/region';
 import type { MemberDetail, MemberEditInput } from '@/types/member';
-import type { DistrictOption, RegionOption } from '@/types/region';
+import type { DistrictOption, RegionOption, VillageOption } from '@/types/region';
 import { fieldErrorMessage } from '@/utils/error';
 import { isValidWhatsapp, normalizeWhatsapp, toLocalWhatsapp } from '@/utils/string';
 
@@ -19,6 +19,7 @@ export type MemberFieldName =
     | 'provinceCode'
     | 'regencyCode'
     | 'districtCode'
+    | 'villageCode'
     | 'postalCode';
 
 export type MemberFormErrors = Partial<Record<MemberFieldName, string>>;
@@ -32,6 +33,7 @@ export interface MemberFormFields {
     provinceCode: string;
     regencyCode: string;
     districtCode: string;
+    villageCode: string;
     postalCode: string;
 }
 
@@ -44,6 +46,7 @@ const EMPTY_FIELDS: MemberFormFields = {
     provinceCode: '',
     regencyCode: '',
     districtCode: '',
+    villageCode: '',
     postalCode: '',
 };
 
@@ -56,6 +59,7 @@ const SERVER_FIELD_NAMES: MemberFieldName[] = [
     'provinceCode',
     'regencyCode',
     'districtCode',
+    'villageCode',
     'postalCode',
 ];
 
@@ -76,16 +80,24 @@ const fieldsFromMember = (member: MemberDetail): MemberFormFields => ({
     provinceCode: member.province?.code ?? '',
     regencyCode: member.regency?.code ?? '',
     districtCode: member.district?.code ?? '',
+    villageCode: member.village?.code ?? '',
     postalCode: member.postalCode,
 });
 
-// Shared by the create and edit member screens: field state, the province -> regency -> district cascade, and validation.
+// Shared by the create and edit member screens: field state and the region cascade through village.
 export const useMemberForm = (member?: MemberDetail) => {
     const [fields, setFields] = useState<MemberFormFields>(() => (member ? fieldsFromMember(member) : EMPTY_FIELDS));
     const [errors, setErrors] = useState<MemberFormErrors>({});
     const [provinces, setProvinces] = useState<RegionOption[]>([]);
     const [regencies, setRegencies] = useState<RegionOption[]>([]);
     const [districts, setDistricts] = useState<DistrictOption[]>([]);
+    const [villages, setVillages] = useState<VillageOption[]>([]);
+    // A slow answer for a district the admin already left must not replace the list of the current one.
+    const villageRequest = useRef(0);
+    const resetVillages = () => {
+        villageRequest.current++;
+        setVillages([]);
+    };
     const [regionError, setRegionError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -96,12 +108,14 @@ export const useMemberForm = (member?: MemberDetail) => {
                 const provinceResponse = await getProvinces();
                 const regencyResponse = member?.province ? await getRegencies(member.province.code) : null;
                 const districtResponse = member?.regency ? await getDistricts(member.regency.code) : null;
+                const villageResponse = member?.district ? await getVillages(member.district.code) : null;
 
                 if (isCancelled) return;
 
                 setProvinces(provinceResponse.data);
                 setRegencies(regencyResponse?.data ?? []);
                 setDistricts(districtResponse?.data ?? []);
+                setVillages(villageResponse?.data ?? []);
             } catch {
                 if (!isCancelled) setRegionError('Daftar wilayah gagal dimuat. Muat ulang halaman untuk mencoba lagi.');
             }
@@ -120,9 +134,10 @@ export const useMemberForm = (member?: MemberDetail) => {
     }, []);
 
     const handleProvinceChange = async (provinceCode: string) => {
-        setFields((current) => ({ ...current, provinceCode, regencyCode: '', districtCode: '', postalCode: '' }));
+        setFields((current) => ({ ...current, provinceCode, regencyCode: '', districtCode: '', villageCode: '', postalCode: '' }));
         setRegencies([]);
         setDistricts([]);
+        resetVillages();
 
         if (!provinceCode) return;
 
@@ -134,8 +149,9 @@ export const useMemberForm = (member?: MemberDetail) => {
     };
 
     const handleRegencyChange = async (regencyCode: string) => {
-        setFields((current) => ({ ...current, regencyCode, districtCode: '', postalCode: '' }));
+        setFields((current) => ({ ...current, regencyCode, districtCode: '', villageCode: '', postalCode: '' }));
         setDistricts([]);
+        resetVillages();
 
         if (!regencyCode) return;
 
@@ -146,12 +162,30 @@ export const useMemberForm = (member?: MemberDetail) => {
         }
     };
 
-    // The postal code follows the district until the admin types a different one.
-    const handleDistrictChange = (districtCode: string) => {
-        const district = districts.find((option) => option.code === districtCode);
+    const handleDistrictChange = async (districtCode: string) => {
+        setFields((current) => ({ ...current, districtCode, villageCode: '', postalCode: '' }));
+        setErrors((current) => ({ ...current, districtCode: undefined, villageCode: undefined, postalCode: undefined }));
+        resetVillages();
 
-        setFields((current) => ({ ...current, districtCode, postalCode: district?.postalCode ?? '' }));
-        setErrors((current) => ({ ...current, districtCode: undefined, postalCode: undefined }));
+        if (!districtCode) return;
+
+        const request = ++villageRequest.current;
+
+        try {
+            const response = await getVillages(districtCode);
+
+            if (request === villageRequest.current) setVillages(response.data);
+        } catch {
+            if (request === villageRequest.current) setRegionError('Daftar kelurahan gagal dimuat.');
+        }
+    };
+
+    // The postal code follows the selected village until the admin types a different one.
+    const handleVillageChange = (villageCode: string) => {
+        const village = villages.find((option) => option.code === villageCode);
+
+        setFields((current) => ({ ...current, villageCode, postalCode: village?.postalCode ?? '' }));
+        setErrors((current) => ({ ...current, villageCode: undefined, postalCode: undefined }));
     };
 
     // Mirrors the API rules for quick feedback; the server stays authoritative.
@@ -168,6 +202,7 @@ export const useMemberForm = (member?: MemberDetail) => {
         if (!fields.provinceCode) nextErrors.provinceCode = 'Pilih provinsi.';
         if (!fields.regencyCode) nextErrors.regencyCode = 'Pilih kabupaten atau kota.';
         if (!fields.districtCode) nextErrors.districtCode = 'Pilih kecamatan.';
+        if (!fields.villageCode) nextErrors.villageCode = 'Pilih kelurahan.';
         if (!fields.postalCode) nextErrors.postalCode = 'Kode pos harus diisi.';
         else if (fields.postalCode.length !== POSTAL_CODE_LENGTH) nextErrors.postalCode = `Kode pos terdiri dari ${POSTAL_CODE_LENGTH} angka.`;
 
@@ -183,6 +218,7 @@ export const useMemberForm = (member?: MemberDetail) => {
             provinceCode: fields.provinceCode,
             regencyCode: fields.regencyCode,
             districtCode: fields.districtCode,
+            villageCode: fields.villageCode,
             postalCode: fields.postalCode,
         };
     };
@@ -207,12 +243,14 @@ export const useMemberForm = (member?: MemberDetail) => {
         provinces,
         regencies,
         districts,
+        villages,
         regionError,
         birthYears: memberBirthYears(),
         setField,
         handleProvinceChange,
         handleRegencyChange,
         handleDistrictChange,
+        handleVillageChange,
         validate,
         applyServerErrors,
     };

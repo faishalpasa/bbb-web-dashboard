@@ -1,5 +1,5 @@
 import type { Identifier, PaginatedCollection, SelectOption } from '@/types/api';
-import type { DistrictOption, RegionOption } from '@/types/region';
+import type { DistrictOption, RegionOption, VillageOption } from '@/types/region';
 
 export type MemberAdminStatus = 'active' | 'exit_requested' | 'email_bounced' | 'awaiting_data' | 'inactive';
 
@@ -61,6 +61,7 @@ export interface MemberDetail {
     province: RegionOption | null;
     regency: RegionOption | null;
     district: DistrictOption | null;
+    village: VillageOption | null;
     postalCode: string;
     preference: SelectOption | null;
     whatsappGroupJoinedAt: string | null;
@@ -81,6 +82,7 @@ export interface MemberEditInput {
     provinceCode: string;
     regencyCode: string;
     districtCode: string;
+    villageCode: string;
     postalCode: string;
 }
 

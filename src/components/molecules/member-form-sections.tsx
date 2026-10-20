@@ -14,8 +14,20 @@ interface MemberFormSectionsProps {
 }
 
 export const MemberFormSections = ({ form, preferences, isEmailEditable, 'data-test-id': testId }: MemberFormSectionsProps) => {
-    const { fields, errors, provinces, regencies, districts, birthYears, setField, handleProvinceChange, handleRegencyChange, handleDistrictChange } =
-        form;
+    const {
+        fields,
+        errors,
+        provinces,
+        regencies,
+        districts,
+        villages,
+        birthYears,
+        setField,
+        handleProvinceChange,
+        handleRegencyChange,
+        handleDistrictChange,
+        handleVillageChange,
+    } = form;
 
     return (
         <div className="space-y-4">
@@ -178,13 +190,31 @@ export const MemberFormSections = ({ form, preferences, isEmailEditable, 'data-t
                             value={fields.districtCode}
                             disabled={!fields.regencyCode}
                             aria-required="true"
-                            onChange={(event) => handleDistrictChange(event.target.value)}
+                            onChange={(event) => void handleDistrictChange(event.target.value)}
                             data-test-id={`${testId}_select_district`}
                         >
                             <option value="">{fields.regencyCode ? 'Pilih kecamatan' : 'Pilih kabupaten atau kota dulu'}</option>
                             {districts.map((district) => (
                                 <option key={district.code} value={district.code}>
                                     {district.label}
+                                </option>
+                            ))}
+                        </NativeSelect>
+                    </FormField>
+
+                    <FormField id="village" label="Kelurahan" error={errors.villageCode} data-test-id={`${testId}_village`}>
+                        <NativeSelect
+                            id="village"
+                            value={fields.villageCode}
+                            disabled={!fields.districtCode}
+                            aria-required="true"
+                            onChange={(event) => handleVillageChange(event.target.value)}
+                            data-test-id={`${testId}_select_village`}
+                        >
+                            <option value="">{fields.districtCode ? 'Pilih kelurahan' : 'Pilih kecamatan dulu'}</option>
+                            {villages.map((village) => (
+                                <option key={village.code} value={village.code}>
+                                    {village.label} - {village.postalCode}
                                 </option>
                             ))}
                         </NativeSelect>
@@ -199,7 +229,7 @@ export const MemberFormSections = ({ form, preferences, isEmailEditable, 'data-t
                             aria-required="true"
                             value={fields.postalCode}
                             onChange={(event) => setField('postalCode', event.target.value.replace(/\D/g, ''))}
-                            placeholder="Terisi otomatis"
+                            placeholder="Terisi otomatis setelah memilih kelurahan"
                             className="bg-card h-11 font-mono"
                             data-test-id={`${testId}_input_postal_code`}
                         />

@@ -7,3 +7,7 @@ export interface RegionOption extends SelectOption {
 export interface DistrictOption extends RegionOption {
     postalCode: string | null;
 }
+
+export interface VillageOption extends RegionOption {
+    postalCode: string;
+}

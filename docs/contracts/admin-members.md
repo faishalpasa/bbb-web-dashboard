@@ -58,6 +58,7 @@ interface MemberDetail {
     province: RegionOption | null;
     regency: RegionOption | null;
     district: (RegionOption & { postalCode: string | null }) | null;
+    village: (RegionOption & { postalCode: string }) | null;
     postalCode: string;
     preference: { value: string; label: string } | null;
     whatsappGroupJoinedAt: string | null;
@@ -82,6 +83,7 @@ interface MemberEditInput {
     provinceCode: string; // wajib
     regencyCode: string; // wajib, sesuai provinsi
     districtCode: string; // wajib, sesuai kabupaten/kota
+    villageCode: string; // wajib, sesuai kecamatan
     postalCode: string; // wajib, 5 digit
 }
 interface MemberCreateInput extends MemberEditInput {
