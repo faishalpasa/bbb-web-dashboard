@@ -28,7 +28,7 @@ export const PageContent = () => {
                         </p>
                     )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex w-full min-w-0 flex-wrap gap-2 sm:w-auto">
                     {can(P.MEMBER_IMPORT_PREVIEW) && (
                         <Button variant="outline" asChild>
                             <Link to={ROUTES.memberImport} data-test-id="members_link_import_preview">

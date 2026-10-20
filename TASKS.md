@@ -1,5 +1,9 @@
 # BBB BFF admin implementation checklist
 
+## Perbaikan responsif Member (20 Oktober 2026)
+
+- [x] Filter mobile satu kolom tanpa implicit track/overlap, aksi header dapat turun baris, dan pilihan preferensi pada komponen tambah/edit dapat wrap di dalam kartu. Checklist React menjaga perubahan CSS saja tanpa state, dependency, permission atau kontrak baru. 61 tes dashboard (termasuk 3 regression utility layout), typecheck/lint/format/build dan diff check lulus. Browser lokal dengan sesi admin/API nyata: daftar pada 360/390/768/1360 px, provinsi berlabel panjang pada 390 px, form tambah pada 360/390/1360 px; tidak ada overflow halaman dan pilihan tetap di dalam kartu. Tidak submit/ekspor/mengubah data, belum uji Safari/perangkat fisik atau deploy; edit memakai komponen yang sama, bukan klaim flow edit diuji penuh.
+
 ## Track masterlist: profil dan minat bacaan (20 Oktober 2026)
 
 - [x] Kebijakan preview v3: warning berprovenance disetujui tampil Diterima dengan catatan (bukan Valid), summary/pesan profil manual tetap dry-run dan konflik tetap skip. Snapshot lama tetap berlabel Perlu review. 7 tes preview + typecheck/lint/format/build; browser data sintetis 58 accepted notes + 2 skip dan detail profil kosong. Kontrak identik tiga repo; bukan bukti import/hosted deployment. Panduan React menjaga label turunan tanpa state/request baru.

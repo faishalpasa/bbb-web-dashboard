@@ -15,7 +15,7 @@ interface FilterSelectProps {
 }
 
 const FilterSelect = ({ id, label, allLabel, value, options, onChange }: FilterSelectProps) => (
-    <div className="grid gap-1.5">
+    <div className="grid min-w-0 gap-1.5">
         <Label htmlFor={id} className="text-xs font-normal">
             {label}
         </Label>
@@ -35,10 +35,10 @@ export const MemberFilters = () => {
 
     return (
         <section
-            className="border-border bg-card grid grid-cols-1 gap-4 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr]"
+            className="border-border bg-card grid grid-cols-1 gap-4 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]"
             data-test-id="members_filters"
         >
-            <div className="col-span-2 grid gap-1.5 lg:col-span-1">
+            <div className="grid min-w-0 gap-1.5 sm:col-span-2 lg:col-span-1">
                 <Label htmlFor="search" className="text-xs font-normal">
                     Pencarian
                 </Label>

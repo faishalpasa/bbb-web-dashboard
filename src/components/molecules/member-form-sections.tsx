@@ -115,9 +115,9 @@ export const MemberFormSections = ({ form, preferences, isEmailEditable, disable
                     </FormField>
                 </div>
 
-                <fieldset className="grid gap-2" data-test-id={`${testId}_preference`}>
+                <fieldset className="grid min-w-0 gap-2" data-test-id={`${testId}_preference`}>
                     <legend className="mb-2 text-sm leading-none font-medium">Preferensi kegiatan</legend>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         {preferences
                             .filter((option) => option.value !== 'unset')
                             .map((option) => (
