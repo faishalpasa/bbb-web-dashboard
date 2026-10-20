@@ -14,8 +14,9 @@ interface FormFieldProps extends PropsWithChildren {
 }
 
 export const FormField = ({ id, label, hint, isOptional = false, error, children, 'data-test-id': testId }: FormFieldProps) => (
-    // min-w-0: a grid item otherwise grows to its content, and a date input on a phone is wider than the card.
-    <div className="grid min-w-0 gap-2">
+    // min-w-0 keeps wide native inputs inside cards. content-start prevents a field without helper text from
+    // distributing the spare height of a taller grid-row sibling and shifting its control out of alignment.
+    <div className="grid min-w-0 content-start gap-2">
         <Label htmlFor={id}>
             {label}
             {!isOptional && <RequiredMark />}
