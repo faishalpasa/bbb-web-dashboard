@@ -103,7 +103,7 @@ export const MemberFormSections = ({ form, preferences, isEmailEditable, disable
                         <Input
                             id="whatsapp"
                             type="tel"
-                            inputMode="numeric"
+                            inputMode="tel"
                             value={fields.whatsapp}
                             aria-required="true"
                             autoComplete="off"

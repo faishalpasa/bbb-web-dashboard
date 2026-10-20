@@ -194,3 +194,28 @@
         min-width: 320px;
     }
 }
+
+/*
+ * Outside any layer on purpose: unlayered rules beat the utility classes, so no field can opt back into a small size.
+ * iOS Safari zooms the whole page when a focused field has a font size under 16px; `-webkit-touch-callout` only exists
+ * on iOS, so other browsers keep the sizes the design asks for.
+ */
+@supports (-webkit-touch-callout: none) {
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+    select,
+    textarea {
+        font-size: 16px;
+    }
+}
+
+/* Number fields have no up/down arrows. */
+input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}

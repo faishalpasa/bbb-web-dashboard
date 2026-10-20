@@ -15,6 +15,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { formatLongDate } from '@/utils/date';
 import { clockMinusMinutes } from '@/utils/string';
 
+import { NUMBER_INPUT_PROPS } from '@/utils/number-input';
 import { type SettingsFieldName, usePageContext } from '../_context';
 
 interface CardProps {
@@ -59,7 +60,7 @@ export const PageContent = () => {
             <FormField id={id} label={label} error={errors[name]} data-test-id={`settings_${id}`}>
                 <Input
                     id={id}
-                    inputMode="numeric"
+                    {...NUMBER_INPUT_PROPS}
                     value={fields[name]}
                     aria-required="true"
                     onChange={(event) => setField(name, event.target.value.replace(/\D/g, ''))}
@@ -155,7 +156,7 @@ export const PageContent = () => {
                             <Input
                                 id="adminWhatsapp"
                                 type="tel"
-                                inputMode="numeric"
+                                inputMode="tel"
                                 value={fields.adminWhatsapp}
                                 onChange={(event) => setField('adminWhatsapp', event.target.value.replace(/\D/g, ''))}
                                 placeholder="081234567000"

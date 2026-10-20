@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { EventForm } from '@/hooks/useEventForm';
 import { cn } from '@/lib/utils';
 import type { SelectOption } from '@/types/api';
+import { NUMBER_INPUT_PROPS } from '@/utils/number-input';
 
 // Mobile Safari draws datetime-local with its own width and a taller box (iOS ignores w-full and h-11 unless the native
 // look is turned off), so the box is reset to match the other 44px fields and the inner value is left-aligned.
@@ -284,7 +285,7 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
                     >
                         <Input
                             id="capacity"
-                            inputMode="numeric"
+                            {...NUMBER_INPUT_PROPS}
                             value={fields.capacity}
                             aria-required="true"
                             onChange={(event) => setField('capacity', event.target.value.replace(/\D/g, ''))}
