@@ -17,6 +17,7 @@ import { usePageContext } from '../_context';
 const scheduleOf = (event: EventListItem): string => (event.startsAt ? formatEventDateTime(event.startsAt, event.timezone) : EVENT_NO_SCHEDULE_LABEL);
 const quotaOf = (event: EventListItem): string => `${event.registered}/${event.capacity ?? '-'}`;
 const attendedOf = (event: EventListItem): string => (event.attended === null ? '-' : String(event.attended));
+const audienceOf = (event: EventListItem): string => (event.allowsNonMember ? 'Member & External' : 'Member Only');
 const isEditable = (event: EventListItem): boolean => event.status.value === 'draft' || event.status.value === 'published';
 
 interface EventActionsProps {
@@ -99,7 +100,7 @@ export const EventTable = () => {
                                               />
                                               <StatusBadge
                                                   tone={event.allowsNonMember ? 'sage' : 'neutral'}
-                                                  label={event.allowsNonMember ? 'External' : 'Internal'}
+                                                  label={audienceOf(event)}
                                                   data-test-id={`events_badge_audience_${event.id}`}
                                               />
                                           </div>
@@ -141,8 +142,7 @@ export const EventTable = () => {
                               </div>
                               <p className={event.startsAt ? 'text-sm' : 'text-muted-foreground text-sm'}>{scheduleOf(event)}</p>
                               <p className="text-muted-foreground text-xs">
-                                  {event.format.label} · {event.allowsNonMember ? 'External' : 'Internal'} · Terdaftar {quotaOf(event)} · Hadir{' '}
-                                  {attendedOf(event)}
+                                  {event.format.label} · {audienceOf(event)} · Terdaftar {quotaOf(event)} · Hadir {attendedOf(event)}
                               </p>
                               <EventActions event={event} canEdit={canEdit(event)} canViewParticipants={canViewParticipants} />
                           </li>

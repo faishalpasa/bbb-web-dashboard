@@ -200,18 +200,14 @@ const EditForm = () => {
                     <section className="border-border bg-card space-y-2 rounded-lg border p-5" data-test-id="event_edit_registration">
                         <h2 className="font-semibold">Jadwal pendaftaran member</h2>
                         {event.registration.closesAt && event.registration.adminAddUntil ? (
-                            <dl className="space-y-1 text-sm">
-                                <div className="flex justify-between gap-3">
+                            <dl className="space-y-4 text-sm">
+                                <div className="space-y-1">
                                     <dt>Daftar dan batal ditutup</dt>
-                                    <dd className="text-right font-mono text-xs">
-                                        {formatEventDateTime(event.registration.closesAt, event.timezone)}
-                                    </dd>
+                                    <dd className="font-mono text-xs">{formatEventDateTime(event.registration.closesAt, event.timezone)}</dd>
                                 </div>
-                                <div className="flex justify-between gap-3">
+                                <div className="space-y-1">
                                     <dt>Admin masih bisa menambah sampai</dt>
-                                    <dd className="text-right font-mono text-xs">
-                                        {formatEventDateTime(event.registration.adminAddUntil, event.timezone)}
-                                    </dd>
+                                    <dd className="font-mono text-xs">{formatEventDateTime(event.registration.adminAddUntil, event.timezone)}</dd>
                                 </div>
                             </dl>
                         ) : (
