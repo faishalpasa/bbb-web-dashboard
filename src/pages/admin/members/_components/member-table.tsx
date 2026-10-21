@@ -79,7 +79,7 @@ const SortableHeader = ({ label, sortBy, activeSortBy, direction, onSort }: Sort
     return (
         <button
             type="button"
-            className="hover:text-foreground inline-flex items-center gap-1 rounded-sm text-left font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
+            className="hover:text-foreground inline-flex cursor-pointer items-center gap-1 rounded-sm text-left font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
             onClick={() => onSort(sortBy)}
             aria-label={`Urutkan ${label} secara ${nextDirection}`}
             data-test-id={`members_button_sort_${sortBy}`}
@@ -169,7 +169,9 @@ export const MemberTable = () => {
                                   <tr key={member.id} className="border-border border-t" data-test-id={`members_row_${member.id}`}>
                                       <td className="py-3 pr-3 pl-4 font-mono text-xs whitespace-nowrap">{member.memberNumber ?? '-'}</td>
                                       <td className="px-3 py-3 font-medium">{member.name}</td>
-                                      <td className="px-3 py-3 font-mono text-xs whitespace-nowrap">{formatWhatsapp(member.whatsapp)}</td>
+                                      <td className="px-3 py-3 font-mono text-xs whitespace-nowrap">
+                                          {member.whatsapp ? formatWhatsapp(member.whatsapp) : '-'}
+                                      </td>
                                       <td className="px-3 py-3">
                                           <Domicile member={member} />
                                       </td>
@@ -218,7 +220,7 @@ export const MemberTable = () => {
                                   />
                               </div>
                               <p className="font-mono text-xs">
-                                  {member.memberNumber ?? '-'} · {formatWhatsapp(member.whatsapp)}
+                                  {member.memberNumber ?? '-'} · {member.whatsapp ? formatWhatsapp(member.whatsapp) : '-'}
                               </p>
                               <p className="text-sm">
                                   <Domicile member={member} />

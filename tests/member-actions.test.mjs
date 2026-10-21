@@ -63,6 +63,13 @@ test('member table exposes sortable desktop headers with joined date newest firs
     assert.match(html, /aria-sort="descending"/);
 });
 
+test('member table renders a dash when WhatsApp is absent', () => {
+    const html = render(['member-view']);
+
+    assert.match(html, />-<\/td>/);
+    assert.match(html, /BFF-00123 · -/);
+});
+
 test('member and participant export labels no longer claim an Excel file', async () => {
     for (const path of ['members/_components/page-content.tsx', 'events/[id]/_components/participant-table.tsx']) {
         const source = await readFile(new URL(`../src/pages/admin/${path}`, import.meta.url), 'utf8');
