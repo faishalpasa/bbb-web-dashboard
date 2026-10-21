@@ -1,5 +1,6 @@
 import { type ChangeEvent, useRef } from 'react';
 
+import { DateTimeField } from '@/components/molecules/date-time-field';
 import { FormField } from '@/components/molecules/form-field';
 import { RegistrationFormBuilder } from '@/components/molecules/registration-form-builder';
 import { Button } from '@/components/ui/button';
@@ -12,12 +13,6 @@ import type { EventForm } from '@/hooks/useEventForm';
 import { cn } from '@/lib/utils';
 import type { SelectOption } from '@/types/api';
 import { NUMBER_INPUT_PROPS } from '@/utils/number-input';
-
-// Mobile Safari draws datetime-local with its own width and a taller box (iOS ignores w-full and h-11 unless the native
-// look is turned off), so the box is reset to match the other 44px fields and the inner value is left-aligned.
-const DATETIME_INPUT_CLASS =
-    'bg-card h-11 min-w-0 max-w-full appearance-none py-0 text-left [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit]:p-0';
-const EVENT_TIME_STEP_SECONDS = 30 * 60;
 
 interface EventFormSectionsProps {
     form: EventForm;
@@ -151,28 +146,22 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
             </Section>
 
             <Section title="Waktu" data-test-id={`${testId}_schedule`}>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="grid max-w-lg gap-4">
                     <FormField id="startsAt" label="Mulai" error={errors.startsAt} data-test-id={`${testId}_starts_at`}>
-                        <Input
+                        <DateTimeField
                             id="startsAt"
-                            type="datetime-local"
                             value={fields.startsAt}
-                            aria-required="true"
-                            step={EVENT_TIME_STEP_SECONDS}
-                            onChange={(event) => setField('startsAt', event.target.value)}
-                            className={DATETIME_INPUT_CLASS}
+                            onChange={(value) => setField('startsAt', value)}
+                            invalid={Boolean(errors.startsAt)}
                             data-test-id={`${testId}_input_starts_at`}
                         />
                     </FormField>
                     <FormField id="endsAt" label="Selesai" error={errors.endsAt} data-test-id={`${testId}_ends_at`}>
-                        <Input
+                        <DateTimeField
                             id="endsAt"
-                            type="datetime-local"
                             value={fields.endsAt}
-                            aria-required="true"
-                            step={EVENT_TIME_STEP_SECONDS}
-                            onChange={(event) => setField('endsAt', event.target.value)}
-                            className={DATETIME_INPUT_CLASS}
+                            onChange={(value) => setField('endsAt', value)}
+                            invalid={Boolean(errors.endsAt)}
                             data-test-id={`${testId}_input_ends_at`}
                         />
                     </FormField>
