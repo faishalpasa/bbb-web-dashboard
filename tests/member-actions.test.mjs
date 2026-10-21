@@ -28,7 +28,7 @@ const member = {id: 'qa-member', memberNumber: 'BFF-00123', name: 'Ibu QA', what
     preference: null, status: {value: 'awaiting_data', label: 'Menunggu data'}, joinedEvents: 0, attendedEvents: 0, joinedAt: '2026-10-20T00:00:00Z'};
 const render = (permissions, status = 'awaiting_data') => {
     setFixture(permissions, {list: {items: [{...member, status: {value: status, label: status}}], meta: {total: 1, currentPage: 1, lastPage: 1}},
-        isLoading: false, rangeStart: 1, rangeEnd: 1, query: {page: 1, perPage: 25}, goToPage() {}, setPerPage() {}});
+        isLoading: false, rangeStart: 1, rangeEnd: 1, query: {page: 1, perPage: 25, sortBy: 'joinedAt', sortDirection: 'desc'}, goToPage() {}, setPerPage() {}, setSort() {}});
     return renderToStaticMarkup(createElement(MemberTable));
 };
 
@@ -54,10 +54,32 @@ test('edit visibility follows permissions rather than guessing member status res
     }
 });
 
+test('member table exposes sortable desktop headers with joined date newest first by default', () => {
+    const html = render(['member-view']);
+
+    for (const field of ['memberNumber', 'name', 'joinedAt']) {
+        assert.match(html, new RegExp(`data-test-id="members_button_sort_${field}"`));
+    }
+    assert.match(html, /aria-sort="descending"/);
+});
+
 test('member and participant export labels no longer claim an Excel file', async () => {
     for (const path of ['members/_components/page-content.tsx', 'events/[id]/_components/participant-table.tsx']) {
         const source = await readFile(new URL(`../src/pages/admin/${path}`, import.meta.url), 'utf8');
         assert.match(source, /isExporting \? 'Menyiapkan…' : 'Expor'/);
         assert.doesNotMatch(source, /Ekspor Excel/);
     }
+});
+
+test('member sorting travels with list and export queries, with a mobile selector', async () => {
+    const [service, filters] = await Promise.all([
+        readFile(new URL('../src/services/member.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/pages/admin/members/_components/member-filters.tsx', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(service, /type MemberFilterQuery = Omit<MemberListQuery, 'page'>/);
+    assert.match(filters, /data-test-id="members_select_sort"/);
+    assert.match(filters, /Tanggal bergabung: terbaru/);
+    assert.match(filters, /Nomor member: naik/);
+    assert.match(filters, /Nama: A–Z/);
 });

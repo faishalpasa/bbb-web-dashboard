@@ -3,6 +3,8 @@ import type { ReadingProfile, ReadingProfileInput, ReadingProfileOptions } from 
 import type { DistrictOption, RegionOption, VillageOption } from '@/types/region';
 
 export type MemberAdminStatus = 'active' | 'exit_requested' | 'awaiting_data' | 'inactive';
+export type MemberSortBy = 'memberNumber' | 'name' | 'joinedAt';
+export type MemberSortDirection = 'asc' | 'desc';
 
 export type MemberHistoryStatus = 'registered' | 'present' | 'absent';
 
@@ -30,6 +32,8 @@ export interface MemberListQuery {
     provinceCode: string;
     preference: string;
     attendance: string;
+    sortBy: MemberSortBy;
+    sortDirection: MemberSortDirection;
     page: number;
     perPage?: number;
 }

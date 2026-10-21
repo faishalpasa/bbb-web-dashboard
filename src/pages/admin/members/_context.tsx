@@ -2,12 +2,22 @@ import { createContext, type PropsWithChildren, useCallback, useContext, useEffe
 
 import { getMemberOptions, getMembers, getMembersExport } from '@/services/member';
 import type { LoadFailure } from '@/types/api';
-import type { MemberList, MemberListQuery, MemberOptions } from '@/types/member';
+import type { MemberList, MemberListQuery, MemberOptions, MemberSortBy, MemberSortDirection } from '@/types/member';
 import { errorMessage, toLoadFailure } from '@/utils/error';
 
 const SEARCH_DEBOUNCE_MS = 350;
 
-const INITIAL_QUERY: MemberListQuery = { search: '', status: '', provinceCode: '', preference: '', attendance: '', page: 1, perPage: 25 };
+const INITIAL_QUERY: MemberListQuery = {
+    search: '',
+    status: '',
+    provinceCode: '',
+    preference: '',
+    attendance: '',
+    sortBy: 'joinedAt',
+    sortDirection: 'desc',
+    page: 1,
+    perPage: 25,
+};
 
 type FilterName = 'status' | 'provinceCode' | 'preference' | 'attendance';
 
@@ -24,6 +34,7 @@ interface PageContextValue {
     rangeEnd: number;
     setSearchText: (value: string) => void;
     setFilter: (name: FilterName, value: string) => void;
+    setSort: (sortBy: MemberSortBy, direction?: MemberSortDirection) => void;
     goToPage: (page: number) => void;
     setPerPage: (perPage: number) => void;
     reload: () => void;
@@ -90,6 +101,15 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         setQuery((current) => ({ ...current, [name]: value, page: 1 }));
     }, []);
 
+    const setSort = useCallback((sortBy: MemberSortBy, direction?: MemberSortDirection) => {
+        setQuery((current) => ({
+            ...current,
+            sortBy,
+            sortDirection: direction ?? (current.sortBy === sortBy && current.sortDirection === 'asc' ? 'desc' : 'asc'),
+            page: 1,
+        }));
+    }, []);
+
     const goToPage = useCallback((page: number) => setQuery((current) => ({ ...current, page })), []);
 
     const exportMembers = useCallback(async () => {
@@ -103,6 +123,8 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 provinceCode: query.provinceCode,
                 preference: query.preference,
                 attendance: query.attendance,
+                sortBy: query.sortBy,
+                sortDirection: query.sortDirection,
             });
             const url = URL.createObjectURL(response.data);
             const link = document.createElement('a');
@@ -136,12 +158,13 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             rangeEnd,
             setSearchText: setSearchTextState,
             setFilter,
+            setSort,
             goToPage,
             setPerPage: (perPage) => setQuery((current) => ({ ...current, perPage, page: 1 })),
             reload: () => setReloadToken((token) => token + 1),
             exportMembers,
         };
-    }, [query, searchText, options, list, failure, isLoading, isExporting, exportError, setFilter, goToPage, exportMembers]);
+    }, [query, searchText, options, list, failure, isLoading, isExporting, exportError, setFilter, setSort, goToPage, exportMembers]);
 
     return <PageContext.Provider value={value}>{children}</PageContext.Provider>;
 };

@@ -25,7 +25,7 @@ Daftar wilayah memakai endpoint `/api/regions/*` yang sama dengan member.
 
 ## List
 
-Query: `search` (nama, email, nomor anggota, atau nomor WhatsApp; `%` dan `_` dicari apa adanya; pencarian tanpa huruf dianggap nomor telepon: yang diawali `0` atau `62` dicocokkan sebagai awal nomor `628...`, selain itu sebagai potongan nomor), `status` (status admin turunan; status tak dikenal tidak memfilter), `provinceCode`, `preference` (`online|offline|both|unset`), `attendance` (`attended|never`), `page` (minimal 1), `perPage` (default 20, minimal 1, maks. 100). Urutan: member yang paling baru bergabung (`joinedAt`) di atas. `summary.activeTotal` menghitung semua member dengan status tersimpan `active`, `summary.total` semua member.
+Query: `search` (nama, email, nomor anggota, atau nomor WhatsApp; `%` dan `_` dicari apa adanya; pencarian tanpa huruf dianggap nomor telepon: yang diawali `0` atau `62` dicocokkan sebagai awal nomor `628...`, selain itu sebagai potongan nomor), `status` (status admin turunan; status tak dikenal tidak memfilter), `provinceCode`, `preference` (`online|offline|both|unset`), `attendance` (`attended|never`), `sortBy` (`memberNumber|name|joinedAt`, default `joinedAt`; nilai tak dikenal memakai default), `sortDirection` (`asc|desc`, default `desc`; selain `asc` memakai `desc`), `page` (minimal 1), `perPage` (default 20, minimal 1, maks. 100). Nomor member kosong selalu di bawah saat diurutkan berdasarkan nomor; tie-breaker adalah ID dengan arah sama. `summary.activeTotal` menghitung semua member dengan status tersimpan `active`, `summary.total` semua member.
 
 ```ts
 interface MemberListItem {

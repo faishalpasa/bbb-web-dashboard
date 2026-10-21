@@ -2,6 +2,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
 import type { SelectOption } from '@/types/api';
+import type { MemberSortBy, MemberSortDirection } from '@/types/member';
 
 import { usePageContext } from '../_context';
 
@@ -31,7 +32,13 @@ const FilterSelect = ({ id, label, allLabel, value, options, onChange }: FilterS
 );
 
 export const MemberFilters = () => {
-    const { query, searchText, options, setSearchText, setFilter } = usePageContext();
+    const { query, searchText, options, setSearchText, setFilter, setSort } = usePageContext();
+
+    const selectSort = (value: string) => {
+        const [sortBy, sortDirection] = value.split(':') as [MemberSortBy, MemberSortDirection];
+
+        setSort(sortBy, sortDirection);
+    };
 
     return (
         <section
@@ -84,6 +91,25 @@ export const MemberFilters = () => {
                 options={options?.attendance ?? []}
                 onChange={(value) => setFilter('attendance', value)}
             />
+            <div className="grid min-w-0 gap-1.5 sm:col-span-2 md:hidden">
+                <Label htmlFor="sort" className="text-xs font-normal">
+                    Urutkan
+                </Label>
+                <NativeSelect
+                    id="sort"
+                    value={`${query.sortBy}:${query.sortDirection}`}
+                    onChange={(event) => selectSort(event.target.value)}
+                    className="h-10"
+                    data-test-id="members_select_sort"
+                >
+                    <option value="joinedAt:desc">Tanggal bergabung: terbaru</option>
+                    <option value="joinedAt:asc">Tanggal bergabung: terlama</option>
+                    <option value="memberNumber:asc">Nomor member: naik</option>
+                    <option value="memberNumber:desc">Nomor member: turun</option>
+                    <option value="name:asc">Nama: A–Z</option>
+                    <option value="name:desc">Nama: Z–A</option>
+                </NativeSelect>
+            </div>
         </section>
     );
 };

@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Eye, Pencil } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Pencil } from 'lucide-react';
 
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { TablePagination } from '@/components/molecules/table-pagination';
@@ -10,7 +10,7 @@ import { MEMBER_STATUS_TONES } from '@/constants/member';
 import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
 import { usePermissions } from '@/hooks/usePermissions';
-import type { MemberListItem } from '@/types/member';
+import type { MemberListItem, MemberSortBy, MemberSortDirection } from '@/types/member';
 import { formatTableDate } from '@/utils/date';
 import { formatNumber } from '@/utils/number';
 import { abbreviateRegency, formatWhatsapp, memberGreetingMessage, whatsappChatUrl } from '@/utils/string';
@@ -25,6 +25,14 @@ interface MemberItemProps {
 
 interface MemberActionsProps extends MemberItemProps {
     canEdit: boolean;
+}
+
+interface SortableHeaderProps {
+    label: string;
+    sortBy: MemberSortBy;
+    activeSortBy: MemberSortBy;
+    direction: MemberSortDirection;
+    onSort: (sortBy: MemberSortBy) => void;
 }
 
 const MemberActions = ({ member, canEdit }: MemberActionsProps) => (
@@ -63,6 +71,25 @@ const MemberActions = ({ member, canEdit }: MemberActionsProps) => (
     </div>
 );
 
+const SortableHeader = ({ label, sortBy, activeSortBy, direction, onSort }: SortableHeaderProps) => {
+    const isActive = sortBy === activeSortBy;
+    const Icon = isActive ? (direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+    const nextDirection = isActive && direction === 'asc' ? 'menurun' : 'menaik';
+
+    return (
+        <button
+            type="button"
+            className="hover:text-foreground inline-flex items-center gap-1 rounded-sm text-left font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
+            onClick={() => onSort(sortBy)}
+            aria-label={`Urutkan ${label} secara ${nextDirection}`}
+            data-test-id={`members_button_sort_${sortBy}`}
+        >
+            {label}
+            <Icon className="size-3.5" aria-hidden="true" />
+        </button>
+    );
+};
+
 // Regency on the first line and province under it, so a long province name never stretches the column.
 const Domicile = ({ member }: MemberItemProps) => (
     <>
@@ -74,7 +101,7 @@ const Domicile = ({ member }: MemberItemProps) => (
 export const MemberTable = () => {
     const { canAll } = usePermissions();
     const canEdit = canAll([P.MEMBER_VIEW, P.MEMBER_UPDATE]);
-    const { list, isLoading, rangeStart, rangeEnd, query, goToPage, setPerPage } = usePageContext();
+    const { list, isLoading, rangeStart, rangeEnd, query, goToPage, setPerPage, setSort } = usePageContext();
     const items = list?.items ?? [];
     const meta = list?.meta;
 
@@ -84,13 +111,48 @@ export const MemberTable = () => {
                 <table className="w-full text-sm">
                     <thead className="bg-secondary/60 text-left">
                         <tr>
-                            {HEADERS.map((header) => (
-                                <th key={header} className="px-3 py-3 font-semibold whitespace-nowrap first:pl-4">
+                            <th
+                                className="px-3 py-3 whitespace-nowrap first:pl-4"
+                                aria-sort={query.sortBy === 'memberNumber' ? (query.sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                            >
+                                <SortableHeader
+                                    label="Nomor"
+                                    sortBy="memberNumber"
+                                    activeSortBy={query.sortBy}
+                                    direction={query.sortDirection}
+                                    onSort={setSort}
+                                />
+                            </th>
+                            <th
+                                className="px-3 py-3 whitespace-nowrap"
+                                aria-sort={query.sortBy === 'name' ? (query.sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                            >
+                                <SortableHeader
+                                    label="Nama"
+                                    sortBy="name"
+                                    activeSortBy={query.sortBy}
+                                    direction={query.sortDirection}
+                                    onSort={setSort}
+                                />
+                            </th>
+                            {HEADERS.slice(2).map((header) => (
+                                <th key={header} className="px-3 py-3 font-semibold whitespace-nowrap">
                                     {header}
                                 </th>
                             ))}
                             <th className="px-3 py-3 text-right font-semibold whitespace-nowrap">Ikut / Hadir</th>
-                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Bergabung</th>
+                            <th
+                                className="px-3 py-3 whitespace-nowrap"
+                                aria-sort={query.sortBy === 'joinedAt' ? (query.sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                            >
+                                <SortableHeader
+                                    label="Bergabung"
+                                    sortBy="joinedAt"
+                                    activeSortBy={query.sortBy}
+                                    direction={query.sortDirection}
+                                    onSort={setSort}
+                                />
+                            </th>
                             <th className="py-3 pr-4 pl-3 text-right font-semibold">Aksi</th>
                         </tr>
                     </thead>
