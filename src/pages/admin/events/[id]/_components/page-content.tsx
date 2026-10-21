@@ -196,7 +196,7 @@ export const PageContent = () => {
                 >
                     <div className="min-w-0">
                         <h2 className="text-sm">Link pendaftaran publik (member dan non-member)</h2>
-                        <p className="truncate font-mono text-sm underline" title={publicUrl}>
+                        <p className="wrap-anywhere font-mono text-sm underline" title={publicUrl}>
                             {publicUrl}
                         </p>
                     </div>
