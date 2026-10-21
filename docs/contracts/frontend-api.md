@@ -102,6 +102,21 @@ Email langkah 5 berupa queued transactional mail; link hanya di email/antrean, t
 
 `MemberHome` memuat `memberNumber`, `name`, `status`, `joinedAt` untuk kartu anggota (dari data member yang masuk); `whatsappCard` (`isVisible` bernilai true bila kartu WhatsApp diaktifkan di pengaturan aplikasi **dan** Ibu belum pernah membuka tautan grup; `groupUrl` dari pengaturan `whatsapp_group_url`, `null` sampai tautan grup diset); serta `upcomingEvents` (maksimal 6 `EventSummary` terdekat). Tombol gabung membuka `groupUrl` di tab baru lalu memanggil `whatsapp-joined`; bila `groupUrl` `null`, tombol nonaktif. `POST /api/member/whatsapp-joined` menyimpan waktu pertama Ibu membuka tautan (`wa_joined_at`) dan idempoten: panggilan berikutnya mengembalikan waktu pertama itu, sehingga kartu tidak tampil lagi pada kunjungan berikutnya di perangkat mana pun. Menutup kartu hanya disimpan di localStorage (`bbb-bff-whatsapp-card-dismissed`). Label format kegiatan dikirim apa adanya ("Offline" atau "Online").
 
+## Notifikasi member
+
+| Method | URL | Result |
+| --- | --- | --- |
+| `GET` | `/api/member/notifications?page=...` | `MemberNotificationPage` |
+| `GET` | `/api/member/notifications/summary` | `{ unreadCount }` |
+| `POST` | `/api/member/notifications/{notificationId}/read` | `MemberNotification` |
+| `POST` | `/api/member/notifications/read-all` | `{ markedCount }` |
+
+`MemberNotification` berbentuk `{ id, type, title, body, targetPath, unread, readAt, createdAt }`. `unread` adalah boolean dari server: `true` bila `readAt: null`, `false` setelah dibaca. `type` MVP hanya `event_registration_confirmed`, `event_cancelled`, `exit_request_approved`, `exit_request_rejected`, atau `profile_completion_required`. `targetPath` selalu path internal web app dari server; frontend menandai notifikasi dibaca sebelum menavigasi ke path tersebut. `readAt` bernilai `null` selama belum dibaca. Daftar terbaru lebih dulu, 20 per halaman, dan respons list berbentuk `{ items, meta, unreadCount }`. Tombol tandai semua hanya mengubah notifikasi milik Ibu yang belum dibaca; panggilan ulang mengembalikan `markedCount: 0`.
+
+Notifikasi adalah pelengkap email, bukan pengganti: pendaftaran berhasil, pembatalan kegiatan, serta keputusan permintaan keluar dibuat persisten dan idempoten per sumber transaksi. Pengingat H-1 hanya melalui email; blast kegiatan baru belum masuk MVP. Notifikasi profil perlu dilengkapi dicadangkan untuk flow akun yang memang dapat membuka area member; akun migrasi yang masih diguard ke onboarding tidak boleh diberi akses lewat notifikasi.
+
+Akses notifikasi memerlukan JWT member dan profil non-migrated. Member `exit_requested`/`unsubscribed` boleh membaca serta menandai inbox sendiri; endpoint kegiatan/profil lain tetap dibatasi. Keputusan disetujui mengarah ke `/status`; keputusan ditolak mengarah ke `/membership/exit-request`, alasan penolakan tersedia pada `body`. Pendaftaran sukses oleh Ibu atau admin mengarah ke `/events/{id}`; tamu publik tidak ditautkan otomatis ke member berdasarkan email. Satu notifikasi konfirmasi disimpan per UUID registrasi (termasuk daftar ulang pada UUID yang sama); satu pembatalan per event/member dan satu keputusan per exit request. Semua insert mengikuti transaksi bisnis dan ikut rollback. Retry read menjaga `readAt` pertama. Page tidak valid mendapat 422; ID asing/tidak dikenal mendapat 404 Indonesia yang sama. Tidak ada backfill notifikasi historis atau penghapusan otomatis pada tahap ini.
+
 ## Profil member
 
 | Method | URL | Payload/result |
