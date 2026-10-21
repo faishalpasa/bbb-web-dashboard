@@ -25,7 +25,7 @@ Daftar wilayah memakai endpoint `/api/regions/*` yang sama dengan member.
 
 ## List
 
-Query: `search` (nama, email, nomor anggota, atau nomor WhatsApp; `%` dan `_` dicari apa adanya; pencarian tanpa huruf dianggap nomor telepon: yang diawali `0` atau `62` dicocokkan sebagai awal nomor `628...`, selain itu sebagai potongan nomor), `status` (status admin turunan; status tak dikenal tidak memfilter), `provinceCode`, `preference` (`online|offline|both|unset`), `attendance` (`attended|never`), `page` (minimal 1), `perPage` (default 20, minimal 1, maks. 100). Urutan: member yang paling baru bergabung (`joinedAt`) di atas. `summary.activeTotal` menghitung status admin `active` (bukan `email_bounced`), `summary.total` semua member.
+Query: `search` (nama, email, nomor anggota, atau nomor WhatsApp; `%` dan `_` dicari apa adanya; pencarian tanpa huruf dianggap nomor telepon: yang diawali `0` atau `62` dicocokkan sebagai awal nomor `628...`, selain itu sebagai potongan nomor), `status` (status admin turunan; status tak dikenal tidak memfilter), `provinceCode`, `preference` (`online|offline|both|unset`), `attendance` (`attended|never`), `page` (minimal 1), `perPage` (default 20, minimal 1, maks. 100). Urutan: member yang paling baru bergabung (`joinedAt`) di atas. `summary.activeTotal` menghitung semua member dengan status tersimpan `active`, `summary.total` semua member.
 
 ```ts
 interface MemberListItem {
@@ -41,7 +41,7 @@ interface MemberListItem {
     attendedEvents: number;
     joinedAt: string;
 }
-type MemberAdminStatus = 'active' | 'exit_requested' | 'email_bounced' | 'awaiting_data' | 'inactive';
+type MemberAdminStatus = 'active' | 'exit_requested' | 'awaiting_data' | 'inactive';
 // summary: { activeTotal: number; total: number } -> "1.248 member aktif dari 1.311 data"
 ```
 
@@ -103,7 +103,7 @@ Penonaktifan mengubah status tersimpan menjadi `unsubscribed` (tampil `inactive`
 
 ## Terbuka
 
-- Status admin diturunkan dari status tersimpan: `unsubscribed` -> `inactive`, `migrated` -> `awaiting_data`, `exit_requested` tetap, dan `email_bounced` hanya untuk member `active` yang alamat emailnya bermasalah (belum ada yang mengisi penanda itu selain seed/admin). `statistics.absent` kini jumlah pendaftaran berstatus `absent` (sebelumnya selisih ikut dan hadir), `history` memuat pendaftaran yang tidak dibatalkan dari yang terbaru, maksimal 50. `signupMethod` bernilai `legacy` (label "Data lama") untuk member impor yang belum punya metode daftar; nilai itu di luar union tiga nilai di atas dan hanya labelnya yang dipakai dashboard.
+- Status admin diturunkan dari status tersimpan: `unsubscribed` -> `inactive`, `migrated` -> `awaiting_data`, `exit_requested` tetap, dan `active` tetap `active`. `users.email_bounced_at` hanya histori pengiriman internal dan tidak mengubah status, filter, atau ringkasan keanggotaan sampai ada alur deliverability yang disepakati. `statistics.absent` kini jumlah pendaftaran berstatus `absent` (sebelumnya selisih ikut dan hadir), `history` memuat pendaftaran yang tidak dibatalkan dari yang terbaru, maksimal 50. `signupMethod` bernilai `legacy` (label "Data lama") untuk member impor yang belum punya metode daftar; nilai itu di luar union tiga nilai di atas dan hanya labelnya yang dipakai dashboard.
 - Ekspor CSV memakai filter yang sama, tanpa paginasi, dan menambahkan `'` di depan sel yang diawali `=`, `+`, `-`, `@` supaya tidak dijalankan sebagai rumus di spreadsheet.
 - Kegiatan, peserta, permintaan keluar, dan dashboard membaca member yang sama dari MySQL (langkah 13-18).
 - Preferensi kegiatan dibuat opsional di form tambah/edit karena daftar menampilkan "Belum diisi".

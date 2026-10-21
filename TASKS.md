@@ -1,5 +1,9 @@
 # BBB BFF admin implementation checklist
 
+## Aksi Member dan label ekspor (21 Oktober 2026)
+
+- [x] Tombol ikon Edit pada kolom aksi desktop/kartu mobile Member mengarah ke route edit existing; tampil hanya dengan member-view + member-update, tanpa batas status buatan atau request baru. Label ekspor Member dan peserta kegiatan menjadi “Expor” sesuai permintaan; CSV/payload/permission tetap. Checklist React mempertahankan shared actions dan menghitung permission di parent. 59 tes (termasuk render positif/negatif permission, kedua markup desktop/mobile, URL/status dan label), typecheck/lint/format/build + diff check lulus. Belum browser/layout/klik edit end-to-end; server lokal tetap mati. Belum commit/push/deploy.
+
 ## Cleanup tooling masterlist (20 Oktober 2026)
 
 - [x] Atas konfirmasi pemilik bahwa import selesai: hapus CTA Preview Masterlist, route/page/context, service/type/constant dan permission khusus import. Tambah/edit/filter/ekspor Member, RBAC lain dan pagination tetap; 55 tes + typecheck/lint/format/build lulus. Kontrak arsip retirement identik lintas repo. Tidak browser smoke karena server lokal sudah dimatikan sesuai instruksi; belum commit/push/deploy. Ledger/audit/data member/profil dipertahankan; migration permission API baru diperlukan pada deploy.

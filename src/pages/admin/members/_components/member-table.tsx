@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Eye } from 'lucide-react';
+import { Eye, Pencil } from 'lucide-react';
 
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { TablePagination } from '@/components/molecules/table-pagination';
@@ -7,7 +7,9 @@ import { WhatsappButton } from '@/components/molecules/whatsapp-button';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MEMBER_STATUS_TONES } from '@/constants/member';
+import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
+import { usePermissions } from '@/hooks/usePermissions';
 import type { MemberListItem } from '@/types/member';
 import { formatTableDate } from '@/utils/date';
 import { formatNumber } from '@/utils/number';
@@ -17,12 +19,15 @@ import { usePageContext } from '../_context';
 
 const HEADERS = ['Nomor', 'Nama', 'No. WhatsApp', 'Domisili', 'Preferensi', 'Status'];
 
-interface MemberActionsProps {
+interface MemberItemProps {
     member: MemberListItem;
 }
 
-// Detail and WhatsApp as icon buttons, so opening a member does not depend on clicking the name.
-const MemberActions = ({ member }: MemberActionsProps) => (
+interface MemberActionsProps extends MemberItemProps {
+    canEdit: boolean;
+}
+
+const MemberActions = ({ member, canEdit }: MemberActionsProps) => (
     <div className="flex items-center justify-end gap-2">
         {member.whatsapp && (
             <WhatsappButton
@@ -42,11 +47,24 @@ const MemberActions = ({ member }: MemberActionsProps) => (
                 <Eye />
             </Link>
         </Button>
+        {canEdit && (
+            <Button asChild variant="outline" size="icon" className="bg-card size-11 md:size-9">
+                <Link
+                    to={ROUTES.memberEdit}
+                    params={{ memberId: member.id }}
+                    aria-label={`Edit member ${member.name}`}
+                    title="Edit member"
+                    data-test-id={`members_link_edit_${member.id}`}
+                >
+                    <Pencil aria-hidden="true" />
+                </Link>
+            </Button>
+        )}
     </div>
 );
 
 // Regency on the first line and province under it, so a long province name never stretches the column.
-const Domicile = ({ member }: MemberActionsProps) => (
+const Domicile = ({ member }: MemberItemProps) => (
     <>
         <span className="block">{member.regency ? abbreviateRegency(member.regency) : '-'}</span>
         {member.province && <span className="text-muted-foreground block text-xs">{member.province}</span>}
@@ -54,6 +72,8 @@ const Domicile = ({ member }: MemberActionsProps) => (
 );
 
 export const MemberTable = () => {
+    const { canAll } = usePermissions();
+    const canEdit = canAll([P.MEMBER_VIEW, P.MEMBER_UPDATE]);
     const { list, isLoading, rangeStart, rangeEnd, query, goToPage, setPerPage } = usePageContext();
     const items = list?.items ?? [];
     const meta = list?.meta;
@@ -106,7 +126,7 @@ export const MemberTable = () => {
                                       </td>
                                       <td className="px-3 py-3 whitespace-nowrap">{formatTableDate(member.joinedAt)}</td>
                                       <td className="py-2 pr-4 pl-3">
-                                          <MemberActions member={member} />
+                                          <MemberActions member={member} canEdit={canEdit} />
                                       </td>
                                   </tr>
                               ))}
@@ -145,7 +165,7 @@ export const MemberTable = () => {
                                   {member.preference ? member.preference.label : 'Preferensi belum diisi'} · Ikut {member.joinedEvents}, hadir{' '}
                                   {member.attendedEvents} · Bergabung {formatTableDate(member.joinedAt)}
                               </p>
-                              <MemberActions member={member} />
+                              <MemberActions member={member} canEdit={canEdit} />
                           </li>
                       ))}
             </ul>

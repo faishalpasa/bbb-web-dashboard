@@ -12,6 +12,6 @@ test('one-off import route, entry and permission are retired without removing me
     }
     const page = await readFile(new URL('../src/pages/admin/members/_components/page-content.tsx', import.meta.url), 'utf8');
     assert.match(page, /Tambah Member/);
-    assert.match(page, /Ekspor Excel/);
+    assert.match(page, /Expor/);
     assert.match(page, /<MemberFilters/);
 });

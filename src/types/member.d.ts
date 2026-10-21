@@ -2,7 +2,7 @@ import type { Identifier, PaginatedCollection, SelectOption } from '@/types/api'
 import type { ReadingProfile, ReadingProfileInput, ReadingProfileOptions } from '@/types/reading-profile';
 import type { DistrictOption, RegionOption, VillageOption } from '@/types/region';
 
-export type MemberAdminStatus = 'active' | 'exit_requested' | 'email_bounced' | 'awaiting_data' | 'inactive';
+export type MemberAdminStatus = 'active' | 'exit_requested' | 'awaiting_data' | 'inactive';
 
 export type MemberHistoryStatus = 'registered' | 'present' | 'absent';
 

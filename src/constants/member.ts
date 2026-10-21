@@ -6,7 +6,6 @@ export type BadgeTone = 'success' | 'neutral' | 'warning' | 'danger' | 'pending'
 export const MEMBER_STATUS_TONES: Record<MemberAdminStatus, BadgeTone> = {
     active: 'success',
     exit_requested: 'warning',
-    email_bounced: 'danger',
     awaiting_data: 'pending',
     inactive: 'neutral',
 };

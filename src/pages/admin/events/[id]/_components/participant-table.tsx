@@ -158,7 +158,7 @@ export const ParticipantTable = () => {
                         data-test-id="event_detail_button_export"
                     >
                         <Download aria-hidden="true" />
-                        {isExporting ? 'Menyiapkan…' : 'Ekspor Excel'}
+                        {isExporting ? 'Menyiapkan…' : 'Expor'}
                     </Button>
                 )}
             </div>

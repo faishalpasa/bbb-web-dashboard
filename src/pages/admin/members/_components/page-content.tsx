@@ -39,7 +39,7 @@ export const PageContent = () => {
                     {can(P.MEMBER_EXPORT) && (
                         <Button variant="outline" onClick={() => void exportMembers()} disabled={isExporting} data-test-id="members_button_export">
                             <Download aria-hidden="true" />
-                            {isExporting ? 'Menyiapkan…' : 'Ekspor Excel'}
+                            {isExporting ? 'Menyiapkan…' : 'Expor'}
                         </Button>
                     )}
                 </div>
