@@ -17,6 +17,7 @@ import { NUMBER_INPUT_PROPS } from '@/utils/number-input';
 // look is turned off), so the box is reset to match the other 44px fields and the inner value is left-aligned.
 const DATETIME_INPUT_CLASS =
     'bg-card h-11 min-w-0 max-w-full appearance-none py-0 text-left [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit]:p-0';
+const EVENT_TIME_STEP_SECONDS = 30 * 60;
 
 interface EventFormSectionsProps {
     form: EventForm;
@@ -157,6 +158,7 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
                             type="datetime-local"
                             value={fields.startsAt}
                             aria-required="true"
+                            step={EVENT_TIME_STEP_SECONDS}
                             onChange={(event) => setField('startsAt', event.target.value)}
                             className={DATETIME_INPUT_CLASS}
                             data-test-id={`${testId}_input_starts_at`}
@@ -168,6 +170,7 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
                             type="datetime-local"
                             value={fields.endsAt}
                             aria-required="true"
+                            step={EVENT_TIME_STEP_SECONDS}
                             onChange={(event) => setField('endsAt', event.target.value)}
                             className={DATETIME_INPUT_CLASS}
                             data-test-id={`${testId}_input_ends_at`}
@@ -189,7 +192,7 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
                         </NativeSelect>
                     </FormField>
                 </div>
-                <p className="text-muted-foreground -mt-2 text-sm">Jam diisi sesuai zona waktu acara.</p>
+                <p className="text-muted-foreground -mt-2 text-sm">Jam diisi sesuai zona waktu acara, dalam pilihan per 30 menit.</p>
             </Section>
 
             <Section title="Lokasi" data-test-id={`${testId}_location`}>
