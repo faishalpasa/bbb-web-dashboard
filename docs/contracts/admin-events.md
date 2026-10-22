@@ -10,7 +10,7 @@ Status: **di MySQL (langkah 13)**. Diimplementasi di `bbb-api` dan dipakai `web-
 
 | Method | URL | Result |
 | --- | --- | --- |
-| `GET` | `/api/admin/events?status&page&perPage` | `{ items: EventListItem[], meta, summary }` |
+| `GET` | `/api/admin/events?search&status&format&dateFrom&dateTo&sortBy&sortDirection&page&perPage` | `{ items: EventListItem[], meta, summary }` |
 | `GET` | `/api/admin/events/options` | `{ statuses, formats, timezones }` |
 | `POST` | `/api/admin/events/attendance-code` | `{ attendanceCode }` (kode acak 8 karakter) |
 | `POST` | `/api/admin/events/banner` | multipart `banner` (JPG/PNG, maks. 5 MB) -> `{ bannerUrl }` (file disimpan permanen di disk `public`, URL `/images/event-banners/...`; kirim URL itu kembali di `bannerUrl` saat menyimpan; URL lain atau file hilang -> `422` pada `bannerUrl`) |
@@ -18,12 +18,23 @@ Status: **di MySQL (langkah 13)**. Diimplementasi di `bbb-api` dan dipakai `web-
 | `GET` | `/api/admin/events/{id}` | `EventDetail` (`404` bila tidak ada) |
 | `PUT` | `/api/admin/events/{id}` | `EventInput` -> `EventDetail` |
 | `POST` | `/api/admin/events/{id}/duplicate` | -> `EventDetail` draf baru (`201`) |
-| `POST` | `/api/admin/events/{id}/cancel` | -> `EventDetail`; `422` bila bukan `published` |
+| `POST` | `/api/admin/events/{id}/cancel` | body opsional `{ reason?: string }` (teks biasa, di-trim, maks. 500 karakter; kosong = tanpa alasan; `422` untuk `reason` yang bukan teks atau terlalu panjang). -> `EventDetail`; `422` bila bukan `published`. Setelah commit, setiap pendaftar yang masih `registered` (member dan tamu) diantrekan email pembatalan yang memuat alasan bila ada; status pendaftaran tidak diubah. Alasan juga masuk ke log audit (dipotong 100 karakter) |
 | `POST` | `/api/admin/events/{id}/close` | -> `EventDetail`; `422` bila bukan `published` |
 | `GET` | `/api/admin/events/{id}/participants?search&page&perPage` | `{ items: EventParticipant[], meta, summary }` |
 | `GET` | `/api/admin/events/{id}/participants/export?search` | `text/csv` (`peserta-{slug}.csv`): Nomor, Nama, Email, WhatsApp, Jenis, Didaftarkan, Didaftarkan oleh, Status; semua peserta yang cocok dengan pencarian, tanpa paginasi, tanpa peserta yang membatalkan; dicatat di log audit (Ekspor data); sel yang diawali `= + - @` diberi awalan `'` |
 | `POST` | `/api/admin/events/{id}/participants` | `{ memberId }` atau `{ name, email, whatsapp }` -> `EventParticipant` (`201`) |
 | `PUT` | `/api/admin/events/{id}/participants/{participantId}/attendance` | `{ present: boolean }` -> `{ participant, summary }` |
+
+### Filter dan urutan daftar
+
+Semua parameter opsional; nilai yang tidak dikenal (atau bukan teks biasa) diabaikan, bukan error.
+
+- `search`: potongan judul, tidak peka huruf besar/kecil; `%` dan `_` dicari apa adanya.
+- `status`: `draft|published|completed|cancelled`.
+- `format`: `online|offline` (kolom "Jenis" di dashboard).
+- `dateFrom`, `dateTo` (`YYYY-MM-DD`, tanggal yang nyata): hari kegiatan **mulai**, dihitung menurut hari di WIB dan inklusif (`dateFrom` 00.00 WIB sampai `dateTo` 23.59 WIB). Draf tanpa `startsAt` tidak pernah masuk bila salah satunya diisi; `dateFrom` setelah `dateTo` menghasilkan daftar kosong.
+- `sortBy`: `startsAt` (bawaan; draf tanpa jadwal ditempatkan menurut `created_at`) atau `title`. `sortDirection`: `asc` atau `desc` (bawaan `desc` untuk `startsAt`, `asc` untuk `title`). Judul yang sama diurutkan menurut `id` dalam arah yang sama, sehingga halaman tidak mengulang atau melewatkan baris.
+- Filter berlaku untuk `items` dan `meta.total`; `summary` tetap menghitung semua kegiatan.
 
 ## Status dan aturan
 
@@ -32,6 +43,7 @@ Status: **di MySQL (langkah 13)**. Diimplementasi di `bbb-api` dan dipakai `web-
 - Draf boleh tidak lengkap (hanya judul, format, zona waktu, dan flag kuota/non-member wajib).
 - Menerbitkan (`publish: true`) dan mengedit kegiatan yang sudah dipublikasikan memakai aturan penuh: `startsAt` dan `endsAt` wajib dan `endsAt` setelah `startsAt`; `startsAt` harus di masa depan saat draf diterbitkan; offline butuh `venueName` dan `address`; online butuh `mapUrl` (link meeting); kuota aktif butuh `capacity`, dan `capacity` tidak boleh di bawah jumlah terdaftar.
 - Kegiatan `completed` dan `cancelled` tidak bisa diedit (`422`).
+- Pengingat H-1: `php artisan events:send-reminders` (dijadwalkan tiap lima menit) mengantrekan satu email per pendaftar `registered` pada kegiatan `published` yang berlangsung besok (mulai 09.00 zona waktu kegiatan), satu kali per kegiatan (`events.reminder_sent_at`, internal, tidak ada di payload). Mengubah `startsAt` mengosongkan penanda itu. Tidak ada endpoint atau permission baru.
 - `close`: peserta yang belum ditandai hadir menjadi `absent`. Tombol X pada peserta (`present: false`) mengembalikan ke `registered`, atau ke `absent` bila kegiatan sudah ditutup; tanda bisa dikoreksi setelah ditutup.
 - Pendaftaran member ditutup 60 menit sebelum mulai (`registration.closesAt`, dibaca dari `app_settings.registration_close_minutes`, bawaan 60). Admin masih bisa menambah peserta sampai akhir hari mulai di zona waktu acara (`registration.adminAddUntil`); kuota penuh dan kegiatan non-member tertutup menolak dengan `422`.
 - `registered` menghitung semua pendaftaran yang bukan `cancelled`, member dan tamu (kuota juga). `attended` = jumlah `present`, `null` sampai ditutup. Peserta dan kehadiran dibaca/ditulis di `event_registrations`; daftar peserta berurutan `registered_at, id`, pencarian nama/nomor member/nama tamu. `cancel` tidak mengubah pendaftaran. Mengubah kapasitas di bawah jumlah terdaftar ditolak.

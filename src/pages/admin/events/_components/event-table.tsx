@@ -1,7 +1,7 @@
 import { PERMISSIONS as P } from '@/constants/permission';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Link } from '@tanstack/react-router';
-import { Eye, Pencil } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Pencil } from 'lucide-react';
 
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { TablePagination } from '@/components/molecules/table-pagination';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EVENT_NO_SCHEDULE_LABEL, EVENT_STATUS_TONES } from '@/constants/event';
 import { ROUTES } from '@/constants/route';
-import type { EventListItem } from '@/types/event';
+import type { EventListItem, EventSortBy, EventSortDirection } from '@/types/event';
 import { formatEventDateTime } from '@/utils/date';
 
 import { usePageContext } from '../_context';
@@ -19,6 +19,33 @@ const quotaOf = (event: EventListItem): string => `${event.registered}/${event.c
 const attendedOf = (event: EventListItem): string => (event.attended === null ? '-' : String(event.attended));
 const audienceOf = (event: EventListItem): string => (event.allowsNonMember ? 'Member & External' : 'Member Only');
 const isEditable = (event: EventListItem): boolean => event.status.value === 'draft' || event.status.value === 'published';
+
+interface SortableHeaderProps {
+    label: string;
+    sortBy: EventSortBy;
+    activeSortBy: EventSortBy;
+    direction: EventSortDirection;
+    onSort: (sortBy: EventSortBy) => void;
+}
+
+const SortableHeader = ({ label, sortBy, activeSortBy, direction, onSort }: SortableHeaderProps) => {
+    const isActive = sortBy === activeSortBy;
+    const Icon = isActive ? (direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+    const nextDirection = isActive && direction === 'asc' ? 'menurun' : 'menaik';
+
+    return (
+        <button
+            type="button"
+            className="hover:text-foreground inline-flex cursor-pointer items-center gap-1 rounded-sm text-left font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
+            onClick={() => onSort(sortBy)}
+            aria-label={`Urutkan ${label} secara ${nextDirection}`}
+            data-test-id={`events_button_sort_${sortBy}`}
+        >
+            {label}
+            <Icon className="size-3.5" aria-hidden="true" />
+        </button>
+    );
+};
 
 interface EventActionsProps {
     event: EventListItem;
@@ -59,7 +86,7 @@ export const EventTable = () => {
     const { can } = usePermissions();
     const canViewParticipants = can(P.EVENT_PARTICIPANT_VIEW);
     const canEdit = (event: EventListItem) => can(P.EVENT_UPDATE) && isEditable(event);
-    const { list, isLoading, query, goToPage, setPerPage } = usePageContext();
+    const { list, isLoading, query, hasActiveFilter, goToPage, setPerPage, setSort } = usePageContext();
     const items = list?.items ?? [];
     const meta = list?.meta;
 
@@ -69,8 +96,30 @@ export const EventTable = () => {
                 <table className="w-full text-sm">
                     <thead className="bg-secondary/60 text-left">
                         <tr>
-                            <th className="py-3 pr-3 pl-4 font-semibold">Judul</th>
-                            <th className="px-3 py-3 font-semibold">Waktu</th>
+                            <th
+                                className="py-3 pr-3 pl-4"
+                                aria-sort={query.sortBy === 'title' ? (query.sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                            >
+                                <SortableHeader
+                                    label="Judul"
+                                    sortBy="title"
+                                    activeSortBy={query.sortBy}
+                                    direction={query.sortDirection}
+                                    onSort={setSort}
+                                />
+                            </th>
+                            <th
+                                className="px-3 py-3"
+                                aria-sort={query.sortBy === 'startsAt' ? (query.sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                            >
+                                <SortableHeader
+                                    label="Waktu"
+                                    sortBy="startsAt"
+                                    activeSortBy={query.sortBy}
+                                    direction={query.sortDirection}
+                                    onSort={setSort}
+                                />
+                            </th>
                             <th className="px-3 py-3 font-semibold">Jenis</th>
                             <th className="px-3 py-3 text-right font-semibold">Terdaftar</th>
                             <th className="px-3 py-3 text-right font-semibold">Hadir</th>
@@ -151,7 +200,7 @@ export const EventTable = () => {
 
             {!isLoading && items.length === 0 && (
                 <p className="text-muted-foreground border-border border-t px-4 py-8 text-center text-sm" data-test-id="events_text_empty">
-                    Belum ada kegiatan di tab ini.
+                    {hasActiveFilter ? 'Tidak ada kegiatan yang cocok dengan filter ini.' : 'Belum ada kegiatan.'}
                 </p>
             )}
 

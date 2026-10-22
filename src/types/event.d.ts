@@ -100,9 +100,20 @@ export interface EventParticipantList extends PaginatedCollection<EventParticipa
     summary: ParticipantSummary;
 }
 
+export type EventSortBy = 'startsAt' | 'title';
+export type EventSortDirection = 'asc' | 'desc';
+
 export interface EventListQuery {
     perPage?: number;
+    search: string;
     status: string;
+    format: string;
+    /** First day (YYYY-MM-DD) an event may start on, in WIB; empty = no lower bound. */
+    dateFrom: string;
+    /** Last day (YYYY-MM-DD) an event may start on, in WIB; empty = no upper bound. */
+    dateTo: string;
+    sortBy: EventSortBy;
+    sortDirection: EventSortDirection;
     page: number;
 }
 
