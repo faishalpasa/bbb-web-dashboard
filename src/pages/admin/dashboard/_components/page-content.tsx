@@ -18,7 +18,7 @@ const DashboardSkeleton = () => (
                 <Skeleton key={index} className="h-28 rounded-lg" />
             ))}
         </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_1fr]">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Skeleton className="h-64 rounded-lg" />
             <Skeleton className="h-64 rounded-lg" />
         </div>
@@ -58,7 +58,7 @@ export const PageContent = () => {
             {dashboard && (
                 <>
                     <StatCards />
-                    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.15fr_1fr]">
+                    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
                         <ActionList />
                         <UpcomingEvents />
                     </div>

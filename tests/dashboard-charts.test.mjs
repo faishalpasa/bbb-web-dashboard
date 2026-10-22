@@ -1,7 +1,7 @@
+import { build } from 'esbuild';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
-import { build } from 'esbuild';
 
 const fixtures = {
     '@test/dashboard': `export let dashboard = null; export const setDashboard = value => { dashboard = value; };`,
@@ -22,23 +22,39 @@ const bundle = await build({
     write: false,
     format: 'esm',
     platform: 'browser',
-    plugins: [{
-        name: 'dashboard-fixtures',
-        setup(build) {
-            build.onResolve({filter: /^(?:@test\/dashboard|\.\.\/_context|@\/components\/molecules\/permission-gate|@tanstack\/react-router)$/}, (args) => ({path: args.path, namespace: 'fixture'}));
-            build.onLoad({filter: /.*/, namespace: 'fixture'}, (args) => ({contents: fixtures[args.path], loader: 'js', resolveDir: process.cwd()}));
+    plugins: [
+        {
+            name: 'dashboard-fixtures',
+            setup(build) {
+                build.onResolve(
+                    { filter: /^(?:@test\/dashboard|\.\.\/_context|@\/components\/molecules\/permission-gate|@tanstack\/react-router)$/ },
+                    (args) => ({ path: args.path, namespace: 'fixture' }),
+                );
+                build.onLoad({ filter: /.*/, namespace: 'fixture' }, (args) => ({
+                    contents: fixtures[args.path],
+                    loader: 'js',
+                    resolveDir: process.cwd(),
+                }));
+            },
         },
-    }],
+    ],
 });
-const {MemberGrowthCard, MemberStatusCard, EventPerformanceCard, setDashboard, createElement, renderToStaticMarkup} =
-    await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
+const { MemberGrowthCard, MemberStatusCard, EventPerformanceCard, setDashboard, createElement, renderToStaticMarkup } = await import(
+    `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`
+);
 const render = (Component) => renderToStaticMarkup(createElement(Component));
 
 test('growth chart renders six monthly values including zero months', () => {
-    setDashboard({memberGrowth: [
-        {month: '2026-05', newMembers: 0}, {month: '2026-06', newMembers: 2}, {month: '2026-07', newMembers: 0},
-        {month: '2026-08', newMembers: 3}, {month: '2026-09', newMembers: 0}, {month: '2026-10', newMembers: 4},
-    ]});
+    setDashboard({
+        memberGrowth: [
+            { month: '2026-05', newMembers: 0 },
+            { month: '2026-06', newMembers: 2 },
+            { month: '2026-07', newMembers: 0 },
+            { month: '2026-08', newMembers: 3 },
+            { month: '2026-09', newMembers: 0 },
+            { month: '2026-10', newMembers: 4 },
+        ],
+    });
     const html = render(MemberGrowthCard);
     assert.equal((html.match(/data-test-id="dashboard_bar_growth_/g) ?? []).length, 6);
     assert.match(html, /Pertumbuhan Member/);
@@ -46,26 +62,38 @@ test('growth chart renders six monthly values including zero months', () => {
 });
 
 test('status chart shows all statuses and exact counts', () => {
-    setDashboard({stats: {members: {total: 5}}, memberStatuses: [
-        {status: 'active', label: 'Aktif', count: 3},
-        {status: 'migrated', label: 'Menunggu data', count: 2},
-        {status: 'exit_requested', label: 'Mengajukan keluar', count: 0},
-        {status: 'unsubscribed', label: 'Nonaktif', count: 0},
-    ]});
+    setDashboard({
+        stats: { members: { total: 5 } },
+        memberStatuses: [
+            { status: 'active', label: 'Aktif', count: 3 },
+            { status: 'migrated', label: 'Menunggu data', count: 2 },
+            { status: 'exit_requested', label: 'Mengajukan keluar', count: 0 },
+            { status: 'unsubscribed', label: 'Nonaktif', count: 0 },
+        ],
+    });
     const html = render(MemberStatusCard);
     assert.equal((html.match(/data-test-id="dashboard_bar_status_/g) ?? []).length, 4);
     assert.match(html, /Aktif: 3 dari 5 member/);
     assert.match(html, /Menunggu data: 2 dari 5 member/);
 });
 
-test('event chart shows registrations versus attendance and handles an empty series', () => {
-    setDashboard({eventPerformance: [{eventId: 'qa-event', eventTitle: 'Kegiatan QA', startsAt: '2026-10-20T02:00:00Z', registered: 4, attended: 3, percent: 75}]});
+test('event chart explains attendance rate and separates present from absent', () => {
+    setDashboard({
+        eventPerformance: [
+            { eventId: 'qa-event', eventTitle: 'Kegiatan QA', startsAt: '2026-10-20T02:00:00Z', registered: 4, attended: 3, percent: 75 },
+        ],
+    });
     const html = render(EventPerformanceCard);
-    assert.match(html, /4 terdaftar, 3 hadir/);
-    assert.match(html, /75%/);
+    assert.match(html, /Persentase hadir = hadir ÷ terdaftar/);
+    assert.match(html, /4 terdaftar, 3 hadir, 1 tidak hadir/);
+    assert.match(html, /75% hadir/);
+    assert.match(html, /width:75%/);
+    assert.match(html, /width:25%/);
+    assert.match(html, /bg-foreground h-full/);
+    assert.match(html, /bg-\[#a45f37\]/);
     assert.match(html, /dashboard_link_event_qa-event/);
 
-    setDashboard({eventPerformance: []});
+    setDashboard({ eventPerformance: [] });
     assert.match(render(EventPerformanceCard), /Belum ada kegiatan yang selesai/);
 });
 
