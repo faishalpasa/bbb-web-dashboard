@@ -102,6 +102,8 @@ Email langkah 5 berupa queued transactional mail; link hanya di email/antrean, t
 
 `MemberHome` memuat `memberNumber`, `name`, `status`, `joinedAt` untuk kartu anggota (dari data member yang masuk); `whatsappCard` (`isVisible` bernilai true bila kartu WhatsApp diaktifkan di pengaturan aplikasi **dan** Ibu belum pernah membuka tautan grup; `groupUrl` dari pengaturan `whatsapp_group_url`, `null` sampai tautan grup diset); serta `upcomingEvents` (maksimal 6 `EventSummary` terdekat). Tombol gabung membuka `groupUrl` di tab baru lalu memanggil `whatsapp-joined`; bila `groupUrl` `null`, tombol nonaktif. `POST /api/member/whatsapp-joined` menyimpan waktu pertama Ibu membuka tautan (`wa_joined_at`) dan idempoten: panggilan berikutnya mengembalikan waktu pertama itu, sehingga kartu tidak tampil lagi pada kunjungan berikutnya di perangkat mana pun. Menutup kartu hanya disimpan di localStorage (`bbb-bff-whatsapp-card-dismissed`). Label format kegiatan dikirim apa adanya ("Offline" atau "Online").
 
+`MemberHome.profilePhotoUrl` memuat URL absolut foto profil dari disk publik (`/images/profile-photos/...`), atau `null` bila Ibu belum memasang foto. Avatar beranda memakai URL ini dan menampilkan inisial bila `null`.
+
 ## Notifikasi member
 
 | Method | URL | Result |
