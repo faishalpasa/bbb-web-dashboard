@@ -5,9 +5,9 @@ import { formatLongDate } from '@/utils/date';
 
 import { usePageContext } from '../_context';
 import { ActionList } from './action-list';
-import { AttendanceCard } from './attendance-card';
-import { ParticipationCard } from './participation-card';
-import { ProvinceCard } from './province-card';
+import { EventPerformanceCard } from './event-performance-card';
+import { MemberGrowthCard } from './member-growth-card';
+import { MemberStatusCard } from './member-status-card';
 import { StatCards } from './stat-cards';
 import { UpcomingEvents } from './upcoming-events';
 
@@ -22,10 +22,10 @@ const DashboardSkeleton = () => (
             <Skeleton className="h-64 rounded-lg" />
             <Skeleton className="h-64 rounded-lg" />
         </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2].map((index) => (
-                <Skeleton key={index} className="h-48 rounded-lg" />
-            ))}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Skeleton className="h-64 rounded-lg" />
+            <Skeleton className="h-64 rounded-lg" />
+            <Skeleton className="h-80 rounded-lg lg:col-span-2" />
         </div>
     </div>
 );
@@ -62,10 +62,12 @@ export const PageContent = () => {
                         <ActionList />
                         <UpcomingEvents />
                     </div>
-                    <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        <ParticipationCard />
-                        <ProvinceCard />
-                        <AttendanceCard />
+                    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+                        <MemberGrowthCard />
+                        <MemberStatusCard />
+                        <div className="lg:col-span-2">
+                            <EventPerformanceCard />
+                        </div>
                     </div>
                 </>
             )}

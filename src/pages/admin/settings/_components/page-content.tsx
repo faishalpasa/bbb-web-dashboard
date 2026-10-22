@@ -130,10 +130,9 @@ export const PageContent = () => {
                         description="Berlaku untuk semua kegiatan. Admin tetap bisa menambah peserta sampai akhir hari acara."
                         data-test-id="settings_card_events"
                     >
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             {numberField('registrationCloseMinutes', 'registrationCloseMinutes', 'Batas member mendaftar (menit sebelum acara)')}
                             {numberField('cancellationCloseMinutes', 'cancellationCloseMinutes', 'Batas member membatalkan (menit sebelum acara)')}
-                            {numberField('engagedWindowMonths', 'engagedWindowMonths', 'Member terlibat (hadir dalam N bulan terakhir)')}
                         </div>
                         <p className="bg-secondary/70 rounded-md px-3 py-2 text-sm" data-test-id="settings_text_example">
                             {exampleText(fields.registrationCloseMinutes, fields.cancellationCloseMinutes)}

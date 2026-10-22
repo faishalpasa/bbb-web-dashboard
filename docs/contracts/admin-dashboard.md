@@ -15,7 +15,7 @@ interface AdminDashboard {
     asOf: string; // ISO 8601 UTC, ditampilkan sebagai "Data per ..."
     stats: {
         members: { total: number; newThisMonth: number };
-        engaged: { total: number; minAttendance: number; windowMonths: number };
+        activeMembers: { total: number };
         exitRequests: { pending: number; overdue: number; overdueAfterDays: number };
         upcomingEvents: { total: number; full: number };
     };
@@ -26,30 +26,28 @@ interface AdminDashboard {
         unclosedPastEvents: { count: number };
     };
     upcomingEvents: { id: string; title: string; startsAt: string; registered: number; quota: number | null }[]; // quota null = tanpa kuota
-    participationPreferences: { value: 'online' | 'offline' | 'both' | 'unset'; label: string; percent: number }[];
-    provinces: { name: string; percent: number }[]; // 5 teratas dari member aktif
-    latestAttendance: {
+    memberGrowth: { month: string; newMembers: number }[]; // 6 bulan kalender WIB, termasuk bulan berjalan
+    memberStatuses: { status: 'active' | 'migrated' | 'exit_requested' | 'unsubscribed'; label: string; count: number }[];
+    eventPerformance: {
         eventId: string;
         eventTitle: string;
         startsAt: string;
         registered: number;
         attended: number;
-        absent: number;
         percent: number;
-        averagePercent: number; // rata-rata beberapa kegiatan terakhir
-        averageEventCount: number;
-    } | null;
+    }[]; // maksimal 6 kegiatan completed terbaru, termasuk yang belum punya pendaftar
 }
 ```
 
 Cara menghitung (semua dari tabel, jumlah query tetap):
 
 - `members.total` = semua member; `newThisMonth` = `joined_at` sejak awal bulan kalender di Jakarta (WIB).
-- `engaged.total` = member **aktif** yang hadir (`present`) minimal 1 kegiatan yang mulai dalam `windowMonths` bulan terakhir (sampai sekarang); `windowMonths` dari Pengaturan.
+- `activeMembers.total` = member berstatus `active` saat respons dibuat; bukan ukuran kehadiran dan bukan riwayat status.
 - `exitRequests` dan `actions.exitRequestsPending` = permintaan keluar `pending` (lihat `admin-exit-requests.md`).
 - `upcomingEvents` = kegiatan `published` yang belum mulai, urut `startsAt`; `registered` = pendaftaran bukan `cancelled` (member + tamu); `full` = berkuota dan `registered >= quota`. Daftar di bawah `upcomingEvents` hanya 3 teratas.
 - `draftEvents` = status `draft`; `unclosedPastEvents` = `published` dengan `endsAt` sudah lewat; `incompleteMembers` = member `migrated` (menunggu data) yang dibuat lebih dari 7 hari lalu.
-- `participationPreferences` dan `provinces` = porsi dari member **aktif**; persen preferensi dibulatkan dengan metode sisa terbesar agar jumlahnya 100 (semua 0 bila belum ada member aktif); provinsi: 5 teratas (jumlah member, lalu nama), member tanpa provinsi tidak masuk daftar tetapi ikut penyebut.
-- `latestAttendance` = kegiatan `completed` dengan `startsAt` terbaru; `registered` bukan `cancelled`, `attended` = `present`, `absent` = sisanya; `averagePercent` = total hadir / total terdaftar dari maksimal 6 kegiatan selesai terakhir (`averageEventCount` = jumlahnya).
+- `memberGrowth` = jumlah member dengan `joined_at` pada masing-masing dari 6 bulan kalender WIB terakhir, termasuk bulan berjalan; bulan kosong tetap dikirim 0. Ini **member baru**, bukan rekonstruksi status aktif historis. Member yang dihapus lunak tidak dihitung.
+- `memberStatuses` = jumlah member saat ini untuk keempat status, urutan active/migrated/exit_requested/unsubscribed; jumlahnya sama dengan `stats.members.total`. `activeMembers.total` sama dengan count active di sini.
+- `eventPerformance` = maksimal 6 kegiatan berstatus `completed` terbaru menurut `starts_at` lalu id, terbaru dahulu. `registered` adalah pendaftaran selain `cancelled` (member + tamu), `attended` adalah `present`, dan `percent` = hadir/terdaftar dibulatkan (0 bila belum ada pendaftar). Kegiatan belum ditutup tidak masuk.
 
-Catatan: baris "Perlu Tindakan" dengan `count` 0 tidak ditampilkan. `latestAttendance` bernilai `null` bila belum ada kegiatan yang selesai.
+Catatan: baris "Perlu Tindakan" dengan `count` 0 tidak ditampilkan. `eventPerformance` adalah array kosong bila belum ada kegiatan yang selesai. Field lama `engaged`, `participationPreferences`, `provinces`, dan `latestAttendance` dihapus dari respons dashboard.
