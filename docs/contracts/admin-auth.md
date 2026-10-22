@@ -19,6 +19,9 @@ Transport (token Bearer), envelope `{ data }` dan format error mengikuti `fronte
 | `POST` | `/api/admin/login` | `AdminLoginInput` -> `AdminSession` |
 | `GET` | `/api/admin/session` | `AdminSession` (`401` bila belum masuk sebagai admin) |
 | `POST` | `/api/admin/logout` | `204` tanpa body |
+| `POST` | `/api/admin/password/forgot` | `{ email }` -> `{ resendAvailableAt }` (selalu `200`, tanpa sesi) |
+| `POST` | `/api/admin/password/verify-token` | `{ token }` -> `{ email }` (tanpa sesi) |
+| `POST` | `/api/admin/password/reset` | `{ token, password }` -> `AdminSession` + `token` (tanpa sesi) |
 
 - Kredensial salah: `422 { message, errors: { email: ["Email atau password salah."] } }`. Pesan sama untuk email tidak terdaftar dan password salah.
 - Akun member biasa (bukan admin) yang mencoba masuk diperlakukan sama seperti kredensial salah; tidak ada pesan yang membocorkan bahwa email itu milik member.
@@ -63,4 +66,11 @@ can dipertahankan untuk dashboard lama dan tidak memberi akses dari view saja. M
 - Tujuan redirect setelah login: `/` (Dashboard). Redirect ke halaman asal sebelum 401 belum diputuskan.
 - Akun pengembangan (seeder `AdminSeeder`, hanya environment `local`/`testing`, bukan credential production): `superadmin@bbb.test` / `superadmin123`, `admin@bbb.test` / `admin123`, `wahyuni.sari@bbb.org` / `admin123`, dan `tuti.handayani@bbb.org` (nonaktif). Admin lain dibuat lewat undangan (`admin-superadmin.md`). Email dicocokkan tanpa memperhatikan huruf besar/kecil dan spasi di tepi.
 - `badges.pendingExitRequests` menghitung `exit_requests.pending` hanya jika aktor memiliki exit-request-view; selain itu `0`, termasuk enum legacy superadmin yang grant-nya sudah dicabut.
-- Remember me, lupa password admin, dan rate limit login belum ada desainnya; tidak dibuat.
+- Remember me dan rate limit login belum ada desainnya; tidak dibuat.
+- Lupa password admin (tidak punya artboard sendiri; mengikuti alur lupa password member dan halaman undangan admin):
+  - `forgot` selalu menjawab `200` dengan `resendAvailableAt` (60 detik), baik untuk email admin aktif, email tidak dikenal, undangan yang belum aktif, maupun admin nonaktif, sehingga tidak membocorkan email admin. Email hanya dikirim ke admin aktif, paling banyak sekali per 60 detik, dan link baru membatalkan link lama. Tanpa `BBB_DASHBOARD_URL` tidak ada email yang dikirim.
+  - Link di email membuka `/reset-password?token=` di dashboard, berlaku 60 menit (`member_links.reset_minutes`) dan sekali pakai. Token hanya disimpan sebagai hash SHA-256 (`admin_password_resets`).
+  - `verify-token` dan `reset` yang gagal menjawab `422 { message, code, adminWhatsappUrl }` dengan `code` `token_invalid`, `token_used`, atau `token_expired`. Password baru minimal 8 karakter (`422` pada `password`, link tetap bisa dipakai).
+  - `reset` mengganti password, membatalkan semua link lain milik admin itu, menaikkan `session_epoch` admin (semua token yang diterbitkan sebelumnya ditolak, termasuk saat refresh), lalu langsung masuk dengan sesi baru seperti penerimaan undangan.
+  - Throttle: `forgot` 5/menit, `verify-token` 30/menit, `reset` 10/menit per IP.
+

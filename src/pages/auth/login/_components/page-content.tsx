@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { LoaderCircle } from 'lucide-react';
 
 import InputError from '@/components/input-error';
@@ -6,6 +7,7 @@ import { RequiredMark } from '@/components/molecules/required-mark';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ROUTES } from '@/constants/route';
 
 import { usePageContext } from '../_context';
 
@@ -37,10 +39,19 @@ export const PageContent = () => {
                 </div>
 
                 <div className="grid gap-2">
-                    <Label htmlFor="password">
-                        Password
-                        <RequiredMark />
-                    </Label>
+                    <div className="flex items-center justify-between gap-3">
+                        <Label htmlFor="password">
+                            Password
+                            <RequiredMark />
+                        </Label>
+                        <Link
+                            to={ROUTES.forgotPassword}
+                            className="text-foreground decoration-foreground/30 hover:decoration-foreground text-xs font-semibold underline underline-offset-4"
+                            data-test-id="auth_link_forgot_password"
+                        >
+                            Lupa password?
+                        </Link>
+                    </div>
                     <PasswordInput
                         id="password"
                         required

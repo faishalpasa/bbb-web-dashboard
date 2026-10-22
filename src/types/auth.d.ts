@@ -45,6 +45,14 @@ export interface AdminSession {
     badges: AdminBadges;
 }
 
+export interface AdminForgotPasswordResult {
+    resendAvailableAt: string;
+}
+
+export interface AdminResetTokenData {
+    email: string;
+}
+
 export interface AdminLoginInput {
     email: string;
     password: string;

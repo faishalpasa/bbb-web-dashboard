@@ -4,6 +4,8 @@ export const ROUTES = {
     forbidden: '/forbidden',
     noAccess: '/no-access',
     invitation: '/invitation',
+    forgotPassword: '/forgot-password',
+    resetPassword: '/reset-password',
     members: '/members',
     memberNew: '/members/new',
     memberDetail: '/members/$memberId',

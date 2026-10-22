@@ -183,6 +183,22 @@ const invitationRoute = createRoute({
     component: lazyRouteComponent(() => import('@/pages/auth/invitation'), 'PageInvitation'),
 });
 
+const forgotPasswordRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: ROUTES.forgotPassword,
+    component: lazyRouteComponent(() => import('@/pages/auth/forgot-password'), 'PageForgotPassword'),
+});
+
+// Opened from the reset email; the token is the only credential, so there is no session guard.
+const resetPasswordRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: ROUTES.resetPassword,
+    validateSearch: (search: Record<string, unknown>): { token?: string } => ({
+        token: typeof search.token === 'string' ? search.token : undefined,
+    }),
+    component: lazyRouteComponent(() => import('@/pages/auth/reset-password'), 'PageResetPassword'),
+});
+
 const forbiddenRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.forbidden,
@@ -202,6 +218,8 @@ export const router = createRouter({
     routeTree: rootRoute.addChildren([
         loginRoute,
         invitationRoute,
+        forgotPasswordRoute,
+        resetPasswordRoute,
         adminLayoutRoute.addChildren([
             forbiddenRoute,
             noAccessRoute,
