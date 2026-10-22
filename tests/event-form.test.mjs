@@ -149,16 +149,23 @@ test('conflict and legacy API states explain read-only behavior and provide expl
     assert.ok(legacy.includes('registration_form_unavailable'));
 });
 
-test('preview renders all four types read-only and escapes question and option copy', () => {
+test('preview keeps text fields read-only, leaves selects and radios usable, and escapes question and option copy', () => {
     const form = { version: 1, fields: ['input', 'textarea', 'select', 'radio'].map((type) => field(type, type)) };
     form.fields[0].label = '<img src=x onerror=alert(1)>';
     form.fields[2].options[0].label = '<script>alert(1)</script>';
     const html = renderToStaticMarkup(createElement(RegistrationFormPreview, { definition: form }));
-    assert.ok(html.includes('<fieldset disabled=""'));
+    assert.ok(!html.includes('<fieldset disabled'));
+    const textInputs = [...html.matchAll(/<(?:input|textarea)\b[^>]*>/g)].map(([tag]) => tag).filter((tag) => !tag.includes('type="radio"'));
+    assert.ok(textInputs.length >= 4);
+    assert.ok(textInputs.every((tag) => tag.includes('readOnly=""') || tag.includes('readonly=""')));
+    const interactive = html.match(/<select\b[^>]*>|<input type="radio"[^>]*>/g) ?? [];
+    assert.ok(interactive.length >= 2);
+    assert.ok(interactive.every((tag) => !/\sdisabled(=|\s|\/|>)/.test(tag)));
     assert.ok(html.includes('<textarea'));
     assert.ok(html.includes('<select'));
     assert.ok(html.includes('type="radio"'));
     assert.ok(html.includes('&lt;img'));
     assert.ok(html.includes('&lt;script&gt;'));
     assert.ok(!html.includes('<script>'));
+    assert.ok(!html.includes('// Text fields'));
 });

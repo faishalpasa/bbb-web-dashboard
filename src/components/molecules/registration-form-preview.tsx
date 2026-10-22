@@ -16,7 +16,8 @@ export const RegistrationFormPreview = ({ definition }: RegistrationFormPreviewP
         <p className="text-muted-foreground mb-4 text-sm">
             Pratinjau saja, bukan formulir pendaftaran aktif. Nama dan Email otomatis terisi untuk member yang sudah login.
         </p>
-        <fieldset disabled className="space-y-4" aria-label="Pratinjau formulir pendaftaran">
+        {/* Text fields are read-only (nothing can be typed); selects and radios stay usable so the choices can be opened and tried. */}
+        <fieldset className="space-y-4" aria-label="Pratinjau formulir pendaftaran">
             <label className="grid gap-2 text-sm">
                 Nama *<Input className="bg-card" placeholder="Nama peserta" readOnly />
             </label>
@@ -35,6 +36,7 @@ export const RegistrationFormPreview = ({ definition }: RegistrationFormPreviewP
                             aria-labelledby={`preview-label-${field.id}`}
                             placeholder="Jawaban singkat"
                             maxLength={LIMITS.input}
+                            readOnly
                         />
                     )}
                     {field.type === 'textarea' && (
@@ -43,6 +45,7 @@ export const RegistrationFormPreview = ({ definition }: RegistrationFormPreviewP
                             aria-labelledby={`preview-label-${field.id}`}
                             placeholder="Jawaban panjang"
                             maxLength={LIMITS.textarea}
+                            readOnly
                         />
                     )}
                     {field.type === 'select' && (
