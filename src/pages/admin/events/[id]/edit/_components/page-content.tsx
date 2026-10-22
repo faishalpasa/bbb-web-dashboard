@@ -149,13 +149,13 @@ const EditForm = () => {
                         <p className="text-sm">
                             {isDraft ? 'Kegiatan berstatus draf belum terlihat oleh member.' : 'Kegiatan sudah terlihat oleh member.'}
                         </p>
-                        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                        <div className="flex items-center gap-2">
                             {isDraft ? (
                                 <>
                                     <PermissionGate permission={P.EVENT_PUBLISH}>
                                         <Button
                                             type="button"
-                                            className="h-11 w-full font-semibold"
+                                            className="h-11 min-w-0 flex-1 px-3 font-semibold"
                                             disabled={isSubmitting || form.registration.requiresReload}
                                             onClick={() => void save(true)}
                                             data-test-id="event_edit_button_publish"
@@ -167,7 +167,7 @@ const EditForm = () => {
                                     <Button
                                         type="submit"
                                         variant="outline"
-                                        className="bg-card col-span-2 h-11 w-full"
+                                        className="bg-card h-11 min-w-0 flex-1 px-3"
                                         disabled={isSubmitting || form.registration.requiresReload}
                                         data-test-id="event_edit_button_save_draft"
                                     >
@@ -177,7 +177,7 @@ const EditForm = () => {
                             ) : (
                                 <Button
                                     type="submit"
-                                    className="h-11 w-full font-semibold"
+                                    className="h-11 min-w-0 flex-1 px-3 font-semibold"
                                     disabled={isSubmitting || form.registration.requiresReload}
                                     data-test-id="event_edit_button_save"
                                 >
