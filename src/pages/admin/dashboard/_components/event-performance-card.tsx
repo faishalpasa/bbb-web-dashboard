@@ -24,66 +24,66 @@ export const EventPerformanceCard = () => {
                     Belum ada kegiatan yang selesai.
                 </p>
             ) : (
-                <div className="space-y-5 p-4">
-                    <div className="text-muted-foreground flex gap-4 text-xs" aria-hidden="true">
-                        <span>
-                            <span className="bg-foreground mr-1 inline-block size-2.5 rounded-sm align-middle" />
-                            Hadir
-                        </span>
-                        <span>
-                            <span className="mr-1 inline-block size-2.5 rounded-sm bg-[#a45f37] align-middle" />
-                            Tidak hadir
-                        </span>
-                    </div>
-                    <ul className="grid gap-x-6 gap-y-5 lg:grid-cols-2">
-                        {events.map((event) => {
-                            const notAttended = event.registered - event.attended;
-                            const attendancePercent = event.registered > 0 ? (event.attended / event.registered) * 100 : 0;
+                <ul className="grid gap-4 p-4 lg:grid-cols-2">
+                    {events.map((event) => {
+                        const notAttended = event.registered - event.attended;
+                        const hasRegistrations = event.registered > 0;
+                        const attendedPercent = hasRegistrations ? Math.round((event.attended / event.registered) * 100) : 0;
+                        const notAttendedPercent = hasRegistrations ? 100 - attendedPercent : 0;
 
-                            return (
-                                <li key={event.eventId} className="min-w-0" data-test-id={`dashboard_bar_event_${event.eventId}`}>
-                                    <div className="flex items-start justify-between gap-3 text-sm">
-                                        <div className="min-w-0">
-                                            <p className="truncate font-medium" title={event.eventTitle}>
-                                                {event.eventTitle}
-                                            </p>
-                                            <p className="text-muted-foreground text-xs">{formatShortDate(event.startsAt)}</p>
-                                        </div>
-                                        <span className="shrink-0 font-mono">{event.percent}% hadir</span>
+                        return (
+                            <li
+                                key={event.eventId}
+                                className="border-border min-w-0 space-y-4 rounded-lg border p-4"
+                                data-test-id={`dashboard_bar_event_${event.eventId}`}
+                            >
+                                <div className="min-w-0">
+                                    <p className="truncate font-medium" title={event.eventTitle}>
+                                        {event.eventTitle}
+                                    </p>
+                                    <p className="text-muted-foreground text-xs">{formatShortDate(event.startsAt)}</p>
+                                </div>
+                                <div
+                                    className="bg-secondary flex h-3 overflow-hidden rounded-full"
+                                    role="img"
+                                    aria-label={`${event.eventTitle}: ${formatNumber(event.registered)} terdaftar, ${formatNumber(event.attended)} hadir, ${formatNumber(notAttended)} tidak hadir`}
+                                >
+                                    <div className="bg-foreground h-full" style={{ width: `${attendedPercent}%` }} aria-hidden="true" />
+                                    <div className="h-full bg-[#a45f37]" style={{ width: `${notAttendedPercent}%` }} aria-hidden="true" />
+                                </div>
+                                <dl className="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <dt className="text-muted-foreground text-xs">Terdaftar</dt>
+                                        <dd className="text-xl font-semibold">{formatNumber(event.registered)}</dd>
                                     </div>
-                                    <div
-                                        className="bg-secondary mt-2 flex h-3 overflow-hidden rounded-sm"
-                                        role="img"
-                                        aria-label={`${event.eventTitle}: ${formatNumber(event.registered)} terdaftar, ${formatNumber(event.attended)} hadir, ${formatNumber(notAttended)} tidak hadir`}
-                                    >
-                                        <div className="bg-foreground h-full" style={{ width: `${attendancePercent}%` }} aria-hidden="true" />
-                                        <div
-                                            className="h-full bg-[#a45f37]"
-                                            style={{ width: `${event.registered > 0 ? 100 - attendancePercent : 0}%` }}
-                                            aria-hidden="true"
-                                        />
+                                    <div>
+                                        <dt className="text-muted-foreground text-xs">Hadir</dt>
+                                        <dd className="text-foreground text-xl font-semibold">{attendedPercent}%</dd>
                                     </div>
-                                    <div className="text-muted-foreground mt-1 flex items-center justify-between gap-2 text-xs">
-                                        <span>
-                                            {formatNumber(event.registered)} terdaftar · {formatNumber(event.attended)} hadir ·{' '}
-                                            {formatNumber(notAttended)} tidak hadir
-                                        </span>
-                                        <PermissionGate permission={P.EVENT_PARTICIPANT_VIEW}>
-                                            <Link
-                                                to={ROUTES.eventDetail}
-                                                params={{ eventId: event.eventId }}
-                                                className="shrink-0 underline underline-offset-2"
-                                                data-test-id={`dashboard_link_event_${event.eventId}`}
-                                            >
-                                                Lihat peserta
-                                            </Link>
-                                        </PermissionGate>
+                                    <div>
+                                        <dt className="text-muted-foreground text-xs">Tidak hadir</dt>
+                                        <dd className="text-xl font-semibold text-[#a45f37]">{notAttendedPercent}%</dd>
                                     </div>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </div>
+                                </dl>
+                                <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
+                                    <span>
+                                        {formatNumber(event.attended)} hadir · {formatNumber(notAttended)} tidak hadir
+                                    </span>
+                                    <PermissionGate permission={P.EVENT_PARTICIPANT_VIEW}>
+                                        <Link
+                                            to={ROUTES.eventDetail}
+                                            params={{ eventId: event.eventId }}
+                                            className="shrink-0 underline underline-offset-2"
+                                            data-test-id={`dashboard_link_event_${event.eventId}`}
+                                        >
+                                            Lihat peserta
+                                        </Link>
+                                    </PermissionGate>
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ul>
             )}
         </Panel>
     );
