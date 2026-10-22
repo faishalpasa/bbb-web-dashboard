@@ -241,7 +241,11 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
                     id="mapUrl"
                     label={fields.format === 'online' ? 'Link meeting' : 'Link Maps'}
                     isOptional={fields.format === 'offline'}
-                    hint="Untuk kegiatan online, isi link meeting. Link hanya tampil untuk peserta yang sudah terdaftar."
+                    hint={
+                        fields.format === 'online'
+                            ? 'Isi link Zoom kegiatan, misalnya https://zoom.us/j/1234567890. Link hanya tampil untuk peserta yang sudah terdaftar.'
+                            : undefined
+                    }
                     error={errors.mapUrl}
                     data-test-id={`${testId}_map_url`}
                 >
@@ -251,7 +255,7 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
                         value={fields.mapUrl}
                         aria-required={fields.format === 'online'}
                         onChange={(event) => setField('mapUrl', event.target.value)}
-                        placeholder="https://maps.app.goo.gl/..."
+                        placeholder={fields.format === 'online' ? 'https://zoom.us/j/1234567890?pwd=...' : 'https://maps.app.goo.gl/...'}
                         className="bg-card h-11 font-mono"
                         data-test-id={`${testId}_input_map_url`}
                     />
