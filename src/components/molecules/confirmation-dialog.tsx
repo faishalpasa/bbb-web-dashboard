@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { Button } from '@/components/ui/button';
 
 interface ConfirmationDialogProps {
@@ -41,11 +42,7 @@ export const ConfirmationDialog = ({
                 <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
             {children}
-            {error && (
-                <p role="alert" className="text-destructive px-4 text-sm sm:px-0" data-test-id={`${testId}_error`}>
-                    {error}
-                </p>
-            )}
+            {error && <FeedbackToast data-test-id={`${testId}_error`}>{error}</FeedbackToast>}
             <DialogFooter>
                 <Button
                     className="h-11 w-full font-semibold"

@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { FormField } from '@/components/molecules/form-field';
 import { RegistrationAnswerFields } from '@/components/molecules/registration-answer-fields';
 import { Button } from '@/components/ui/button';
@@ -94,11 +95,7 @@ const ParticipantForm = () => {
                     ))}
                 </div>
             )}
-            {error && (
-                <p role="alert" className="text-destructive text-sm">
-                    {error}
-                </p>
-            )}
+            {error && <FeedbackToast data-test-id="participant_add_error">{error}</FeedbackToast>}
             {addTab === 'member' && (
                 <>
                     <FormField id="memberSearch" label="Cari member" isOptional data-test-id="participant_search">

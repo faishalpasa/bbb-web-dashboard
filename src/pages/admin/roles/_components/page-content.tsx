@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { PermissionGate } from '@/components/molecules/permission-gate';
 import { TablePagination } from '@/components/molecules/table-pagination';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ export const PageContent = () => {
             </header>
             {failure && (
                 <div className="space-y-2">
-                    <AlertMessage data-test-id="roles_error">{failure}</AlertMessage>
+                    <FeedbackToast data-test-id="roles_error">{failure}</FeedbackToast>
                     <Button variant="outline" onClick={reload} data-test-id="roles_button_retry">
                         Coba lagi
                     </Button>

@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { Download } from 'lucide-react';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { Button } from '@/components/ui/button';
 import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
@@ -45,13 +45,13 @@ export const PageContent = () => {
                 </div>
             </header>
 
-            {exportError && <AlertMessage data-test-id="members_alert_export_error">{exportError}</AlertMessage>}
+            {exportError && <FeedbackToast data-test-id="members_alert_export_error">{exportError}</FeedbackToast>}
 
             <MemberFilters />
 
             {failure ? (
                 <div className="max-w-xl space-y-3">
-                    <AlertMessage data-test-id="members_alert_error">{failure.message}</AlertMessage>
+                    <FeedbackToast data-test-id="members_alert_error">{failure.message}</FeedbackToast>
                     <Button variant="outline" onClick={reload} data-test-id="members_button_retry">
                         Coba lagi
                     </Button>

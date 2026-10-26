@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { LoaderCircle } from 'lucide-react';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { MemberFormSections } from '@/components/molecules/member-form-sections';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ export const PageContent = () => {
             </header>
 
             {(submitError || form.regionError) && (
-                <AlertMessage data-test-id="member_new_alert_error">{submitError ?? form.regionError}</AlertMessage>
+                <FeedbackToast data-test-id="member_new_alert_error">{submitError ?? form.regionError}</FeedbackToast>
             )}
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.86fr_1fr]">

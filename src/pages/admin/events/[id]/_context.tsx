@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -247,6 +248,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 const response = await putParticipantAttendance(eventId, participantId, present);
 
                 setSummary(response.data.summary);
+                toast.add({ type: 'success', title: 'Kehadiran peserta diperbarui.' });
                 setParticipants((current) =>
                     current
                         ? { ...current, items: current.items.map((item) => (item.id === participantId ? response.data.participant : item)) }
@@ -275,6 +277,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         try {
             setEvent((await postCloseEvent(eventId)).data);
+            toast.add({ type: 'success', title: 'Kegiatan ditutup.' });
             setCloseDialogOpenState(false);
             setReloadToken((token) => token + 1);
         } catch (error) {
@@ -339,6 +342,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             link.download = `peserta-${event.slug}.csv`;
             link.click();
             URL.revokeObjectURL(url);
+            toast.add({ type: 'success', title: 'File expor peserta siap diunduh.' });
         } catch (error) {
             setNotice({ tone: 'error', text: errorMessage(error) });
         } finally {
@@ -352,6 +356,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         setNotice(null);
         try {
             const response = await postDuplicateEvent(eventId);
+            toast.add({ type: 'success', title: 'Kegiatan berhasil diduplikat.' });
             void navigate({ to: canEditEvent ? ROUTES.eventEdit : ROUTES.eventDetail, params: { eventId: response.data.id } });
         } catch (error) {
             setNotice({ tone: 'error', text: errorMessage(error) });

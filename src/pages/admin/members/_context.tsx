@@ -1,5 +1,6 @@
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { getMemberOptions, getMembers, getMembersExport } from '@/services/member';
 import type { LoadFailure } from '@/types/api';
 import type { MemberList, MemberListQuery, MemberOptions, MemberSortBy, MemberSortDirection } from '@/types/member';
@@ -133,6 +134,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             link.download = 'member-bbb-bff.csv';
             link.click();
             URL.revokeObjectURL(url);
+            toast.add({ type: 'success', title: 'File expor member siap diunduh.' });
         } catch (error) {
             setExportError(errorMessage(error));
         } finally {

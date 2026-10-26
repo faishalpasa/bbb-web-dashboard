@@ -1,5 +1,6 @@
 import { createContext, type FormEventHandler, type PropsWithChildren, useContext, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { postForgotPassword } from '@/services/auth';
 import { errorMessage, fieldErrorMessage } from '@/utils/error';
 
@@ -33,8 +34,10 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
             setSentTo(address.trim());
             setResendAvailableAt(response.data.resendAvailableAt);
+            toast.add({ type: 'success', title: 'Jika email terdaftar, link atur ulang password akan dikirim.' });
         } catch (error) {
-            setEmailError(fieldErrorMessage(error, 'email') ?? errorMessage(error));
+            toast.add({ type: 'error', title: errorMessage(error) });
+            setEmailError(fieldErrorMessage(error, 'email') ?? null);
         } finally {
             setIsSubmitting(false);
         }

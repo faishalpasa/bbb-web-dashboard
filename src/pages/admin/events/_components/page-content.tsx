@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { Button } from '@/components/ui/button';
 import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
@@ -40,7 +40,7 @@ export const PageContent = () => {
             <section className="border-border bg-card overflow-hidden rounded-lg border">
                 {failure ? (
                     <div className="space-y-3 p-4">
-                        <AlertMessage data-test-id="events_alert_error">{failure.message}</AlertMessage>
+                        <FeedbackToast data-test-id="events_alert_error">{failure.message}</FeedbackToast>
                         <Button variant="outline" onClick={reload} data-test-id="events_button_retry">
                             Coba lagi
                         </Button>

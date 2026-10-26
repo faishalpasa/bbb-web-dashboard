@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { LoaderCircle } from 'lucide-react';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { FormField } from '@/components/molecules/form-field';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { Button } from '@/components/ui/button';
@@ -29,11 +29,11 @@ export const PageContent = () => {
                 <RequiredNote />
             </header>
 
-            {submitError && <AlertMessage data-test-id="admin_new_alert_error">{submitError}</AlertMessage>}
+            {submitError && <FeedbackToast data-test-id="admin_new_alert_error">{submitError}</FeedbackToast>}
 
             {invitation && (
-                <AlertMessage tone="success" data-test-id="admin_new_invitation_result">
-                    <span className="font-medium">Undangan untuk {invitation.name} dibuat.</span>{' '}
+                <section className="border-border bg-card rounded-lg border p-4 text-sm" data-test-id="admin_new_invitation_result">
+                    <span className="font-medium">Link undangan untuk {invitation.name}.</span>{' '}
                     <a
                         href={invitation.invitationPath}
                         target="_blank"
@@ -43,7 +43,7 @@ export const PageContent = () => {
                     >
                         Buka link undangan
                     </a>
-                </AlertMessage>
+                </section>
             )}
 
             <form className="border-border bg-card space-y-5 rounded-lg border p-5" noValidate onSubmit={handleSubmit} data-test-id="admin_new_form">
@@ -102,7 +102,7 @@ export const PageContent = () => {
                     </NativeSelect>
                 </FormField>
 
-                {roleOptionsError && <AlertMessage data-test-id="admin_new_role_options_error">{roleOptionsError}</AlertMessage>}
+                {roleOptionsError && <FeedbackToast data-test-id="admin_new_role_options_error">{roleOptionsError}</FeedbackToast>}
                 {!isLoadingRoles && roleOptions.length === 0 && !roleOptionsError && (
                     <p className="text-muted-foreground text-sm">Belum ada role yang dapat Anda berikan.</p>
                 )}

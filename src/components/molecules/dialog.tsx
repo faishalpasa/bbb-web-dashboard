@@ -21,6 +21,11 @@ interface DialogProps extends PropsWithChildren {
 
 const DialogContext = createContext<{ fullHeight: boolean }>({ fullHeight: false });
 
+// Toasts live in their own portal. Interacting with one must not dismiss a form dialog.
+const keepDialogForToast = (event: Event) => {
+    if (event.target instanceof Element && event.target.closest('[data-slot="toast-viewport"]')) event.preventDefault();
+};
+
 // Renders a centered dialog on desktop and a bottom sheet on mobile.
 export const Dialog = ({ open, onOpenChange, fullHeight = false, children }: DialogProps) => {
     const { isDesktop } = useMediaQuery();
@@ -49,7 +54,12 @@ export const DialogContent = ({ children, className, ...props }: HTMLAttributes<
 
     if (isDesktop) {
         return (
-            <DialogContentUI className={className} onOpenAutoFocus={(event) => event.preventDefault()} {...props}>
+            <DialogContentUI
+                className={className}
+                onOpenAutoFocus={(event) => event.preventDefault()}
+                onInteractOutside={keepDialogForToast}
+                {...props}
+            >
                 {children}
             </DialogContentUI>
         );
@@ -59,6 +69,7 @@ export const DialogContent = ({ children, className, ...props }: HTMLAttributes<
         <DrawerContent
             className={cn('max-h-[90vh]', fullHeight && 'h-[90vh]', className)}
             onOpenAutoFocus={(event) => event.preventDefault()}
+            onInteractOutside={keepDialogForToast}
             {...props}
         >
             {children}

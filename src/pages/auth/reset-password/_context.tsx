@@ -2,6 +2,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { createContext, type FormEventHandler, type PropsWithChildren, useContext, useEffect, useRef, useState } from 'react';
 
 import { useAppContext } from '@/app-context';
+import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/constants/route';
 import { postResetPassword, postVerifyResetToken } from '@/services/auth';
 import { errorMessage, fieldErrorMessage, isServiceError } from '@/utils/error';
@@ -56,6 +57,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 setEmail((await postVerifyResetToken(token.current)).data.email);
                 setState('ready');
             } catch (error) {
+                toast.add({ type: 'error', title: errorMessage(error) });
                 setInvalidMessage(errorMessage(error));
                 setAdminWhatsappUrl(isServiceError(error) ? (error.data?.adminWhatsappUrl ?? null) : null);
                 setState('invalid');
@@ -77,8 +79,10 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             const response = await postResetPassword(token.current, password);
 
             setSession(response.data);
+            toast.add({ type: 'success', title: 'Password berhasil diperbarui.' });
             void navigate({ to: landingRoute(response.data) });
         } catch (error) {
+            toast.add({ type: 'error', title: errorMessage(error) });
             const fieldError = fieldErrorMessage(error, 'password');
 
             if (fieldError) {

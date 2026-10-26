@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/constants/route';
 import { type EventForm, useEventForm } from '@/hooks/useEventForm';
 import { getEventOptions, postEvent } from '@/services/event';
@@ -51,6 +52,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         try {
             const response = await postEvent(input);
+            toast.add({ type: 'success', title: publish ? 'Kegiatan dipublikasikan.' : 'Draf kegiatan disimpan.' });
 
             void navigate({ to: ROUTES.eventDetail, params: { eventId: response.data.id } });
         } catch (error) {

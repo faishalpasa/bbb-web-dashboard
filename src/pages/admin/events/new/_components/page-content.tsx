@@ -1,9 +1,9 @@
 import { Link } from '@tanstack/react-router';
 import { LoaderCircle } from 'lucide-react';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
 import { EventFormSections } from '@/components/molecules/event-form-sections';
 import { EventTypeCard } from '@/components/molecules/event-type-card';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { PermissionGate } from '@/components/molecules/permission-gate';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { StatusBadge } from '@/components/molecules/status-badge';
@@ -38,7 +38,7 @@ export const PageContent = () => {
                 <RequiredNote />
             </header>
 
-            {submitError && <AlertMessage data-test-id="event_new_alert_error">{submitError}</AlertMessage>}
+            {submitError && <FeedbackToast data-test-id="event_new_alert_error">{submitError}</FeedbackToast>}
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.7fr_1fr]">
                 <EventFormSections

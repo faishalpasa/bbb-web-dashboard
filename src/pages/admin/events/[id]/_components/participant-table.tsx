@@ -1,6 +1,6 @@
 import { Check, Download, X } from 'lucide-react';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { TablePagination } from '@/components/molecules/table-pagination';
 import { WhatsappButton } from '@/components/molecules/whatsapp-button';
@@ -165,7 +165,7 @@ export const ParticipantTable = () => {
 
             {participantsFailure ? (
                 <div className="space-y-3 p-4">
-                    <AlertMessage data-test-id="event_detail_alert_participants_error">{participantsFailure.message}</AlertMessage>
+                    <FeedbackToast data-test-id="event_detail_alert_participants_error">{participantsFailure.message}</FeedbackToast>
                     <Button variant="outline" onClick={reload} data-test-id="event_detail_button_participants_retry">
                         Coba lagi
                     </Button>

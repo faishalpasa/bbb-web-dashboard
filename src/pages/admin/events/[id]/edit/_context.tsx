@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/constants/route';
 import { getEvent, getEventOptions, postCancelEvent, postDuplicateEvent } from '@/services/event';
 import type { LoadFailure } from '@/types/api';
@@ -86,6 +87,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         try {
             const response = await postDuplicateEvent(eventId);
+            toast.add({ type: 'success', title: 'Kegiatan berhasil diduplikat.' });
 
             void navigate({ to: ROUTES.eventEdit, params: { eventId: response.data.id } });
         } catch (error) {
@@ -115,6 +117,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         try {
             await postCancelEvent(eventId, cancelReason);
+            toast.add({ type: 'success', title: 'Kegiatan dibatalkan.' });
             void navigate({ to: ROUTES.eventDetail, params: { eventId } });
         } catch (error) {
             setCancelError(errorMessage(error));

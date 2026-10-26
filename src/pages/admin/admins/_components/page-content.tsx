@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { FormField } from '@/components/molecules/form-field';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { TablePagination } from '@/components/molecules/table-pagination';
@@ -58,14 +58,14 @@ export const PageContent = () => {
             </header>
 
             {notice && (
-                <AlertMessage tone={notice.tone} data-test-id="admins_alert_notice">
+                <FeedbackToast revision={notice} tone={notice.tone} data-test-id="admins_alert_notice">
                     {notice.text}
-                </AlertMessage>
+                </FeedbackToast>
             )}
 
             {failure ? (
                 <div className="max-w-xl space-y-3">
-                    <AlertMessage data-test-id="admins_alert_error">{failure.message}</AlertMessage>
+                    <FeedbackToast data-test-id="admins_alert_error">{failure.message}</FeedbackToast>
                     <Button variant="outline" onClick={reload} data-test-id="admins_button_retry">
                         Coba lagi
                     </Button>
@@ -194,7 +194,7 @@ export const PageContent = () => {
                             ))}
                         </NativeSelect>
                     </FormField>
-                    {roleOptionsError && <AlertMessage data-test-id="admins_assignment_options_error">{roleOptionsError}</AlertMessage>}
+                    {roleOptionsError && <FeedbackToast data-test-id="admins_assignment_options_error">{roleOptionsError}</FeedbackToast>}
                 </div>
             </ConfirmationDialog>
             <ConfirmationDialog

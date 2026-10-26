@@ -1,6 +1,7 @@
 import { createContext, type FormEventHandler, type PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useAppContext } from '@/app-context';
+import { toast } from '@/components/ui/toast';
 import { getAdminRoleOptions } from '@/services/role';
 import { postAdmin } from '@/services/superadmin';
 import type { AdminRoleSummary } from '@/types/auth';
@@ -75,7 +76,10 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         setErrors(nextErrors);
 
-        if (Object.keys(nextErrors).length > 0) return;
+        if (Object.keys(nextErrors).length > 0) {
+            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+            return;
+        }
 
         setIsSubmitting(true);
         setSubmitError(null);
@@ -85,6 +89,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             const response = await postAdmin({ name: fields.name.trim(), email: fields.email.trim(), roleId: fields.roleId });
 
             setInvitation(response.data);
+            toast.add({ type: 'success', title: 'Undangan admin berhasil dibuat.' });
             setFields({ name: '', email: '', roleId: '' });
         } catch (error) {
             const fieldErrors: InviteErrors = {
@@ -96,6 +101,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             setErrors(fieldErrors);
 
             if (!fieldErrors.name && !fieldErrors.email && !fieldErrors.roleId) setSubmitError(errorMessage(error));
+            else toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
         } finally {
             setIsSubmitting(false);
         }

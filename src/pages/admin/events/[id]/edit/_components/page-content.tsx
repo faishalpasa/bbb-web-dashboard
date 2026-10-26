@@ -7,6 +7,7 @@ import { CancelReasonField } from '@/components/molecules/cancel-reason-field';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { EventFormSections } from '@/components/molecules/event-form-sections';
 import { EventTypeCard } from '@/components/molecules/event-type-card';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { PermissionGate } from '@/components/molecules/permission-gate';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { StatusBadge } from '@/components/molecules/status-badge';
@@ -27,7 +28,7 @@ export const PageContent = () => {
     if (failure) {
         return (
             <div className="max-w-xl space-y-3">
-                <AlertMessage data-test-id="event_edit_alert_load_error">{failure.message}</AlertMessage>
+                <FeedbackToast data-test-id="event_edit_alert_load_error">{failure.message}</FeedbackToast>
                 <div className="flex gap-2">
                     {!failure.isServerError && (
                         <Button asChild variant="outline">
@@ -124,9 +125,9 @@ const EditForm = () => {
             </header>
 
             {(submitError || notice) && (
-                <AlertMessage tone={submitError ? 'error' : (notice?.tone ?? 'error')} data-test-id="event_edit_alert_notice">
+                <FeedbackToast revision={notice} tone={submitError ? 'error' : (notice?.tone ?? 'error')} data-test-id="event_edit_alert_notice">
                     {submitError ?? notice?.text}
-                </AlertMessage>
+                </FeedbackToast>
             )}
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.7fr_1fr]">

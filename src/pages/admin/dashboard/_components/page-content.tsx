@@ -1,4 +1,4 @@
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatLongDate } from '@/utils/date';
@@ -48,7 +48,7 @@ export const PageContent = () => {
 
             {failure && (
                 <div className="max-w-xl space-y-3">
-                    <AlertMessage data-test-id="dashboard_alert_error">{failure.message}</AlertMessage>
+                    <FeedbackToast data-test-id="dashboard_alert_error">{failure.message}</FeedbackToast>
                     <Button variant="outline" onClick={reload} data-test-id="dashboard_button_retry">
                         Coba lagi
                     </Button>

@@ -1,4 +1,4 @@
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,9 +27,9 @@ export const InternalNote = () => {
                 data-test-id="member_detail_input_note"
             />
             {noteMessage && (
-                <AlertMessage tone={noteMessage.tone} data-test-id="member_detail_alert_note">
+                <FeedbackToast revision={noteMessage} tone={noteMessage.tone} data-test-id="member_detail_alert_note">
                     {noteMessage.text}
-                </AlertMessage>
+                </FeedbackToast>
             )}
             {can(P.MEMBER_NOTE_UPDATE) && (
                 <Button variant="outline" disabled={isSavingNote} onClick={() => void saveNote()} data-test-id="member_detail_button_save_note">

@@ -42,6 +42,11 @@
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
+    --color-toast: var(--toast);
+    --color-toast-foreground: var(--toast-foreground);
+    --color-toast-muted: var(--toast-muted);
+    --color-toast-border: var(--toast-border);
+    --color-toast-error: var(--toast-error);
 
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);
@@ -99,6 +104,11 @@
     --border: #d8d4c7;
     --input: #b7b3a6;
     --ring: #002a32;
+    --toast: #18181b;
+    --toast-foreground: #fafafa;
+    --toast-muted: #d4d4d8;
+    --toast-border: #3f3f46;
+    --toast-error: #fca5a5;
     --chart-1: hsl(12, 76%, 61%);
     --chart-2: hsl(173, 58%, 39%);
     --chart-3: hsl(197, 37%, 24%);

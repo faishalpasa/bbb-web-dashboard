@@ -15,6 +15,7 @@ import { ArrowDown, ArrowUp, GripVertical, LockKeyhole, Plus, Trash2 } from 'luc
 import { useState } from 'react';
 
 import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { FormField } from '@/components/molecules/form-field';
 import { RegistrationFormPreview } from '@/components/molecules/registration-form-preview';
 import { Button } from '@/components/ui/button';
@@ -265,9 +266,10 @@ export const RegistrationFormBuilder = ({ builder, disabled = false }: Registrat
                     Formulir terkunci karena kegiatan sudah pernah menerima pendaftaran. Detail kegiatan lain tetap dapat diubah.
                 </p>
             )}
-            {builder.errors.form && <AlertMessage data-test-id="registration_form_error">{builder.errors.form}</AlertMessage>}
+            {builder.errors.form && <FeedbackToast data-test-id="registration_form_error">{builder.errors.form}</FeedbackToast>}
             {builder.requiresReload && (
                 <div className="space-y-2">
+                    <p className="text-sm">{builder.errors.form}</p>
                     <p className="text-sm">
                         Perubahan belum disimpan. Muat ulang untuk memakai versi terbaru; perubahan lokal di halaman ini akan dibuang.
                     </p>

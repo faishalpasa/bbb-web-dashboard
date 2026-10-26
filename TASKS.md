@@ -1,5 +1,9 @@
 # BBB BFF admin implementation checklist
 
+## Feedback toast dashboard (26 Oktober 2026)
+
+- [x] Feedback hasil aksi/copy/response API lintas halaman dan dialog memakai global shadcn Base UI Toast, gelap bottom-center + safe area. Validasi field, informasi locked/read-only, konflik yang membutuhkan reload dan link undangan tetap tersedia dekat konteksnya. Provider di luar router menjaga feedback setelah navigasi; revisi notice mendukung copy berulang tanpa duplikasi saat rerender/StrictMode. Interaksi toast tidak menutup modal/bottom sheet. Delapan tes khusus toast lulus, typecheck/lint/format/build lulus. Preview komponen sintetis desktop/mobile memverifikasi warna/posisi/wrapping, copy berulang, transisi tampilan serta close toast tanpa menutup dialog. Bukan smoke seluruh operasi terhadap API nyata; tidak menulis DB atau mengirim email. Suite keseluruhan masih memiliki satu kegagalan assertion grafik existing (`75% hadir`), file grafik dan tesnya tidak diubah. Fixture, tab dan server preview sementara dibersihkan. Belum commit/push/deploy; API tidak diubah.
+
 ## Aksi Member dan label ekspor (21 Oktober 2026)
 
 - [x] Tombol ikon Edit pada kolom aksi desktop/kartu mobile Member mengarah ke route edit existing; tampil hanya dengan member-view + member-update, tanpa batas status buatan atau request baru. Label ekspor Member dan peserta kegiatan menjadi “Expor” sesuai permintaan; CSV/payload/permission tetap. Checklist React mempertahankan shared actions dan menghitung permission di parent. 59 tes (termasuk render positif/negatif permission, kedua markup desktop/mobile, URL/status dan label), typecheck/lint/format/build + diff check lulus. Belum browser/layout/klik edit end-to-end; server lokal tetap mati. Belum commit/push/deploy.

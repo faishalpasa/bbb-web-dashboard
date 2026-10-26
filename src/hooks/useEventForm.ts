@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { EVENT_DEFAULT_CAPACITY, EVENT_DEFAULT_TIMEZONE } from '@/constants/event';
 import { useRegistrationFormBuilder } from '@/hooks/useRegistrationFormBuilder';
 import { postEventBanner, postRandomAttendanceCode } from '@/services/event';
@@ -153,7 +154,9 @@ export const useEventForm = (event?: EventDetail) => {
             const response = await postEventBanner(file);
 
             setFields((current) => ({ ...current, bannerUrl: response.data.bannerUrl }));
+            toast.add({ type: 'success', title: 'Banner kegiatan berhasil diunggah.' });
         } catch (error) {
+            toast.add({ type: 'error', title: fieldErrorMessage(error, 'banner') ?? errorMessage(error) });
             setErrors((current) => ({ ...current, bannerUrl: fieldErrorMessage(error, 'banner') ?? errorMessage(error) }));
         } finally {
             setIsUploadingBanner(false);

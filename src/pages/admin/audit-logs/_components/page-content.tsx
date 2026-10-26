@@ -1,4 +1,4 @@
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { TablePagination } from '@/components/molecules/table-pagination';
 import { Button } from '@/components/ui/button';
@@ -44,7 +44,7 @@ export const PageContent = () => {
 
                 {failure ? (
                     <div className="space-y-3 p-4">
-                        <AlertMessage data-test-id="audit_logs_alert_error">{failure.message}</AlertMessage>
+                        <FeedbackToast data-test-id="audit_logs_alert_error">{failure.message}</FeedbackToast>
                         <Button variant="outline" onClick={reload} data-test-id="audit_logs_button_retry">
                             Coba lagi
                         </Button>

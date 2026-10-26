@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 
 import { AlertMessage } from '@/components/molecules/alert-message';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { FormField } from '@/components/molecules/form-field';
 import { PermissionTree } from '@/components/molecules/permission-tree';
 import { RequiredNote } from '@/components/molecules/required-mark';
@@ -28,13 +29,13 @@ export const RoleForm = ({ editor }: RoleFormProps) => {
                 <h1 className="text-2xl font-semibold">{isCreating ? 'Buat Role' : `Role ${role?.label ?? ''}`}</h1>
             </header>
             {notice && (
-                <AlertMessage tone="success" data-test-id="roles_notice">
+                <FeedbackToast tone="success" data-test-id="roles_notice">
                     {notice}
-                </AlertMessage>
+                </FeedbackToast>
             )}
             {failure && (
                 <div className="space-y-2">
-                    <AlertMessage data-test-id="roles_error">{failure}</AlertMessage>
+                    <FeedbackToast data-test-id="roles_error">{failure}</FeedbackToast>
                     <Button variant="outline" onClick={editor.reload} data-test-id="roles_button_retry">
                         Coba lagi
                     </Button>
@@ -87,7 +88,7 @@ export const RoleForm = ({ editor }: RoleFormProps) => {
                                     data-test-id="roles_input_label"
                                 />
                             </FormField>
-                            {saveError && <AlertMessage data-test-id="roles_save_error">{saveError}</AlertMessage>}
+                            {saveError && <FeedbackToast data-test-id="roles_save_error">{saveError}</FeedbackToast>}
                             {role && role.adminCount > 0 && (
                                 <p className="text-muted-foreground text-xs">
                                     Role dipakai {role.adminCount} akun, termasuk nonaktif dan diundang, sehingga tidak bisa dihapus.

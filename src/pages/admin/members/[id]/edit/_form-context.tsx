@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { createContext, type FormEventHandler, type PropsWithChildren, useContext, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/constants/route';
 import { type MemberForm, useMemberForm } from '@/hooks/useMemberForm';
 import { putMember } from '@/services/member';
@@ -35,15 +36,20 @@ export const MemberEditFormProvider = ({ member, options, children }: MemberEdit
 
         const input = form.validate({ requireEmail: false });
 
-        if (!input) return;
+        if (!input) {
+            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+            return;
+        }
 
         setIsSubmitting(true);
 
         try {
             await putMember(member.id, input);
+            toast.add({ type: 'success', title: 'Perubahan member disimpan.' });
             void navigate({ to: ROUTES.memberDetail, params: { memberId: member.id } });
         } catch (error) {
-            if (!form.applyServerErrors(error)) setSubmitError(errorMessage(error));
+            if (form.applyServerErrors(error)) toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+            else setSubmitError(errorMessage(error));
         } finally {
             setIsSubmitting(false);
         }

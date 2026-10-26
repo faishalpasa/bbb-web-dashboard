@@ -1,6 +1,6 @@
-import { AlertMessage } from '@/components/molecules/alert-message';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { TablePagination } from '@/components/molecules/table-pagination';
 import { Button } from '@/components/ui/button';
@@ -47,14 +47,14 @@ export const PageContent = () => {
             </header>
 
             {notice && (
-                <AlertMessage tone="success" data-test-id="exit_requests_alert_notice">
+                <FeedbackToast tone="success" data-test-id="exit_requests_alert_notice">
                     {notice}
-                </AlertMessage>
+                </FeedbackToast>
             )}
 
             {failure ? (
                 <div className="max-w-xl space-y-3">
-                    <AlertMessage data-test-id="exit_requests_alert_error">{failure.message}</AlertMessage>
+                    <FeedbackToast data-test-id="exit_requests_alert_error">{failure.message}</FeedbackToast>
                     <Button variant="outline" onClick={reload} data-test-id="exit_requests_button_retry">
                         Coba lagi
                     </Button>

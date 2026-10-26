@@ -1,6 +1,7 @@
 import { type ChangeEvent, useRef } from 'react';
 
 import { DateTimeField } from '@/components/molecules/date-time-field';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { FormField } from '@/components/molecules/form-field';
 import { RegistrationFormBuilder } from '@/components/molecules/registration-form-builder';
 import { Button } from '@/components/ui/button';
@@ -65,6 +66,7 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
     return (
         <fieldset disabled={disabled} className="min-w-0 space-y-4">
             <legend className="sr-only">Data kegiatan</legend>
+            {codeError && <FeedbackToast data-test-id={`${testId}_code_error`}>{codeError}</FeedbackToast>}
             <Section title="Informasi" data-test-id={`${testId}_information`}>
                 <FormField id="title" label="Judul" error={errors.title} data-test-id={`${testId}_title`}>
                     <Input
@@ -297,7 +299,7 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
                     id="attendanceCode"
                     label="Kode kehadiran"
                     hint="Huruf dan angka tanpa spasi. Panitia membagikan kode ini saat acara berlangsung, lalu member memasukkannya untuk mencatat kehadiran."
-                    error={errors.attendanceCode ?? codeError ?? undefined}
+                    error={errors.attendanceCode}
                     data-test-id={`${testId}_attendance_code`}
                 >
                     <div className="flex gap-2">

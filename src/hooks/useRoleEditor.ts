@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { type FormEventHandler, useEffect, useState } from 'react';
 
 import { useAppContext } from '@/app-context';
+import { toast } from '@/components/ui/toast';
 import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -84,7 +85,10 @@ export const useRoleEditor = (roleId?: string) => {
         if (isCreating && !fields.name.trim()) next.name = 'Nama role harus diisi.';
         if (!fields.label.trim()) next.label = 'Label role harus diisi.';
         setErrors(next);
-        if (Object.keys(next).length > 0) return;
+        if (Object.keys(next).length > 0) {
+            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+            return;
+        }
         setIsSaving(true);
         setSaveError(null);
         setNotice(null);
@@ -92,6 +96,7 @@ export const useRoleEditor = (roleId?: string) => {
             const input = { label: fields.label.trim(), permissionIds: fields.permissionIds };
             if (isCreating) {
                 const response = await postRole({ ...input, name: fields.name.trim().toLowerCase() });
+                toast.add({ type: 'success', title: 'Role berhasil dibuat.' });
                 void navigate({ to: ROUTES.roleDetail, params: { roleId: response.data.id } });
                 return;
             }
@@ -117,6 +122,7 @@ export const useRoleEditor = (roleId?: string) => {
         setDeleteError(null);
         try {
             await deleteRole(role.id);
+            toast.add({ type: 'success', title: 'Role berhasil dihapus.' });
             void navigate({ to: ROUTES.roles });
         } catch (error) {
             setDeleteError(errorMessage(error));

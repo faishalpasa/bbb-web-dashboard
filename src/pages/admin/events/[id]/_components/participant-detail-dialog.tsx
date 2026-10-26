@@ -1,5 +1,5 @@
-import { AlertMessage } from '@/components/molecules/alert-message';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -62,7 +62,7 @@ export const ParticipantDetailDialog = () => {
                     )}
                     {error && (
                         <div className="space-y-3">
-                            <AlertMessage data-test-id="event_detail_participant_detail_error">{error}</AlertMessage>
+                            <FeedbackToast data-test-id="event_detail_participant_detail_error">{error}</FeedbackToast>
                             <Button variant="outline" className="bg-card" onClick={retry} data-test-id="event_detail_participant_detail_retry">
                                 Coba lagi
                             </Button>

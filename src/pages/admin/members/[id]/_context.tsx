@@ -1,6 +1,7 @@
 import { useParams } from '@tanstack/react-router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { useClientPagination, type ClientPagination } from '@/hooks/useClientPagination';
 import { getMember, postActivateMember, postDeactivateMember, postMemberResetPassword, putMemberNote } from '@/services/member';
 import type { LoadFailure } from '@/types/api';
@@ -117,6 +118,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
             setMember(response.data);
             setStatusDialog(null);
+            toast.add({ type: 'success', title: statusDialog === 'activate' ? 'Member diaktifkan kembali.' : 'Member dinonaktifkan.' });
         } catch (error) {
             setStatusError(errorMessage(error));
         } finally {

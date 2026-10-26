@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { createContext, type PropsWithChildren, useContext, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/constants/route';
 import { type EventForm, useEventForm } from '@/hooks/useEventForm';
 import { putEvent } from '@/services/event';
@@ -42,6 +43,7 @@ export const EventEditFormProvider = ({ event, children }: EventEditFormProvider
 
         try {
             await putEvent(event.id, input);
+            toast.add({ type: 'success', title: 'Perubahan kegiatan disimpan.' });
             void navigate({ to: ROUTES.eventDetail, params: { eventId: event.id } });
         } catch (error) {
             setSubmitError(form.applyServerErrors(error) ? 'Periksa isian formulir yang ditandai di bawah.' : errorMessage(error));

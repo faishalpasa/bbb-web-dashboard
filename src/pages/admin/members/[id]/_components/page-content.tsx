@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { WhatsappButton } from '@/components/molecules/whatsapp-button';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ export const PageContent = () => {
     if (failure) {
         return (
             <div className="max-w-xl space-y-3">
-                <AlertMessage data-test-id="member_detail_alert_error">{failure.message}</AlertMessage>
+                <FeedbackToast data-test-id="member_detail_alert_error">{failure.message}</FeedbackToast>
                 <div className="flex gap-2">
                     {!failure.isServerError && (
                         <Button asChild variant="outline">
@@ -123,9 +123,9 @@ export const PageContent = () => {
             </header>
 
             {resetMessage && (
-                <AlertMessage tone={resetMessage.tone} data-test-id="member_detail_alert_reset">
+                <FeedbackToast revision={resetMessage} tone={resetMessage.tone} data-test-id="member_detail_alert_reset">
                     {resetMessage.text}
-                </AlertMessage>
+                </FeedbackToast>
             )}
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.4fr_1fr]">

@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 
 import { AppContextProvider, useAppContext } from '@/app-context';
+import { Toaster } from '@/components/ui/toast';
 import { IS_MOCK_API_ENABLED } from '@/constants/env';
 import { ROUTES } from '@/constants/route';
 import { router } from '@/router';
@@ -51,6 +52,7 @@ const startApp = async () => {
     reactRoot.render(
         <AppContextProvider>
             <AppRouter />
+            <Toaster />
         </AppContextProvider>,
     );
 };

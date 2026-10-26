@@ -1,7 +1,7 @@
 import { LoaderCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { FormField } from '@/components/molecules/form-field';
 import { PermissionGate } from '@/components/molecules/permission-gate';
 import { RequiredNote } from '@/components/molecules/required-mark';
@@ -73,7 +73,7 @@ export const PageContent = () => {
     if (failure) {
         return (
             <div className="max-w-xl space-y-3">
-                <AlertMessage data-test-id="settings_alert_error">{failure.message}</AlertMessage>
+                <FeedbackToast data-test-id="settings_alert_error">{failure.message}</FeedbackToast>
                 <Button variant="outline" onClick={reload} data-test-id="settings_button_retry">
                     Coba lagi
                 </Button>
@@ -119,9 +119,9 @@ export const PageContent = () => {
                 </header>
 
                 {notice && (
-                    <AlertMessage tone={notice.tone} data-test-id="settings_alert_notice">
+                    <FeedbackToast revision={notice} tone={notice.tone} data-test-id="settings_alert_notice">
                         {notice.text}
-                    </AlertMessage>
+                    </FeedbackToast>
                 )}
 
                 <div className="max-w-3xl space-y-4">

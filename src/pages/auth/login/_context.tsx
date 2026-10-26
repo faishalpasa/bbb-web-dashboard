@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { createContext, type FormEventHandler, type PropsWithChildren, useContext, useState } from 'react';
 
 import { useAppContext } from '@/app-context';
+import { toast } from '@/components/ui/toast';
 import { postLogin } from '@/services/auth';
 import type { AdminLoginInput } from '@/types/auth';
 import { errorMessage, fieldErrorMessage } from '@/utils/error';
@@ -43,8 +44,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             setSession(response.data);
             void navigate({ to: landingRoute(response.data) });
         } catch (error) {
+            toast.add({ type: 'error', title: errorMessage(error) });
             setErrors({
-                email: fieldErrorMessage(error, 'email') ?? errorMessage(error),
+                email: fieldErrorMessage(error, 'email'),
                 password: fieldErrorMessage(error, 'password'),
             });
         } finally {

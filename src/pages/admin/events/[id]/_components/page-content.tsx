@@ -1,8 +1,8 @@
 import { Link } from '@tanstack/react-router';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
 import { CancelReasonField } from '@/components/molecules/cancel-reason-field';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -48,7 +48,7 @@ export const PageContent = () => {
     if (failure) {
         return (
             <div className="max-w-xl space-y-3">
-                <AlertMessage data-test-id="event_detail_alert_error">{failure.message}</AlertMessage>
+                <FeedbackToast data-test-id="event_detail_alert_error">{failure.message}</FeedbackToast>
                 <div className="flex gap-2">
                     {!failure.isServerError && (
                         <Button asChild variant="outline">
@@ -146,9 +146,9 @@ export const PageContent = () => {
             </header>
 
             {notice && (
-                <AlertMessage tone={notice.tone} data-test-id="event_detail_alert_notice">
+                <FeedbackToast revision={notice} tone={notice.tone} data-test-id="event_detail_alert_notice">
                     {notice.text}
-                </AlertMessage>
+                </FeedbackToast>
             )}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_1.5fr]">

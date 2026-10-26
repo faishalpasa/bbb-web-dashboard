@@ -1,5 +1,6 @@
 import { createContext, type FormEventHandler, type PropsWithChildren, useContext, useEffect, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { getSettings, putSettings } from '@/services/superadmin';
 import type { LoadFailure } from '@/types/api';
 import type { AdminSettings } from '@/types/superadmin';
@@ -98,6 +99,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         if (fields.adminWhatsapp.trim() && !isValidWhatsapp(whatsapp)) {
             setErrors({ adminWhatsapp: 'Nomor WhatsApp tidak valid.' });
+            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
 
             return;
         }
@@ -132,6 +134,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             setErrors(next);
 
             if (Object.keys(next).length === 0) setNotice({ tone: 'error', text: errorMessage(error) });
+            else toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
         } finally {
             setIsSaving(false);
         }
