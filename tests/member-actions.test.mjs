@@ -26,8 +26,8 @@ const bundle = await build({
 const {MemberTable, setFixture, createElement, renderToStaticMarkup} = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
 const member = {id: 'qa-member', memberNumber: 'BFF-00123', name: 'Ibu QA', whatsapp: '', regency: null, province: null,
     preference: null, status: {value: 'awaiting_data', label: 'Menunggu data'}, joinedEvents: 0, attendedEvents: 0, joinedAt: '2026-10-20T00:00:00Z'};
-const render = (permissions, status = 'awaiting_data') => {
-    setFixture(permissions, {list: {items: [{...member, status: {value: status, label: status}}], meta: {total: 1, currentPage: 1, lastPage: 1}},
+const render = (permissions, status = 'awaiting_data', whatsapp = '') => {
+    setFixture(permissions, {list: {items: [{...member, whatsapp, status: {value: status, label: status}}], meta: {total: 1, currentPage: 1, lastPage: 1}},
         isLoading: false, rangeStart: 1, rangeEnd: 1, query: {page: 1, perPage: 25, sortBy: 'joinedAt', sortDirection: 'desc'}, goToPage() {}, setPerPage() {}, setSort() {}});
     return renderToStaticMarkup(createElement(MemberTable));
 };
@@ -45,6 +45,18 @@ test('view-only, create-only, empty and missing-view grants cannot expose edit',
         const html = render(grants);
         assert.doesNotMatch(html, /members_link_edit_/);
         assert.match(html, /members_link_detail_qa-member/);
+    }
+});
+
+test('WhatsApp, detail and edit share the same mobile and desktop dimensions', () => {
+    const html = render(['member-view', 'member-update'], 'active', '081234567890');
+    const actions = [...html.matchAll(/<a\b[^>]*data-test-id="members_link_(?:whatsapp|detail|edit)_qa-member"[^>]*>/g)].map(([tag]) => tag);
+    assert.equal(actions.length, 6, 'three actions in both desktop rows and mobile cards');
+    for (const tag of actions) {
+        const classes = tag.match(/class="([^"]+)"/)[1].split(' ');
+        assert.ok(classes.includes('size-11'), 'mobile target is 44px');
+        assert.ok(classes.includes('md:size-9'), 'desktop target is 36px');
+        assert.ok(!classes.includes('size-9'), 'unconditional 36px must not override mobile');
     }
 });
 

@@ -35,16 +35,19 @@ interface SortableHeaderProps {
     onSort: (sortBy: MemberSortBy) => void;
 }
 
+const MEMBER_ACTION_CLASS = 'bg-card size-11 md:size-9';
+
 const MemberActions = ({ member, canEdit }: MemberActionsProps) => (
     <div className="flex items-center justify-end gap-2">
         {member.whatsapp && (
             <WhatsappButton
                 href={whatsappChatUrl(member.whatsapp, memberGreetingMessage(member.name))}
                 label={`Hubungi ${member.name} lewat WhatsApp`}
+                className={MEMBER_ACTION_CLASS}
                 data-test-id={`members_link_whatsapp_${member.id}`}
             />
         )}
-        <Button asChild variant="outline" size="icon" className="bg-card size-9">
+        <Button asChild variant="outline" size="icon" className={MEMBER_ACTION_CLASS}>
             <Link
                 to={ROUTES.memberDetail}
                 params={{ memberId: member.id }}
@@ -56,7 +59,7 @@ const MemberActions = ({ member, canEdit }: MemberActionsProps) => (
             </Link>
         </Button>
         {canEdit && (
-            <Button asChild variant="outline" size="icon" className="bg-card size-11 md:size-9">
+            <Button asChild variant="outline" size="icon" className={MEMBER_ACTION_CLASS}>
                 <Link
                     to={ROUTES.memberEdit}
                     params={{ memberId: member.id }}
