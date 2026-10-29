@@ -12,6 +12,7 @@ export interface MemberListItem {
     id: Identifier;
     memberNumber: string | null;
     name: string;
+    email: string;
     whatsapp: string;
     regency: string | null;
     province: string | null;

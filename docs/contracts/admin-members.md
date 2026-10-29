@@ -32,6 +32,7 @@ interface MemberListItem {
     id: string;
     memberNumber: string | null; // null sebelum data dilengkapi
     name: string;
+    email: string; // alamat akun, ditampilkan di list dan CTA mailto; tidak mengirim email otomatis
     whatsapp: string; // 628...
     regency: string | null;
     province: string | null;

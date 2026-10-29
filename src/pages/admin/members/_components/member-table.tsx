@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Pencil } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Mail, Pencil } from 'lucide-react';
 
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { TablePagination } from '@/components/molecules/table-pagination';
@@ -16,8 +16,6 @@ import { formatNumber } from '@/utils/number';
 import { abbreviateRegency, formatWhatsapp, memberGreetingMessage, whatsappChatUrl } from '@/utils/string';
 
 import { usePageContext } from '../_context';
-
-const HEADERS = ['Nomor', 'Nama', 'No. WhatsApp', 'Domisili', 'Preferensi', 'Status'];
 
 interface MemberItemProps {
     member: MemberListItem;
@@ -38,12 +36,25 @@ interface SortableHeaderProps {
 const MEMBER_ACTION_CLASS = 'bg-card size-11 md:size-9';
 
 const MemberActions = ({ member, canEdit }: MemberActionsProps) => (
-    <div className="flex items-center justify-end gap-2">
+    <div className="flex flex-wrap items-center justify-end gap-2">
+        {member.email && (
+            <Button asChild variant="outline" size="icon" className={MEMBER_ACTION_CLASS}>
+                <a
+                    href={`mailto:${encodeURIComponent(member.email)}`}
+                    aria-label={`Hubungi ${member.name} lewat email`}
+                    title="Hubungi lewat email"
+                    data-test-id={`members_link_email_${member.id}`}
+                >
+                    <Mail aria-hidden="true" />
+                </a>
+            </Button>
+        )}
         {member.whatsapp && (
             <WhatsappButton
                 href={whatsappChatUrl(member.whatsapp, memberGreetingMessage(member.name))}
                 label={`Hubungi ${member.name} lewat WhatsApp`}
                 className={MEMBER_ACTION_CLASS}
+                iconClassName="size-4"
                 data-test-id={`members_link_whatsapp_${member.id}`}
             />
         )}
@@ -138,12 +149,7 @@ export const MemberTable = () => {
                                     onSort={setSort}
                                 />
                             </th>
-                            {HEADERS.slice(2).map((header) => (
-                                <th key={header} className="px-3 py-3 font-semibold whitespace-nowrap">
-                                    {header}
-                                </th>
-                            ))}
-                            <th className="px-3 py-3 text-right font-semibold whitespace-nowrap">Ikut / Hadir</th>
+                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Domisili</th>
                             <th
                                 className="px-3 py-3 whitespace-nowrap"
                                 aria-sort={query.sortBy === 'joinedAt' ? (query.sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
@@ -156,6 +162,8 @@ export const MemberTable = () => {
                                     onSort={setSort}
                                 />
                             </th>
+                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Preferensi</th>
+                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Status</th>
                             <th className="py-3 pr-4 pl-3 text-right font-semibold">Aksi</th>
                         </tr>
                     </thead>
@@ -163,7 +171,7 @@ export const MemberTable = () => {
                         {isLoading && items.length === 0
                             ? Array.from({ length: 8 }, (_, index) => (
                                   <tr key={index} className="border-border border-t">
-                                      <td colSpan={9} className="px-4 py-3">
+                                      <td colSpan={7} className="px-4 py-3">
                                           <Skeleton className="h-5 w-full" />
                                       </td>
                                   </tr>
@@ -171,13 +179,22 @@ export const MemberTable = () => {
                             : items.map((member) => (
                                   <tr key={member.id} className="border-border border-t" data-test-id={`members_row_${member.id}`}>
                                       <td className="py-3 pr-3 pl-4 font-mono text-xs whitespace-nowrap">{member.memberNumber ?? '-'}</td>
-                                      <td className="px-3 py-3 font-medium">{member.name}</td>
-                                      <td className="px-3 py-3 font-mono text-xs whitespace-nowrap">
-                                          {member.whatsapp ? formatWhatsapp(member.whatsapp) : '-'}
+                                      <td className="space-y-1 px-3 py-3" data-test-id={`members_cell_name_${member.id}`}>
+                                          <span className="block font-medium">{member.name}</span>
+                                          <span
+                                              className="text-muted-foreground block text-xs break-all"
+                                              data-test-id={`members_text_email_${member.id}`}
+                                          >
+                                              {member.email || '-'}
+                                          </span>
+                                          <span className="text-muted-foreground block font-mono text-xs whitespace-nowrap">
+                                              {member.whatsapp ? formatWhatsapp(member.whatsapp) : '-'}
+                                          </span>
                                       </td>
                                       <td className="px-3 py-3">
                                           <Domicile member={member} />
                                       </td>
+                                      <td className="px-3 py-3 whitespace-nowrap">{formatTableDate(member.joinedAt)}</td>
                                       <td className="px-3 py-3 whitespace-nowrap">
                                           {member.preference ? member.preference.label : <span className="text-[#8a6d1f]">Belum diisi</span>}
                                       </td>
@@ -188,10 +205,6 @@ export const MemberTable = () => {
                                               data-test-id={`members_badge_status_${member.id}`}
                                           />
                                       </td>
-                                      <td className="px-3 py-3 text-right font-mono text-xs whitespace-nowrap">
-                                          {member.joinedEvents} / {member.attendedEvents}
-                                      </td>
-                                      <td className="px-3 py-3 whitespace-nowrap">{formatTableDate(member.joinedAt)}</td>
                                       <td className="py-2 pr-4 pl-3">
                                           <MemberActions member={member} canEdit={canEdit} />
                                       </td>
@@ -222,9 +235,13 @@ export const MemberTable = () => {
                                       data-test-id={`members_card_badge_status_${member.id}`}
                                   />
                               </div>
-                              <p className="font-mono text-xs">
-                                  {member.memberNumber ?? '-'} · {member.whatsapp ? formatWhatsapp(member.whatsapp) : '-'}
+                              <p className="text-muted-foreground text-sm break-all" data-test-id={`members_card_email_${member.id}`}>
+                                  {member.email || '-'}
                               </p>
+                              <p className="text-muted-foreground font-mono text-xs" data-test-id={`members_card_whatsapp_${member.id}`}>
+                                  {member.whatsapp ? formatWhatsapp(member.whatsapp) : '-'}
+                              </p>
+                              <p className="font-mono text-xs">{member.memberNumber ?? '-'}</p>
                               <p className="text-sm">
                                   <Domicile member={member} />
                               </p>
