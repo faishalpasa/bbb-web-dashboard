@@ -1,0 +1,15 @@
+{
+    "name": "BBB Admin (Dev)",
+    "short_name": "BBB Admin (Dev)",
+    "description": "Dashboard admin Buibu Baca Buku Best Friends & Family",
+    "lang": "id",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "theme_color": "#F6F4ED",
+    "background_color": "#F6F4ED",
+    "icons": [
+        { "src": "/app-icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "/app-icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    ]
+}
