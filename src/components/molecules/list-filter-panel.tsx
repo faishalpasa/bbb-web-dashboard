@@ -1,5 +1,5 @@
 import { SlidersHorizontal } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
 import { Button } from '@/components/ui/button';
@@ -16,16 +16,38 @@ interface ListFilterPanelProps {
 export const ListFilterPanel = ({ search, children, title, hasActiveFilter, 'data-test-id': testId }: ListFilterPanelProps) => {
     const { isDesktop } = useMediaQuery(1024);
     const [isOpen, setIsOpen] = useState(false);
+    const [isStuck, setIsStuck] = useState(false);
+    const stickySentinelRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!isDesktop || !stickySentinelRef.current) return;
+
+        const observer = new IntersectionObserver(([entry]) => setIsStuck(!entry.isIntersecting), {
+            rootMargin: '-24px 0px 0px 0px',
+        });
+        observer.observe(stickySentinelRef.current);
+
+        return () => observer.disconnect();
+    }, [isDesktop]);
 
     if (isDesktop) {
         return (
-            <section
-                className="border-border bg-card grid grid-cols-1 gap-4 rounded-lg border p-4 lg:sticky lg:top-6 lg:z-20 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))] lg:shadow-sm"
-                data-test-id={testId}
-            >
-                {search}
-                {children}
-            </section>
+            <>
+                <div ref={stickySentinelRef} className="-mb-px h-px" aria-hidden="true" />
+                <section className="bg-background lg:sticky lg:top-6 lg:z-20" data-test-id={testId}>
+                    {isStuck && (
+                        <div
+                            className="bg-background pointer-events-none absolute -inset-x-6 -top-6 bottom-0 -z-10"
+                            aria-hidden="true"
+                            data-test-id={`${testId}_backdrop`}
+                        />
+                    )}
+                    <div className="border-border bg-card grid grid-cols-1 gap-4 rounded-lg border p-4 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))] lg:shadow-sm">
+                        {search}
+                        {children}
+                    </div>
+                </section>
+            </>
         );
     }
 

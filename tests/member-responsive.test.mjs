@@ -29,12 +29,22 @@ test('member and event filters stick 24px from the top only on desktop', async (
         const name = module === 'members' ? 'member' : 'event';
         const filters = await source(`pages/admin/${module}/_components/${name}-filters.tsx`);
         assert.match(filters, /<ListFilterPanel/);
-        for (const utility of ['bg-card', 'lg:sticky', 'lg:top-6', 'lg:z-20', 'lg:shadow-sm']) {
+        for (const utility of ['bg-background', 'lg:sticky', 'lg:top-6', 'lg:z-20']) {
             assert.ok(classes.includes(utility), `${module}: ${utility}`);
         }
         assert.ok(!classes.includes('sticky'), 'mobile filters must scroll normally');
         assert.ok(!classes.includes('fixed'), 'filters must stay in document flow');
     }
+});
+
+test('sticky desktop filters mask the gutters only after reaching the sticky offset', async () => {
+    const panel = await source('components/molecules/list-filter-panel.tsx');
+    assert.match(panel, /new IntersectionObserver/);
+    assert.match(panel, /rootMargin: '-24px 0px 0px 0px'/);
+    assert.match(panel, /\{isStuck && \(/);
+    assert.match(panel, /bg-background pointer-events-none absolute -inset-x-6 -top-6 bottom-0 -z-10/);
+    assert.match(panel, /aria-hidden="true"/);
+    assert.match(panel, /border-border bg-card grid/);
 });
 
 test('mobile and tablet filters use the shared dialog as a bottom sheet below 1024px', async () => {
