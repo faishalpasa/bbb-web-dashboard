@@ -1,8 +1,10 @@
 import { DatePickerField } from '@/components/molecules/date-picker-field';
+import { ListFilterPanel } from '@/components/molecules/list-filter-panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { SelectOption } from '@/types/api';
 
 import { usePageContext } from '../_context';
@@ -33,27 +35,31 @@ const FilterSelect = ({ id, label, allLabel, value, options, onChange }: FilterS
 );
 
 export const EventFilters = () => {
+    const { isDesktop } = useMediaQuery(1024);
     const { query, searchText, options, hasActiveFilter, setSearchText, setFilter, clearFilters } = usePageContext();
 
     return (
-        <section
-            className="border-border bg-card grid grid-cols-1 gap-4 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]"
+        <ListFilterPanel
+            title="Filter kegiatan"
+            hasActiveFilter={hasActiveFilter}
             data-test-id="events_filters"
+            search={
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor="search" className="sr-only text-xs font-normal lg:not-sr-only">
+                        Pencarian
+                    </Label>
+                    <Input
+                        id="search"
+                        type="search"
+                        value={searchText}
+                        onChange={(event) => setSearchText(event.target.value)}
+                        placeholder="Judul kegiatan"
+                        className="bg-card h-11 lg:h-10"
+                        data-test-id="events_input_search"
+                    />
+                </div>
+            }
         >
-            <div className="grid min-w-0 gap-1.5 sm:col-span-2 lg:col-span-1">
-                <Label htmlFor="search" className="text-xs font-normal">
-                    Pencarian
-                </Label>
-                <Input
-                    id="search"
-                    type="search"
-                    value={searchText}
-                    onChange={(event) => setSearchText(event.target.value)}
-                    placeholder="Judul kegiatan"
-                    className="bg-card h-10"
-                    data-test-id="events_input_search"
-                />
-            </div>
             <FilterSelect
                 id="status"
                 label="Status"
@@ -74,25 +80,47 @@ export const EventFilters = () => {
                 <Label htmlFor="dateFrom" className="text-xs font-normal">
                     Dari tanggal
                 </Label>
-                <DatePickerField
-                    id="dateFrom"
-                    value={query.dateFrom}
-                    onChange={(value) => setFilter('dateFrom', value)}
-                    placeholder="Pilih tanggal"
-                    data-test-id="events_date_from"
-                />
+                {isDesktop ? (
+                    <DatePickerField
+                        id="dateFrom"
+                        value={query.dateFrom}
+                        onChange={(value) => setFilter('dateFrom', value)}
+                        placeholder="Pilih tanggal"
+                        data-test-id="events_date_from"
+                    />
+                ) : (
+                    <Input
+                        id="dateFrom"
+                        type="date"
+                        value={query.dateFrom}
+                        onChange={(event) => setFilter('dateFrom', event.target.value)}
+                        className="bg-card h-11 min-w-0"
+                        data-test-id="events_date_from_input"
+                    />
+                )}
             </div>
             <div className="grid min-w-0 gap-1.5">
                 <Label htmlFor="dateTo" className="text-xs font-normal">
                     Sampai tanggal
                 </Label>
-                <DatePickerField
-                    id="dateTo"
-                    value={query.dateTo}
-                    onChange={(value) => setFilter('dateTo', value)}
-                    placeholder="Pilih tanggal"
-                    data-test-id="events_date_to"
-                />
+                {isDesktop ? (
+                    <DatePickerField
+                        id="dateTo"
+                        value={query.dateTo}
+                        onChange={(value) => setFilter('dateTo', value)}
+                        placeholder="Pilih tanggal"
+                        data-test-id="events_date_to"
+                    />
+                ) : (
+                    <Input
+                        id="dateTo"
+                        type="date"
+                        value={query.dateTo}
+                        onChange={(event) => setFilter('dateTo', event.target.value)}
+                        className="bg-card h-11 min-w-0"
+                        data-test-id="events_date_to_input"
+                    />
+                )}
             </div>
             {hasActiveFilter && (
                 <div className="sm:col-span-2 lg:col-span-5">
@@ -101,6 +129,6 @@ export const EventFilters = () => {
                     </Button>
                 </div>
             )}
-        </section>
+        </ListFilterPanel>
     );
 };

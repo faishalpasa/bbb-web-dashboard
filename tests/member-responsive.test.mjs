@@ -5,13 +5,13 @@ import { test } from 'node:test';
 const source = (path) => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8');
 
 // These guard the layout utilities; actual CSS geometry is checked in the browser.
-test('member search spans two columns only from the two-column breakpoint', async () => {
+test('member search uses the shared responsive panel with a mobile-only sort field', async () => {
     const filters = await source('pages/admin/members/_components/member-filters.tsx');
-    assert.match(filters, /grid grid-cols-1/);
-    assert.match(filters, /grid min-w-0 gap-1\.5 sm:col-span-2 lg:col-span-1/);
+    assert.match(filters, /<ListFilterPanel/);
+    assert.match(filters, /search=\{/);
     assert.doesNotMatch(filters, /className="col-span-2/);
-    assert.match(filters, /lg:grid-cols-\[minmax\(0,2fr\)_repeat\(4,minmax\(0,1fr\)\)\]/);
-    assert.match(filters, /<div className="grid min-w-0 gap-1\.5">/);
+    assert.match(filters, /lg:hidden/);
+    assert.match(filters, /data-test-id="members_select_sort"/);
 });
 
 test('member header actions can wrap without expanding the mobile page', async () => {
@@ -20,6 +20,37 @@ test('member header actions can wrap without expanding the mobile page', async (
     for (const action of ['MEMBER_CREATE', 'MEMBER_EXPORT']) {
         assert.ok(page.includes(`P.${action}`));
     }
+});
+
+test('member and event filters stick 24px from the top only on desktop', async () => {
+    const panel = await source('components/molecules/list-filter-panel.tsx');
+    const classes = panel.match(/<section\s+className="([^"]+)"/)[1].split(' ');
+    for (const module of ['members', 'events']) {
+        const name = module === 'members' ? 'member' : 'event';
+        const filters = await source(`pages/admin/${module}/_components/${name}-filters.tsx`);
+        assert.match(filters, /<ListFilterPanel/);
+        for (const utility of ['bg-card', 'lg:sticky', 'lg:top-6', 'lg:z-20', 'lg:shadow-sm']) {
+            assert.ok(classes.includes(utility), `${module}: ${utility}`);
+        }
+        assert.ok(!classes.includes('sticky'), 'mobile filters must scroll normally');
+        assert.ok(!classes.includes('fixed'), 'filters must stay in document flow');
+    }
+});
+
+test('mobile and tablet filters use the shared dialog as a bottom sheet below 1024px', async () => {
+    const panel = await source('components/molecules/list-filter-panel.tsx');
+    assert.match(panel, /useMediaQuery\(1024\)/);
+    assert.match(panel, /mobileUntil=\{1024\}/);
+    assert.match(panel, /aria-expanded=\{isOpen\}/);
+    assert.match(panel, /overflow-y-auto/);
+    assert.match(panel, /safe-area-inset-bottom/);
+    const dialog = await source('components/molecules/dialog.tsx');
+    assert.match(dialog, /mobileUntil = 768/);
+    assert.match(dialog, /useMediaQuery\(mobileUntil\)/);
+    const events = await source('pages/admin/events/_components/event-filters.tsx');
+    assert.match(events, /type="date"/);
+    assert.match(events, /events_date_from_input/);
+    assert.match(events, /events_date_to_input/);
 });
 
 test('shared create/edit member preferences wrap inside the card', async () => {

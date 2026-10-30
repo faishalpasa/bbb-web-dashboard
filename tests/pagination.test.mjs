@@ -3,20 +3,39 @@ import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { build } from 'esbuild';
 
-globalThis.window = { innerWidth: 1360 };
+globalThis.window = { innerWidth: 1360, location: { href: 'http://localhost:5174/members' } };
 
 const bundle = await build({
-    stdin: { contents: `export * from './src/utils/pagination'; export * from './src/components/molecules/table-pagination';
+    stdin: { contents: `export * from './src/utils/pagination'; export * from './src/components/molecules/table-pagination'; export {ListFilterPanel} from './src/components/molecules/list-filter-panel';
         export {createElement} from 'react'; export {renderToStaticMarkup} from 'react-dom/server';`, resolveDir: process.cwd() },
     bundle: true, write: false, format: 'esm', platform: 'browser',
 });
-const { paginationEntries, paginateItems, TablePagination, createElement, renderToStaticMarkup } =
+const { paginationEntries, paginateItems, TablePagination, ListFilterPanel, createElement, renderToStaticMarkup } =
     await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
 
 test('small tables show all numbers and no previous/next controls', () => {
     assert.deepEqual(paginationEntries(1, 1), [1]);
     assert.deepEqual(paginationEntries(2, 3), [1, 2, 3]);
     assert.deepEqual(paginationEntries(7, 7), [1, 2, 3, 4, 5, 6, 7]);
+});
+
+test('filter panel only renders inline filters on desktop and a collapsed trigger on mobile and tablet', () => {
+    const props = {search: createElement('input', {'data-test-id': 'search'}), title: 'Filter', hasActiveFilter: true, 'data-test-id': 'filters'};
+    for (const width of [360, 390, 768, 1023, 1024, 1360]) {
+        globalThis.window.innerWidth = width;
+        const html = renderToStaticMarkup(createElement(ListFilterPanel, props, createElement('span', null, 'Inline filter fixture')));
+        assert.match(html, /data-test-id="search"/);
+        if (width >= 1024) {
+            assert.match(html, /Inline filter fixture/);
+            assert.match(html, /lg:sticky lg:top-6/);
+            assert.doesNotMatch(html, /filters_button_open/);
+        } else {
+            assert.match(html, /filters_button_open/);
+            assert.match(html, /aria-expanded="false"/);
+            assert.doesNotMatch(html, /Inline filter fixture/);
+        }
+    }
+    globalThis.window.innerWidth = 1360;
 });
 test('large tables keep first last active and nearby pages with bounded ellipses', () => {
     assert.deepEqual(paginationEntries(1, 200), [1, 2, 3, 4, 'end-ellipsis', 200]);

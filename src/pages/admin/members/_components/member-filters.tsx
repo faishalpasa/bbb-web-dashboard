@@ -1,3 +1,4 @@
+import { ListFilterPanel } from '@/components/molecules/list-filter-panel';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -41,24 +42,34 @@ export const MemberFilters = () => {
     };
 
     return (
-        <section
-            className="border-border bg-card grid grid-cols-1 gap-4 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]"
+        <ListFilterPanel
+            title="Filter member"
+            hasActiveFilter={Boolean(
+                query.status ||
+                    query.provinceCode ||
+                    query.preference ||
+                    query.attendance ||
+                    query.sortBy !== 'joinedAt' ||
+                    query.sortDirection !== 'desc',
+            )}
             data-test-id="members_filters"
+            search={
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor="search" className="sr-only text-xs font-normal lg:not-sr-only">
+                        Pencarian
+                    </Label>
+                    <Input
+                        id="search"
+                        type="search"
+                        value={searchText}
+                        onChange={(event) => setSearchText(event.target.value)}
+                        placeholder="Nama, email, no. WhatsApp, atau nomor member"
+                        className="bg-card h-11 lg:h-10"
+                        data-test-id="members_input_search"
+                    />
+                </div>
+            }
         >
-            <div className="grid min-w-0 gap-1.5 sm:col-span-2 lg:col-span-1">
-                <Label htmlFor="search" className="text-xs font-normal">
-                    Pencarian
-                </Label>
-                <Input
-                    id="search"
-                    type="search"
-                    value={searchText}
-                    onChange={(event) => setSearchText(event.target.value)}
-                    placeholder="Nama, email, no. WhatsApp, atau nomor member"
-                    className="bg-card h-10"
-                    data-test-id="members_input_search"
-                />
-            </div>
             <FilterSelect
                 id="status"
                 label="Status"
@@ -91,7 +102,7 @@ export const MemberFilters = () => {
                 options={options?.attendance ?? []}
                 onChange={(value) => setFilter('attendance', value)}
             />
-            <div className="grid min-w-0 gap-1.5 sm:col-span-2 md:hidden">
+            <div className="grid min-w-0 gap-1.5 lg:hidden">
                 <Label htmlFor="sort" className="text-xs font-normal">
                     Urutkan
                 </Label>
@@ -110,6 +121,6 @@ export const MemberFilters = () => {
                     <option value="name:desc">Nama: Z–A</option>
                 </NativeSelect>
             </div>
-        </section>
+        </ListFilterPanel>
     );
 };
