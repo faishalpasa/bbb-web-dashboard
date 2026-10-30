@@ -28,7 +28,7 @@ const member = {id: 'qa-member', memberNumber: 'BFF-00123', name: 'Ibu QA', emai
     preference: null, status: {value: 'awaiting_data', label: 'Menunggu data'}, joinedEvents: 0, attendedEvents: 0, joinedAt: '2026-10-20T00:00:00Z'};
 const render = (permissions, status = 'awaiting_data', whatsapp = '') => {
     setFixture(permissions, {list: {items: [{...member, whatsapp, status: {value: status, label: status}}], meta: {total: 1, currentPage: 1, lastPage: 1}},
-        isLoading: false, rangeStart: 1, rangeEnd: 1, query: {page: 1, perPage: 25, sortBy: 'joinedAt', sortDirection: 'desc'}, goToPage() {}, setPerPage() {}, setSort() {}});
+        isLoading: false, rangeStart: 1, rangeEnd: 1, query: {page: 1, perPage: 100, sortBy: 'joinedAt', sortDirection: 'desc'}, goToPage() {}, setPerPage() {}, setSort() {}});
     return renderToStaticMarkup(createElement(MemberTable));
 };
 
@@ -104,6 +104,21 @@ test('edit visibility follows permissions rather than guessing member status res
     }
 });
 
+test('member page sizes are exactly 100 250 500 1000 with 100 selected', () => {
+    const html = render(['member-view']);
+    const select = html.match(/<select[^>]*data-test-id="members_pagination_page_size"[^>]*>([\s\S]*?)<\/select>/)[1];
+    assert.deepEqual([...select.matchAll(/<option value="(\d+)"/g)].map(([, size]) => Number(size)), [100, 250, 500, 1000]);
+    assert.match(select, /value="100" selected/);
+});
+
+test('member initial page size is 100 and size changes reset page one', async () => {
+    const source = await readFile(new URL('../src/pages/admin/members/_context.tsx', import.meta.url), 'utf8');
+    const constants = await readFile(new URL('../src/constants/member.ts', import.meta.url), 'utf8');
+    assert.match(constants, /MEMBER_DEFAULT_PER_PAGE = 100/);
+    assert.match(source, /perPage: MEMBER_DEFAULT_PER_PAGE/);
+    assert.match(source, /setPerPage:.*perPage, page: 1/);
+});
+
 test('member table exposes sortable desktop headers with joined date newest first by default', () => {
     const html = render(['member-view']);
 
@@ -119,6 +134,25 @@ test('member table renders a dash when WhatsApp is absent', () => {
     const contact = html.match(/<td[^>]*data-test-id="members_cell_name_qa-member"[^>]*>([\s\S]*?)<\/td>/)?.[1];
     assert.match(contact, />-<\/span>/);
     assert.match(html, /data-test-id="members_card_whatsapp_qa-member">-<\/p>/);
+});
+
+test('member detail omits the consent display without removing the API consent type', async () => {
+    const profile = await readFile(new URL('../src/pages/admin/members/[id]/_components/member-profile.tsx', import.meta.url), 'utf8');
+    const types = await readFile(new URL('../src/types/member.d.ts', import.meta.url), 'utf8');
+    assert.doesNotMatch(profile, /member_detail_row_consent|label="Persetujuan"/);
+    assert.match(profile, /member_detail_row_joined/);
+    assert.match(types, /consent: \{ rulesVersion: string; acceptedAt: string \} \| null/);
+});
+
+test('member detail has icon-only email and WhatsApp contacts with accessible names', async () => {
+    const source = await readFile(new URL('../src/pages/admin/members/[id]/_components/page-content.tsx', import.meta.url), 'utf8');
+    assert.match(source, /data-test-id="member_detail_link_email"/);
+    assert.match(source, /mailto:\$\{encodeURIComponent\(member.email\)\}/);
+    assert.match(source, /aria-label=\{`Hubungi \$\{member.name\} lewat email`\}/);
+    const whatsapp = source.match(/<WhatsappButton[\s\S]*?\/>/)[0];
+    assert.doesNotMatch(whatsapp, /text="Chat"/);
+    assert.match(whatsapp, /iconClassName="size-4"/);
+    assert.match(whatsapp, /size-11 md:size-10/);
 });
 
 test('member and participant export labels no longer claim an Excel file', async () => {

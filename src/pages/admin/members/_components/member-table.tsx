@@ -6,7 +6,7 @@ import { TablePagination } from '@/components/molecules/table-pagination';
 import { WhatsappButton } from '@/components/molecules/whatsapp-button';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MEMBER_STATUS_TONES } from '@/constants/member';
+import { MEMBER_DEFAULT_PER_PAGE, MEMBER_PAGE_SIZES, MEMBER_STATUS_TONES } from '@/constants/member';
 import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -268,7 +268,8 @@ export const MemberTable = () => {
                 </p>
                 <TablePagination
                     total={meta?.total ?? 0}
-                    perPage={query.perPage ?? 25}
+                    perPage={query.perPage ?? MEMBER_DEFAULT_PER_PAGE}
+                    pageSizes={MEMBER_PAGE_SIZES}
                     onPerPageChange={setPerPage}
                     currentPage={meta?.currentPage ?? query.page}
                     lastPage={meta?.lastPage ?? 1}

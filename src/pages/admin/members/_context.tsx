@@ -1,6 +1,7 @@
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { toast } from '@/components/ui/toast';
+import { MEMBER_DEFAULT_PER_PAGE } from '@/constants/member';
 import { getMemberOptions, getMembers, getMembersExport } from '@/services/member';
 import type { LoadFailure } from '@/types/api';
 import type { MemberList, MemberListQuery, MemberOptions, MemberSortBy, MemberSortDirection } from '@/types/member';
@@ -17,7 +18,7 @@ const INITIAL_QUERY: MemberListQuery = {
     sortBy: 'joinedAt',
     sortDirection: 'desc',
     page: 1,
-    perPage: 25,
+    perPage: MEMBER_DEFAULT_PER_PAGE,
 };
 
 type FilterName = 'status' | 'provinceCode' | 'preference' | 'attendance';

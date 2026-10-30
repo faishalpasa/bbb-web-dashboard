@@ -1,6 +1,6 @@
 # Admin member management contract (DRAFT)
 
-Pagination dashboard (20 Oktober 2026): GET /members menerima perPage seperti implementasi existing (maks. 100). FE mengirim default 25, opsi 10/20/25/50/100, kembali page=1 saat ukuran/filter berubah. Riwayat kegiatan pada detail member tetap dikirim utuh dan dipaginasi client-side. Footer bersama menampilkan Tampilkan + selector + total di kiri, nomor/ellipsis + panah prev/next di kanan; tanpa tombol first/last. Default API dan envelope existing tetap.
+Pagination Member (30 Oktober 2026): GET /members menerima perPage default 100, maksimal 1000. FE memakai default 100 dengan opsi 100/250/500/1000, kembali page=1 saat ukuran/filter berubah. Ini khusus daftar Member; pilihan pagination tabel lain dan riwayat kegiatan pada detail member tidak berubah. Footer bersama menampilkan Tampilkan + selector + total di kiri, nomor/ellipsis + panah prev/next di kanan; tanpa tombol first/last. Envelope existing tetap.
 
 Tambahan profil/minat member (20 Oktober 2026): [kontrak shared](member-reading-profile.md). Detail, options dan input create/edit mendapat tambahan opsional; list/CSV dan permission existing tetap.
 
@@ -25,7 +25,7 @@ Daftar wilayah memakai endpoint `/api/regions/*` yang sama dengan member.
 
 ## List
 
-Query: `search` (nama, email, nomor anggota, atau nomor WhatsApp; `%` dan `_` dicari apa adanya; pencarian tanpa huruf dianggap nomor telepon: yang diawali `0` atau `62` dicocokkan sebagai awal nomor `628...`, selain itu sebagai potongan nomor), `status` (status admin turunan; status tak dikenal tidak memfilter), `provinceCode`, `preference` (`online|offline|both|unset`), `attendance` (`attended|never`), `sortBy` (`memberNumber|name|joinedAt`, default `joinedAt`; nilai tak dikenal memakai default), `sortDirection` (`asc|desc`, default `desc`; selain `asc` memakai `desc`), `page` (minimal 1), `perPage` (default 20, minimal 1, maks. 100). Nomor member kosong selalu di bawah saat diurutkan berdasarkan nomor; tie-breaker adalah ID dengan arah sama. `summary.activeTotal` menghitung semua member dengan status tersimpan `active`, `summary.total` semua member.
+Query: `search` (nama, email, nomor anggota, atau nomor WhatsApp; `%` dan `_` dicari apa adanya; pencarian tanpa huruf dianggap nomor telepon: yang diawali `0` atau `62` dicocokkan sebagai awal nomor `628...`, selain itu sebagai potongan nomor), `status` (status admin turunan; status tak dikenal tidak memfilter), `provinceCode`, `preference` (`online|offline|both|unset`), `attendance` (`attended|never`), `sortBy` (`memberNumber|name|joinedAt`, default `joinedAt`; nilai tak dikenal memakai default), `sortDirection` (`asc|desc`, default `desc`; selain `asc` memakai `desc`), `page` (minimal 1), `perPage` (default 100, minimal 1, maks. 1000). Nomor member kosong selalu di bawah saat diurutkan berdasarkan nomor; tie-breaker adalah ID dengan arah sama. `summary.activeTotal` menghitung semua member dengan status tersimpan `active`, `summary.total` semua member.
 
 ```ts
 interface MemberListItem {

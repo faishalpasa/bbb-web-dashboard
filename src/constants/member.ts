@@ -1,5 +1,8 @@
 import type { MemberAdminStatus, MemberHistoryStatus } from '@/types/member';
 
+export const MEMBER_DEFAULT_PER_PAGE = 100;
+export const MEMBER_PAGE_SIZES = [100, 250, 500, 1000] as const;
+
 export type BadgeTone = 'success' | 'neutral' | 'warning' | 'danger' | 'pending' | 'dark' | 'sage';
 
 // Status labels come from the API; the tone is presentation only.

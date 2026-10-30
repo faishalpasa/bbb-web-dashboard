@@ -11,6 +11,7 @@ interface TablePaginationProps {
     lastPage: number;
     total: number;
     perPage: number;
+    pageSizes?: readonly number[];
     isLoading?: boolean;
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: number) => void;
@@ -23,6 +24,7 @@ export const TablePagination = ({
     lastPage,
     total,
     perPage,
+    pageSizes = TABLE_PAGE_SIZES,
     isLoading = false,
     onPageChange,
     onPerPageChange,
@@ -58,7 +60,7 @@ export const TablePagination = ({
                     onChange={(event) => onPerPageChange(Number(event.target.value))}
                     data-test-id={`${testId}_page_size`}
                 >
-                    {TABLE_PAGE_SIZES.map((size) => (
+                    {pageSizes.map((size) => (
                         <option key={size} value={size}>
                             {size}
                         </option>

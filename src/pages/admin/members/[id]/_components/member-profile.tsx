@@ -72,11 +72,6 @@ export const MemberProfile = () => {
                     <ProfileRow label="Bergabung" data-test-id="member_detail_row_joined">
                         {formatLongDate(member.joinedAt)}
                     </ProfileRow>
-                    <ProfileRow label="Persetujuan" data-test-id="member_detail_row_consent">
-                        {member.consent
-                            ? `Aturan versi ${member.consent.rulesVersion}, ${formatLongDate(member.consent.acceptedAt)}`
-                            : 'Belum menyetujui'}
-                    </ProfileRow>
                 </dl>
             </section>
             <ReadingProfileSummary profile={member} data-test-id="member_detail_reading_summary" />

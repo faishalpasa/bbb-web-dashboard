@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { Mail } from 'lucide-react';
 
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
@@ -76,11 +77,24 @@ export const PageContent = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                        {member.email && (
+                            <Button asChild variant="outline" size="icon" className="bg-card size-11 md:size-10">
+                                <a
+                                    href={`mailto:${encodeURIComponent(member.email)}`}
+                                    aria-label={`Hubungi ${member.name} lewat email`}
+                                    title="Hubungi lewat email"
+                                    data-test-id="member_detail_link_email"
+                                >
+                                    <Mail aria-hidden="true" />
+                                </a>
+                            </Button>
+                        )}
                         {member.whatsapp && (
                             <WhatsappButton
                                 href={whatsappChatUrl(member.whatsapp, memberGreetingMessage(member.name))}
-                                label={`Chat ${member.name} lewat WhatsApp`}
-                                text="Chat"
+                                label={`Hubungi ${member.name} lewat WhatsApp`}
+                                className="bg-card size-11 md:size-10"
+                                iconClassName="size-4"
                                 data-test-id="member_detail_link_chat"
                             />
                         )}

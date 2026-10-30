@@ -51,6 +51,10 @@ test('loading disables all numbers and current page remains non-actionable', () 
     const html = renderToStaticMarkup(createElement(TablePagination, { currentPage: 2, lastPage: 3, total: 61, perPage: 25, isLoading: true, onPageChange: () => {}, onPerPageChange: () => {}, 'data-test-id': 'loading' }));
     assert.equal((html.match(/disabled=""/g) ?? []).length, 6);
 });
+test('tables without custom page sizes retain their original size options', () => {
+    const html = renderToStaticMarkup(createElement(TablePagination, {currentPage: 1, lastPage: 1, total: 0, perPage: 25, onPageChange() {}, onPerPageChange() {}, 'data-test-id': 'unchanged'}));
+    assert.deepEqual([...html.matchAll(/<option value="(\d+)"/g)].map(([, size]) => Number(size)), [10, 20, 25, 50, 100]);
+});
 test('client collections keep exact order and identity across pages with no duplicates or omissions', () => {
     const records = Array.from({ length: 61 }, (_, id) => ({ id }));
     const pages = [1, 2, 3].map((page) => paginateItems(records, page));
