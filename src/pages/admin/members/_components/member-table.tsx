@@ -1,10 +1,9 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Mail, Pencil } from 'lucide-react';
 
+import { ROW_ACTION_ITEM_CLASS, RowActionsMenu } from '@/components/molecules/row-actions-menu';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { TablePagination } from '@/components/molecules/table-pagination';
-import { WhatsappButton } from '@/components/molecules/whatsapp-button';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MEMBER_DEFAULT_PER_PAGE, MEMBER_PAGE_SIZES, MEMBER_STATUS_TONES } from '@/constants/member';
 import { PERMISSIONS as P } from '@/constants/permission';
@@ -33,56 +32,63 @@ interface SortableHeaderProps {
     onSort: (sortBy: MemberSortBy) => void;
 }
 
-const MEMBER_ACTION_CLASS = 'bg-card size-11 md:size-9';
-
 const MemberActions = ({ member, canEdit }: MemberActionsProps) => (
-    <div className="flex flex-wrap items-center justify-end gap-2">
-        {member.email && (
-            <Button asChild variant="outline" size="icon" className={MEMBER_ACTION_CLASS}>
-                <a
-                    href={`mailto:${encodeURIComponent(member.email)}`}
-                    aria-label={`Hubungi ${member.name} lewat email`}
-                    title="Hubungi lewat email"
-                    data-test-id={`members_link_email_${member.id}`}
-                >
-                    <Mail aria-hidden="true" />
-                </a>
-            </Button>
-        )}
-        {member.whatsapp && (
-            <WhatsappButton
-                href={whatsappChatUrl(member.whatsapp, memberGreetingMessage(member.name))}
-                label={`Hubungi ${member.name} lewat WhatsApp`}
-                className={MEMBER_ACTION_CLASS}
-                iconClassName="size-4"
-                data-test-id={`members_link_whatsapp_${member.id}`}
-            />
-        )}
-        <Button asChild variant="outline" size="icon" className={MEMBER_ACTION_CLASS}>
-            <Link
-                to={ROUTES.memberDetail}
-                params={{ memberId: member.id }}
-                aria-label={`Lihat detail ${member.name}`}
-                title="Lihat detail"
-                data-test-id={`members_link_detail_${member.id}`}
-            >
-                <Eye />
-            </Link>
-        </Button>
-        {canEdit && (
-            <Button asChild variant="outline" size="icon" className={MEMBER_ACTION_CLASS}>
+    <RowActionsMenu label={member.name} data-test-id={`members_actions_${member.id}`}>
+        {(close) => (
+            <>
                 <Link
-                    to={ROUTES.memberEdit}
+                    to={ROUTES.memberDetail}
                     params={{ memberId: member.id }}
-                    aria-label={`Edit member ${member.name}`}
-                    title="Edit member"
-                    data-test-id={`members_link_edit_${member.id}`}
+                    role="menuitem"
+                    className={ROW_ACTION_ITEM_CLASS}
+                    onClick={close}
+                    data-test-id={`members_link_detail_${member.id}`}
                 >
-                    <Pencil aria-hidden="true" />
+                    <Eye className="size-4 shrink-0" aria-hidden="true" />
+                    Lihat detail
                 </Link>
-            </Button>
+                {canEdit && (
+                    <Link
+                        to={ROUTES.memberEdit}
+                        params={{ memberId: member.id }}
+                        role="menuitem"
+                        className={ROW_ACTION_ITEM_CLASS}
+                        onClick={close}
+                        data-test-id={`members_link_edit_${member.id}`}
+                    >
+                        <Pencil className="size-4 shrink-0" aria-hidden="true" />
+                        Edit member
+                    </Link>
+                )}
+                {member.whatsapp && (
+                    <a
+                        href={whatsappChatUrl(member.whatsapp, memberGreetingMessage(member.name))}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        role="menuitem"
+                        className={ROW_ACTION_ITEM_CLASS}
+                        onClick={close}
+                        data-test-id={`members_link_whatsapp_${member.id}`}
+                    >
+                        <img src="/images/whatsapp.png" alt="" aria-hidden="true" className="size-4 shrink-0" />
+                        Hubungi lewat WhatsApp
+                    </a>
+                )}
+                {member.email && (
+                    <a
+                        href={`mailto:${encodeURIComponent(member.email)}`}
+                        role="menuitem"
+                        className={ROW_ACTION_ITEM_CLASS}
+                        onClick={close}
+                        data-test-id={`members_link_email_${member.id}`}
+                    >
+                        <Mail className="size-4 shrink-0" aria-hidden="true" />
+                        Hubungi lewat email
+                    </a>
+                )}
+            </>
         )}
-    </div>
+    </RowActionsMenu>
 );
 
 const SortableHeader = ({ label, sortBy, activeSortBy, direction, onSort }: SortableHeaderProps) => {
@@ -149,6 +155,7 @@ export const MemberTable = () => {
                                     onSort={setSort}
                                 />
                             </th>
+                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Kontak</th>
                             <th className="px-3 py-3 font-semibold whitespace-nowrap">Domisili</th>
                             <th
                                 className="px-3 py-3 whitespace-nowrap"
@@ -164,6 +171,7 @@ export const MemberTable = () => {
                             </th>
                             <th className="px-3 py-3 font-semibold whitespace-nowrap">Preferensi</th>
                             <th className="px-3 py-3 font-semibold whitespace-nowrap">Status</th>
+                            <th className="px-3 py-3 text-right font-semibold whitespace-nowrap">Ikut / Hadir</th>
                             <th className="py-3 pr-4 pl-3 text-right font-semibold">Aksi</th>
                         </tr>
                     </thead>
@@ -171,7 +179,7 @@ export const MemberTable = () => {
                         {isLoading && items.length === 0
                             ? Array.from({ length: 8 }, (_, index) => (
                                   <tr key={index} className="border-border border-t">
-                                      <td colSpan={7} className="px-4 py-3">
+                                      <td colSpan={9} className="px-4 py-3">
                                           <Skeleton className="h-5 w-full" />
                                       </td>
                                   </tr>
@@ -179,16 +187,21 @@ export const MemberTable = () => {
                             : items.map((member) => (
                                   <tr key={member.id} className="border-border border-t" data-test-id={`members_row_${member.id}`}>
                                       <td className="py-3 pr-3 pl-4 font-mono text-xs whitespace-nowrap">{member.memberNumber ?? '-'}</td>
-                                      <td className="space-y-1 px-3 py-3" data-test-id={`members_cell_name_${member.id}`}>
+                                      <td className="px-3 py-3" data-test-id={`members_cell_name_${member.id}`}>
                                           <span className="block font-medium">{member.name}</span>
+                                      </td>
+                                      <td className="space-y-1 px-3 py-3" data-test-id={`members_cell_contact_${member.id}`}>
+                                          <span
+                                              className="block font-mono text-xs whitespace-nowrap"
+                                              data-test-id={`members_text_whatsapp_${member.id}`}
+                                          >
+                                              {member.whatsapp ? formatWhatsapp(member.whatsapp) : '-'}
+                                          </span>
                                           <span
                                               className="text-muted-foreground block text-xs break-all"
                                               data-test-id={`members_text_email_${member.id}`}
                                           >
                                               {member.email || '-'}
-                                          </span>
-                                          <span className="text-muted-foreground block font-mono text-xs whitespace-nowrap">
-                                              {member.whatsapp ? formatWhatsapp(member.whatsapp) : '-'}
                                           </span>
                                       </td>
                                       <td className="px-3 py-3">
@@ -204,6 +217,12 @@ export const MemberTable = () => {
                                               label={member.status.label}
                                               data-test-id={`members_badge_status_${member.id}`}
                                           />
+                                      </td>
+                                      <td
+                                          className="px-3 py-3 text-right font-mono text-xs whitespace-nowrap"
+                                          data-test-id={`members_cell_events_${member.id}`}
+                                      >
+                                          {formatNumber(member.joinedEvents)} / {formatNumber(member.attendedEvents)}
                                       </td>
                                       <td className="py-2 pr-4 pl-3">
                                           <MemberActions member={member} canEdit={canEdit} />

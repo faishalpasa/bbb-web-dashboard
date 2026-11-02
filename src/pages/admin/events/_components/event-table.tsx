@@ -3,9 +3,9 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { Link } from '@tanstack/react-router';
 import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Pencil } from 'lucide-react';
 
+import { ROW_ACTION_ITEM_CLASS, RowActionsMenu } from '@/components/molecules/row-actions-menu';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { TablePagination } from '@/components/molecules/table-pagination';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EVENT_NO_SCHEDULE_LABEL, EVENT_STATUS_TONES } from '@/constants/event';
 import { ROUTES } from '@/constants/route';
@@ -54,32 +54,36 @@ interface EventActionsProps {
 }
 
 const EventActions = ({ event, canEdit, canViewParticipants }: EventActionsProps) => (
-    <div className="flex items-center justify-end gap-2">
-        <Button asChild variant="outline" size="icon" className="bg-card size-9">
-            <Link
-                to={ROUTES.eventDetail}
-                params={{ eventId: event.id }}
-                aria-label={canViewParticipants ? `Lihat peserta ${event.title}` : `Lihat detail ${event.title}`}
-                title={canViewParticipants ? 'Lihat peserta' : 'Lihat detail'}
-                data-test-id={`events_link_participants_${event.id}`}
-            >
-                <Eye />
-            </Link>
-        </Button>
-        {canEdit && (
-            <Button asChild variant="outline" size="icon" className="bg-card size-9">
+    <RowActionsMenu label={event.title} data-test-id={`events_actions_${event.id}`}>
+        {(close) => (
+            <>
                 <Link
-                    to={ROUTES.eventEdit}
+                    to={ROUTES.eventDetail}
                     params={{ eventId: event.id }}
-                    aria-label={`Edit kegiatan ${event.title}`}
-                    title="Edit kegiatan"
-                    data-test-id={`events_link_edit_${event.id}`}
+                    role="menuitem"
+                    className={ROW_ACTION_ITEM_CLASS}
+                    onClick={close}
+                    data-test-id={`events_link_participants_${event.id}`}
                 >
-                    <Pencil />
+                    <Eye className="size-4 shrink-0" aria-hidden="true" />
+                    {canViewParticipants ? 'Lihat peserta' : 'Lihat detail'}
                 </Link>
-            </Button>
+                {canEdit && (
+                    <Link
+                        to={ROUTES.eventEdit}
+                        params={{ eventId: event.id }}
+                        role="menuitem"
+                        className={ROW_ACTION_ITEM_CLASS}
+                        onClick={close}
+                        data-test-id={`events_link_edit_${event.id}`}
+                    >
+                        <Pencil className="size-4 shrink-0" aria-hidden="true" />
+                        Edit kegiatan
+                    </Link>
+                )}
+            </>
         )}
-    </div>
+    </RowActionsMenu>
 );
 
 export const EventTable = () => {
