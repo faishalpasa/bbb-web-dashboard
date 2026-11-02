@@ -14,20 +14,20 @@ export const AdminLayout = () => {
             <AdminSidebar />
 
             <header
-                className="border-border bg-card sticky top-0 z-40 flex h-14 items-center gap-3 border-b px-4 lg:hidden"
+                className="border-border bg-card sticky top-0 z-40 flex h-14 items-center justify-center border-b px-4 lg:hidden"
                 data-test-id="admin_topbar"
             >
                 <button
                     type="button"
                     onClick={() => setIsDrawerOpen(true)}
-                    className="hover:bg-secondary focus-visible:ring-ring -ml-2 flex size-11 items-center justify-center rounded-md focus-visible:ring-2 focus-visible:outline-none"
+                    className="hover:bg-secondary focus-visible:ring-ring absolute left-2 flex size-11 items-center justify-center rounded-md focus-visible:ring-2 focus-visible:outline-none"
                     aria-label="Buka menu"
                     aria-expanded={isDrawerOpen}
                     data-test-id="admin_topbar_button_menu"
                 >
                     <Menu className="size-5" />
                 </button>
-                <BrandLogo className="w-[110px]" />
+                <BrandLogo className="w-[160px]" />
             </header>
 
             <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>

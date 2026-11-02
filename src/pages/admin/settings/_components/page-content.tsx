@@ -98,7 +98,7 @@ export const PageContent = () => {
 
     return (
         <form
-            className="space-y-4"
+            className="flex flex-col gap-4"
             onSubmit={(event) => {
                 if (can(P.SETTING_UPDATE)) void handleSubmit(event);
                 else event.preventDefault();
@@ -135,7 +135,7 @@ export const PageContent = () => {
                         description="Berlaku untuk semua kegiatan. Admin tetap bisa menambah peserta sampai akhir hari acara."
                         data-test-id="settings_card_events"
                     >
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             {numberField('registrationCloseMinutes', 'registrationCloseMinutes', 'Batas member mendaftar (menit sebelum acara)')}
                             {numberField('cancellationCloseMinutes', 'cancellationCloseMinutes', 'Batas member membatalkan (menit sebelum acara)')}
                             {numberField(
