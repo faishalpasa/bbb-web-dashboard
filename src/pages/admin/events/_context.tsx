@@ -21,6 +21,9 @@ const INITIAL_QUERY: EventListQuery = {
 
 type FilterName = 'status' | 'format' | 'dateFrom' | 'dateTo';
 
+/** The filters set in the filter dialog; they are applied together. */
+export type EventFilterValues = Pick<EventListQuery, FilterName>;
+
 interface PageContextValue {
     query: EventListQuery;
     searchText: string;
@@ -30,9 +33,9 @@ interface PageContextValue {
     failure: LoadFailure | null;
     isLoading: boolean;
     setSearchText: (value: string) => void;
-    setFilter: (name: FilterName, value: string) => void;
+    applyFilters: (values: EventFilterValues) => void;
+    resetFilters: () => void;
     setSort: (sortBy: EventSortBy, direction?: EventSortDirection) => void;
-    clearFilters: () => void;
     goToPage: (page: number) => void;
     setPerPage: (perPage: number) => void;
     reload: () => void;
@@ -70,7 +73,10 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         return () => window.clearTimeout(timer);
     }, [searchText]);
 
-    const setFilter = useCallback((name: FilterName, value: string) => setQuery((current) => ({ ...current, [name]: value, page: 1 })), []);
+    const applyFilters = useCallback((values: EventFilterValues) => setQuery((current) => ({ ...current, ...values, page: 1 })), []);
+
+    // Clears the dialog's filters and keeps the search text, the sort and the page size.
+    const resetFilters = useCallback(() => setQuery((current) => ({ ...current, status: '', format: '', dateFrom: '', dateTo: '', page: 1 })), []);
 
     // The first click on a header sorts ascending, the next one reverses it (as on the members page).
     const setSort = useCallback((sortBy: EventSortBy, direction?: EventSortDirection) => {
@@ -80,11 +86,6 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             sortDirection: direction ?? (current.sortBy === sortBy && current.sortDirection === 'asc' ? 'desc' : 'asc'),
             page: 1,
         }));
-    }, []);
-
-    const clearFilters = useCallback(() => {
-        setSearchTextState('');
-        setQuery((current) => ({ ...INITIAL_QUERY, perPage: current.perPage, sortBy: current.sortBy, sortDirection: current.sortDirection }));
     }, []);
 
     useEffect(() => {
@@ -119,14 +120,14 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             failure,
             isLoading,
             setSearchText: setSearchTextState,
-            setFilter,
+            applyFilters,
+            resetFilters,
             setSort,
-            clearFilters,
             goToPage: (page) => setQuery((current) => ({ ...current, page })),
             setPerPage: (perPage) => setQuery((current) => ({ ...current, perPage, page: 1 })),
             reload: () => setReloadToken((token) => token + 1),
         }),
-        [query, searchText, options, list, failure, isLoading, setFilter, setSort, clearFilters],
+        [query, searchText, options, list, failure, isLoading, applyFilters, resetFilters, setSort],
     );
 
     return <PageContext.Provider value={value}>{children}</PageContext.Provider>;

@@ -22,9 +22,11 @@ interface DialogProps extends PropsWithChildren {
 
 const DialogContext = createContext({ fullHeight: false, mobileUntil: 768 });
 
-// Toasts live in their own portal. Interacting with one must not dismiss a form dialog.
+// Toasts and popovers (a calendar or a menu opened from inside the dialog) live in their own portals. Interacting with one
+// must not dismiss the form dialog.
 const keepDialogForToast = (event: Event) => {
-    if (event.target instanceof Element && event.target.closest('[data-slot="toast-viewport"]')) event.preventDefault();
+    if (event.target instanceof Element && event.target.closest('[data-slot="toast-viewport"], [data-radix-popper-content-wrapper]'))
+        event.preventDefault();
 };
 
 // Renders a centered dialog on desktop and a bottom sheet on mobile.

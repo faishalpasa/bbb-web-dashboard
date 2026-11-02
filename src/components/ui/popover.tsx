@@ -17,7 +17,8 @@ const PopoverContent = React.forwardRef<
             align={align}
             sideOffset={sideOffset}
             className={cn(
-                'bg-popover text-popover-foreground border-border z-50 w-auto rounded-md border p-0 shadow-md outline-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0',
+                // pointer-events-auto: opened from inside a modal dialog (which turns pointer events off outside itself) the popover must still be clickable.
+                'pointer-events-auto bg-popover text-popover-foreground border-border z-50 w-auto rounded-md border p-0 shadow-md outline-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0',
                 className,
             )}
             {...props}

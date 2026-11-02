@@ -15,13 +15,17 @@ const INITIAL_QUERY: MemberListQuery = {
     provinceCode: '',
     preference: '',
     attendance: '',
+    readingInterests: '',
     sortBy: 'joinedAt',
     sortDirection: 'desc',
     page: 1,
     perPage: MEMBER_DEFAULT_PER_PAGE,
 };
 
-type FilterName = 'status' | 'provinceCode' | 'preference' | 'attendance';
+type FilterName = 'status' | 'provinceCode' | 'preference' | 'attendance' | 'readingInterests';
+
+/** The filters set in the filter dialog; they are applied together. */
+export type MemberFilterValues = Pick<MemberListQuery, FilterName | 'sortBy' | 'sortDirection'>;
 
 interface PageContextValue {
     query: MemberListQuery;
@@ -36,6 +40,8 @@ interface PageContextValue {
     rangeEnd: number;
     setSearchText: (value: string) => void;
     setFilter: (name: FilterName, value: string) => void;
+    applyFilters: (values: MemberFilterValues) => void;
+    resetFilters: () => void;
     setSort: (sortBy: MemberSortBy, direction?: MemberSortDirection) => void;
     goToPage: (page: number) => void;
     setPerPage: (perPage: number) => void;
@@ -103,6 +109,23 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         setQuery((current) => ({ ...current, [name]: value, page: 1 }));
     }, []);
 
+    const applyFilters = useCallback((values: MemberFilterValues) => setQuery((current) => ({ ...current, ...values, page: 1 })), []);
+
+    // Clears the dialog's filters and keeps the search text and the page size.
+    const resetFilters = useCallback(
+        () =>
+            setQuery((current) => ({
+                ...current,
+                status: '',
+                provinceCode: '',
+                preference: '',
+                attendance: '',
+                readingInterests: '',
+                page: 1,
+            })),
+        [],
+    );
+
     const setSort = useCallback((sortBy: MemberSortBy, direction?: MemberSortDirection) => {
         setQuery((current) => ({
             ...current,
@@ -125,6 +148,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 provinceCode: query.provinceCode,
                 preference: query.preference,
                 attendance: query.attendance,
+                readingInterests: query.readingInterests,
                 sortBy: query.sortBy,
                 sortDirection: query.sortDirection,
             });
@@ -161,13 +185,30 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             rangeEnd,
             setSearchText: setSearchTextState,
             setFilter,
+            applyFilters,
+            resetFilters,
             setSort,
             goToPage,
             setPerPage: (perPage) => setQuery((current) => ({ ...current, perPage, page: 1 })),
             reload: () => setReloadToken((token) => token + 1),
             exportMembers,
         };
-    }, [query, searchText, options, list, failure, isLoading, isExporting, exportError, setFilter, setSort, goToPage, exportMembers]);
+    }, [
+        query,
+        searchText,
+        options,
+        list,
+        failure,
+        isLoading,
+        isExporting,
+        exportError,
+        setFilter,
+        applyFilters,
+        resetFilters,
+        setSort,
+        goToPage,
+        exportMembers,
+    ]);
 
     return <PageContext.Provider value={value}>{children}</PageContext.Provider>;
 };

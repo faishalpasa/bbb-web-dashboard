@@ -129,6 +129,7 @@ Akses notifikasi memerlukan JWT member dan profil non-migrated. Member `exit_req
 | `POST` | `/api/member/profile/photo` | multipart `photo` (JPG/PNG persegi, maksimal 5 MB) -> `{ profilePhotoUrl }` |
 | `PUT` | `/api/member/password` | `{ currentPassword, password }` -> `{ message }` |
 | `GET` | `/api/member/community-rules` | `CommunityRules` |
+| `GET` | `/api/public/community-rules` | `PublicCommunityRules` (tanpa login) |
 | `GET` | `/api/regions/provinces` | `RegionOption[]` |
 | `GET` | `/api/regions/regencies?provinceCode=...` | `RegionOption[]` |
 | `GET` | `/api/regions/districts?regencyCode=...` | `RegionOption[]` |
@@ -147,6 +148,8 @@ Edit data diri memakai form yang sama dengan onboarding, dengan email read-only.
 Ubah password: password lama wajib sesuai; password baru minimal 8 karakter dan berbeda dari password lama. Error field memakai `currentPassword` dan `password`; respons sukses tetap `{ message }` tanpa token baru. Untuk member di database, hash password diganti dan epoch sesi user naik: **sesi perangkat yang mengganti password tetap hidup** (token dan refresh-nya tetap berlaku), sedangkan token semua perangkat lain, termasuk refresh-nya, menjadi `401`; perangkat yang masuk setelahnya memakai epoch baru. Lupa password lewat tautan (`POST /api/password/reset`) mengakhiri **semua** sesi lama; hanya sesi baru dari reset yang hidup. Email pemberitahuan "password berubah" diantrekan setelah transaksi selesai (tanpa tautan atau rahasia; pengiriman nyata menunggu provider email).
 
 `CommunityRules` berbentuk `{ version, updatedByLabel, sections: [{ title, body }], whatsappGroupUrl }`. Body adalah plain text dengan baris baru (bukan HTML); frontend tidak merender HTML dari server. Sumbernya pengaturan admin: `version` adalah `rules_version` sebagai string angka ("1", "2"); bila `rules_summary` terisi, `sections` berisi **satu** section `{ title: "Aturan komunitas", body: <ringkasan apa adanya> }`, dan selama kosong tetap placeholder artboard 6m sampai copy final tersedia; `updatedByLabel` "Diperbarui oleh {nama admin}" bila admin pengubah ringkasan diketahui, selain itu "Diperbarui oleh admin". `whatsappGroupUrl` dari pengaturan yang sama dengan Beranda; kosong berarti tombol nonaktif. Kontak admin dan URL dokumen eksternal belum ditentukan.
+
+`GET /api/public/community-rules` (tanpa token; token basi diabaikan; 60 permintaan per menit) mengembalikan `PublicCommunityRules` = `{ version: string, sections: [{ title, body }] }`, isi yang sama dengan `CommunityRules` tetapi **tanpa** `whatsappGroupUrl` (tautan grup khusus member) dan `updatedByLabel`. Dipakai formulir onboarding untuk menampilkan Aturan Komunitas dari persetujuan, sebab orang yang belum menyelesaikan onboarding belum menjadi member dan tidak bisa memakai endpoint member.
 
 
 ## Permintaan keluar dan status keanggotaan

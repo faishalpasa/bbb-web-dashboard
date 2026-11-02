@@ -33,6 +33,8 @@ export interface MemberListQuery {
     provinceCode: string;
     preference: string;
     attendance: string;
+    /** Ids of the chosen reading interests (favourite genres), comma-separated; a member matches any of them. */
+    readingInterests: string;
     sortBy: MemberSortBy;
     sortDirection: MemberSortDirection;
     page: number;
