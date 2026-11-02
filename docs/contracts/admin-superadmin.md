@@ -26,6 +26,7 @@ Semua endpoint di bawah, kecuali undangan, butuh sesi **superadmin**: tanpa sesi
 interface AdminSettings {
     registrationCloseMinutes: number; // member bisa mendaftar sampai N menit sebelum acara
     cancellationCloseMinutes: number; // member bisa membatalkan sampai N menit sebelum acara
+    attendanceOpenMinutes: number; // member bisa mengisi kode absensi mulai N menit sebelum acara (bawaan 30); tidak boleh lebih besar dari registrationCloseMinutes
     engagedWindowMonths: number; // "Terlibat" = hadir minimal 1 kegiatan dalam N bulan terakhir
     adminWhatsapp: string | null; // 628...
     whatsappGroupUrl: string | null; // harus diawali https://chat.whatsapp.com/
@@ -38,7 +39,7 @@ interface AdminSettings {
 type AdminSettingsInput = Omit<AdminSettings, 'rulesVersion' | 'updatedBy' | 'updatedAt'>;
 ```
 
-Batas menit 0-10080, bulan 1-24. `registrationCloseMinutes` dipakai `registration.closesAt` kegiatan (admin, member, halaman publik) dan `cancellationCloseMinutes` batas batal member; `engagedWindowMonths` dibaca dashboard; `adminWhatsapp` jadi tombol WhatsApp admin; `whatsappGroupUrl` dan `rulesSummary`/`rulesVersion` tampil di layar member. Kolom opsional yang dikosongkan (atau hanya spasi) disimpan sebagai `null`; `rulesSummary` di-trim. Belum pernah diubah admin: bawaan 60/60/6, kolom opsional `null`, `rulesSummary` kosong, `rulesVersion` 1, `updatedBy` = `"Sistem"`. `updatedBy`/`updatedAt` = perubahan terakhir pada salah satu kolom di atas. `rulesVersion` naik 1 hanya bila `rulesSummary` benar-benar berubah. Tiap kolom yang berubah dicatat sebagai satu baris log ("Ubah pengaturan").
+Batas menit 0-10080, bulan 1-24. **`attendanceOpenMinutes` tidak boleh lebih besar dari `registrationCloseMinutes`** (absensi tidak dibuka lebih awal daripada penutupan pendaftaran; sama besar boleh): `422` pada `attendanceOpenMinutes` "Waktu buka absensi tidak boleh lebih besar dari batas member mendaftar (N menit)." Field ini boleh tidak dikirim (klien lama): nilai tersimpan dipertahankan dan tetap dicek terhadap `registrationCloseMinutes` yang dikirim; bila batas mendaftar diturunkan di bawah nilai tersimpan, `422` jatuh pada `registrationCloseMinutes` "Batas member mendaftar tidak boleh lebih kecil dari waktu buka absensi (N menit)." Perubahan dicatat di log: "Absensi dibuka N menit sebelum kegiatan". `registrationCloseMinutes` dipakai `registration.closesAt` kegiatan (admin, member, halaman publik) dan `cancellationCloseMinutes` batas batal member; `engagedWindowMonths` dibaca dashboard; `adminWhatsapp` jadi tombol WhatsApp admin; `whatsappGroupUrl` dan `rulesSummary`/`rulesVersion` tampil di layar member. Kolom opsional yang dikosongkan (atau hanya spasi) disimpan sebagai `null`; `rulesSummary` di-trim. Belum pernah diubah admin: bawaan 60/60/6, kolom opsional `null`, `rulesSummary` kosong, `rulesVersion` 1, `updatedBy` = `"Sistem"`. `updatedBy`/`updatedAt` = perubahan terakhir pada salah satu kolom di atas. `rulesVersion` naik 1 hanya bila `rulesSummary` benar-benar berubah. Tiap kolom yang berubah dicatat sebagai satu baris log ("Ubah pengaturan").
 
 ## Kelola admin
 

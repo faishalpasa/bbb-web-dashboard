@@ -10,6 +10,7 @@ import { isValidWhatsapp, normalizeWhatsapp, toLocalWhatsapp } from '@/utils/str
 export type SettingsFieldName =
     | 'registrationCloseMinutes'
     | 'cancellationCloseMinutes'
+    | 'attendanceOpenMinutes'
     | 'engagedWindowMonths'
     | 'adminWhatsapp'
     | 'whatsappGroupUrl'
@@ -22,6 +23,7 @@ export type SettingsErrors = Partial<Record<SettingsFieldName, string>>;
 const FIELD_NAMES: SettingsFieldName[] = [
     'registrationCloseMinutes',
     'cancellationCloseMinutes',
+    'attendanceOpenMinutes',
     'engagedWindowMonths',
     'adminWhatsapp',
     'whatsappGroupUrl',
@@ -47,6 +49,7 @@ const PageContext = createContext<PageContextValue | null>(null);
 const toFields = (settings: AdminSettings): SettingsFields => ({
     registrationCloseMinutes: String(settings.registrationCloseMinutes),
     cancellationCloseMinutes: String(settings.cancellationCloseMinutes),
+    attendanceOpenMinutes: String(settings.attendanceOpenMinutes),
     engagedWindowMonths: String(settings.engagedWindowMonths),
     adminWhatsapp: settings.adminWhatsapp ? toLocalWhatsapp(settings.adminWhatsapp) : '',
     whatsappGroupUrl: settings.whatsappGroupUrl ?? '',
@@ -104,6 +107,18 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             return;
         }
 
+        // The API checks this too; saying it here saves a round trip. Attendance may not open earlier than registration closes.
+        const registrationMinutes = Number(fields.registrationCloseMinutes);
+
+        if (Number(fields.attendanceOpenMinutes) > registrationMinutes) {
+            setErrors({
+                attendanceOpenMinutes: `Waktu buka absensi tidak boleh lebih besar dari batas member mendaftar (${registrationMinutes} menit).`,
+            });
+            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+
+            return;
+        }
+
         setIsSaving(true);
         setErrors({});
         setNotice(null);
@@ -112,6 +127,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             const response = await putSettings({
                 registrationCloseMinutes: Number(fields.registrationCloseMinutes),
                 cancellationCloseMinutes: Number(fields.cancellationCloseMinutes),
+                attendanceOpenMinutes: Number(fields.attendanceOpenMinutes),
                 engagedWindowMonths: Number(fields.engagedWindowMonths),
                 adminWhatsapp: fields.adminWhatsapp.trim() ? whatsapp : null,
                 whatsappGroupUrl: fields.whatsappGroupUrl.trim() || null,

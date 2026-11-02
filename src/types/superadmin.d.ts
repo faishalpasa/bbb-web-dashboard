@@ -4,6 +4,8 @@ import type { AdminRoleSummary } from '@/types/auth';
 export interface AdminSettings {
     registrationCloseMinutes: number;
     cancellationCloseMinutes: number;
+    /** Minutes before an event starts at which members may begin entering the attendance code; at most `registrationCloseMinutes`. */
+    attendanceOpenMinutes: number;
     engagedWindowMonths: number;
     adminWhatsapp: string | null;
     whatsappGroupUrl: string | null;
