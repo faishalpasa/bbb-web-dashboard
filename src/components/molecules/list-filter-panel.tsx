@@ -66,7 +66,7 @@ export const ListFilterPanel = ({ search, children, title, hasActiveFilter, 'dat
                     data-test-id={`${testId}_button_open`}
                 >
                     <SlidersHorizontal aria-hidden="true" />
-                    {hasActiveFilter && <span className="bg-primary absolute top-1 right-1 size-2 rounded-full" aria-hidden="true" />}
+                    {hasActiveFilter && <span className="bg-teal absolute top-1 right-1 size-2 rounded-full" aria-hidden="true" />}
                 </Button>
             </section>
             <Dialog open={isOpen} onOpenChange={setIsOpen} mobileUntil={1024}>

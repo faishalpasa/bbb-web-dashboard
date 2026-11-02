@@ -14,7 +14,7 @@ export const AdminLayout = () => {
             <AdminSidebar />
 
             <header
-                className="border-border bg-background sticky top-0 z-40 flex h-14 items-center gap-3 border-b px-4 lg:hidden"
+                className="border-border bg-card sticky top-0 z-40 flex h-14 items-center gap-3 border-b px-4 lg:hidden"
                 data-test-id="admin_topbar"
             >
                 <button
@@ -31,7 +31,7 @@ export const AdminLayout = () => {
             </header>
 
             <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-                <SheetContent data-test-id="admin_drawer" aria-describedby="admin-drawer-description">
+                <SheetContent className="bg-card" data-test-id="admin_drawer" aria-describedby="admin-drawer-description">
                     <SheetTitle className="sr-only">Menu admin</SheetTitle>
                     <SheetDescription id="admin-drawer-description" className="sr-only">
                         Navigasi utama dashboard admin.

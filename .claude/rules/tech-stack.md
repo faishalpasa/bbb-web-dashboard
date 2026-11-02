@@ -5,7 +5,7 @@
 - Axios through the shared `axiosClient` (`src/utils/api.ts`) against the Laravel API with JWT `Authorization: Bearer` auth (`docs/plans/bearer-auth.md`).
 - MSW 2 for opt-in, dev-only API mocks.
 - ESLint and Prettier. Playwright may be added when browser automation begins.
-- Fonts: DM Sans and IBM Plex Mono through `@fontsource` (no runtime CDN).
+- Fonts: Mulish, Fraunces and IBM Plex Mono through `@fontsource` (no runtime CDN).
 
 ## Path aliases
 

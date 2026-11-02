@@ -125,7 +125,7 @@ export const SidebarContent = ({ testPrefix, onNavigate }: SidebarContentProps) 
 };
 
 export const AdminSidebar = () => (
-    <aside className="bg-background border-border sticky top-0 hidden h-svh w-[200px] shrink-0 flex-col border-r lg:flex">
+    <aside className="bg-card border-border sticky top-0 hidden h-svh w-[200px] shrink-0 flex-col border-r lg:flex">
         <SidebarContent testPrefix="sidebar" />
     </aside>
 );

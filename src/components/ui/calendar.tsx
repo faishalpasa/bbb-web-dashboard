@@ -29,7 +29,7 @@ const Calendar = ({ className, classNames, showOutsideDays = true, ...props }: C
             day_button:
                 'hover:bg-muted focus-visible:ring-ring inline-flex size-9 items-center justify-center rounded-md font-normal focus-visible:ring-2 focus-visible:outline-hidden',
             selected: '[&>button]:bg-primary [&>button]:text-primary-foreground [&>button:hover]:bg-primary',
-            today: '[&>button]:border-primary [&>button]:border',
+            today: '[&>button]:border-teal [&>button]:border',
             outside: 'text-muted-foreground opacity-50',
             disabled: 'text-muted-foreground opacity-40',
             hidden: 'invisible',

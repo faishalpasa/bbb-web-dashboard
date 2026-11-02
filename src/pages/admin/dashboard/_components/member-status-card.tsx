@@ -5,8 +5,8 @@ import { usePageContext } from '../_context';
 import { Panel } from './panel';
 
 const STATUS_COLORS: Record<MemberDashboardStatus, string> = {
-    active: 'bg-[#002a32]',
-    migrated: 'bg-[#b7b38f]',
+    active: 'bg-[#019896]',
+    migrated: 'bg-[#90c7c4]',
     exit_requested: 'bg-[#a45f37]',
     unsubscribed: 'bg-[#dcdad2]',
 };

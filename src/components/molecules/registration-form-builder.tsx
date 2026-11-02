@@ -335,7 +335,7 @@ export const RegistrationFormBuilder = ({ builder, disabled = false }: Registrat
                 </SortableContext>
                 <DragOverlay>
                     {activeField ? (
-                        <div className="border-primary bg-card rounded-lg border p-4 shadow-lg">{activeField.label || 'Pertanyaan tambahan'}</div>
+                        <div className="border-teal bg-card rounded-lg border p-4 shadow-lg">{activeField.label || 'Pertanyaan tambahan'}</div>
                     ) : null}
                 </DragOverlay>
             </DndContext>
