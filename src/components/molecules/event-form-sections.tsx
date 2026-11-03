@@ -96,13 +96,13 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
                     <Label className="text-sm font-medium">Banner</Label>
                     <div className="flex flex-wrap items-center gap-4">
                         <div
-                            className="border-input text-muted-foreground flex aspect-[5/4] w-48 shrink-0 items-center justify-center overflow-hidden rounded-md border border-dashed bg-neutral-100 text-xs"
+                            className="border-input text-muted-foreground flex aspect-[4/5] w-48 shrink-0 items-center justify-center overflow-hidden rounded-md border border-dashed bg-neutral-100 text-xs"
                             data-test-id={`${testId}_banner_preview`}
                         >
                             {fields.bannerUrl ? (
                                 <img src={fields.bannerUrl} alt="Pratinjau banner" className="size-full object-cover" />
                             ) : (
-                                'Rasio 5:4'
+                                'Rasio 4:5'
                             )}
                         </div>
                         <div className="space-y-2">
@@ -128,7 +128,7 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
                                     </Button>
                                 )}
                             </div>
-                            <p className="text-muted-foreground text-xs">JPG atau PNG, rasio 5:4 seperti post Instagram. Maks. 5 MB.</p>
+                            <p className="text-muted-foreground text-xs">JPG atau PNG, rasio 4:5 (portrait). Maks. 5 MB.</p>
                         </div>
                         <input
                             ref={bannerInput}
