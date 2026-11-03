@@ -20,7 +20,7 @@ export const ReadingProfileSection = ({ form, disabled = false, 'data-test-id': 
         <fieldset disabled={disabled || !options} className="border-border bg-card min-w-0 space-y-5 rounded-lg border p-4" data-test-id={testId}>
             <legend className="sr-only">Profil tambahan dan minat bacaan</legend>
             <h2 className="font-semibold">Profil tambahan dan minat bacaan</h2>
-            <p className="text-muted-foreground text-sm">Opsional. Ibu boleh melengkapinya sekarang atau nanti.</p>
+            <p className="text-muted-foreground text-sm">Opsional. Kamu boleh melengkapinya sekarang atau nanti.</p>
             {(['instagramAccount', 'websiteUrl', 'goodreadsAccount'] as const).map((name) => (
                 <FormField
                     key={name}

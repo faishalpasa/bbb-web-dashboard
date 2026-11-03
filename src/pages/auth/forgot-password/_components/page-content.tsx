@@ -64,7 +64,7 @@ export const PageContent = () => {
     }
 
     return (
-        <AuthLayout title="Lupa password" description="Masukkan email akun admin Anda. Kami akan mengirim link untuk membuat password baru.">
+        <AuthLayout title="Lupa password" description="Masukkan email akun adminmu. Kami akan mengirim link untuk membuat password baru.">
             <form className="flex flex-col gap-7" onSubmit={handleSubmit} noValidate data-test-id="forgot_form">
                 <div className="grid gap-2">
                     <Label htmlFor="forgotEmail">

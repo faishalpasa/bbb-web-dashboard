@@ -74,7 +74,7 @@ export const PageContent = () => {
                                 Simpan Password
                             </Button>
 
-                            <p className="text-muted-foreground text-xs">Setelah disimpan, Anda langsung masuk ke dashboard.</p>
+                            <p className="text-muted-foreground text-xs">Setelah disimpan, dirimu langsung masuk ke dashboard.</p>
                         </form>
                     )}
 

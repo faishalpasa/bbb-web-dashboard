@@ -215,7 +215,7 @@ test('tree renders accessible nested checkboxes, partial state and disabled out-
     assert.match(html, /aria-checked="mixed"/);
     assert.match(html, /aria-label="Member View"/);
     assert.match(html, /<button[^>]*aria-label="Member Update"[^>]*disabled=""|<button[^>]*disabled=""[^>]*aria-label="Member Update"/);
-    assert.match(html, /Di luar izin akun Anda/);
+    assert.match(html, /Di luar izin akunmu/);
     const readonly = renderToStaticMarkup(createElement(PermissionTree, {catalog:treeCatalog, selected:[], disabled:true, onToggle:()=>{}, onToggleGroup:()=>{}}));
     assert.equal((readonly.match(/role="checkbox"[^>]*disabled=""|disabled=""[^>]*role="checkbox"/g) ?? []).length, treeCatalog.length + 3);
 });

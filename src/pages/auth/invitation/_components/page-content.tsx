@@ -39,7 +39,7 @@ export const PageContent = () => {
                             <div className="space-y-2">
                                 <h1 className="text-2xl font-semibold tracking-[-0.025em]">Aktifkan akun admin</h1>
                                 <p className="text-sm">
-                                    {invitation.invitedBy ?? 'Superadmin'} mengundang Anda menjadi <strong>{invitation.role}</strong> BBB BFF. Buat
+                                    {invitation.invitedBy ?? 'Superadmin'} mengundangmu menjadi <strong>{invitation.role}</strong> BBB BFF. Buat
                                     password untuk mulai masuk.
                                 </p>
                             </div>
@@ -93,7 +93,7 @@ export const PageContent = () => {
                                 Aktifkan Akun
                             </Button>
 
-                            <p className="text-muted-foreground text-xs">Setelah aktif, Anda bisa masuk dengan email dan password ini.</p>
+                            <p className="text-muted-foreground text-xs">Setelah aktif, kamu bisa masuk dengan email dan password ini.</p>
                         </form>
                     )}
 

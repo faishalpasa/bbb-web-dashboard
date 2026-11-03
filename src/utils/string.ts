@@ -28,9 +28,9 @@ export const whatsappChatUrl = (whatsapp: string, message: string): string =>
     `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
 
 export const attendanceConfirmationMessage = (name: string, eventTitle: string): string =>
-    `Halo Ibu ${name},\nSaya admin Buibu Baca Buku ingin mengkonfirmasi apakah ibu akan hadir di acara ${eventTitle}?`;
+    `Halo ${name},\nSaya admin Buibu Baca Buku (BBB) ingin mengkonfirmasi apakah dirimu akan hadir di acara ${eventTitle}?`;
 
-export const memberGreetingMessage = (name: string): string => `Halo Ibu ${name},\nSaya admin Buibu Baca Buku.`;
+export const memberGreetingMessage = (name: string): string => `Halo ${name},\nSaya admin Buibu Baca Buku (BBB)!`;
 
 // "Kabupaten Bogor" -> "Kab. Bogor"; city names stay as they are.
 export const abbreviateRegency = (label: string): string => label.replace(/^Kabupaten /, 'Kab. ');

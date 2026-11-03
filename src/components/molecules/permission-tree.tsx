@@ -65,7 +65,7 @@ export const PermissionTree = ({ catalog, selected, disabled, onToggle, onToggle
                                                 {option.description}
                                             </span>
                                         )}
-                                        {!option.isAssignable && <span className="text-muted-foreground block text-xs">Di luar izin akun Anda.</span>}
+                                        {!option.isAssignable && <span className="text-muted-foreground block text-xs">Di luar izin akunmu.</span>}
                                     </span>
                                 </label>
                             </li>
