@@ -17,6 +17,8 @@ import { attendanceConfirmationMessage, formatWhatsapp, whatsappChatUrl } from '
 
 import { usePageContext } from '../_context';
 
+const participantWhatsappLabel = (whatsapp: string): string => (whatsapp.trim() ? formatWhatsapp(whatsapp) : '-');
+
 const registeredLabel = (participant: EventParticipant): string =>
     participant.source === 'admin' ? 'Oleh admin' : formatRegisteredAt(participant.registeredAt);
 
@@ -201,7 +203,7 @@ export const ParticipantTable = () => {
                                           >
                                               <td className="py-3 pr-3 pl-4 font-mono text-xs">{participant.memberNumber ?? 'Non-member'}</td>
                                               <td className="px-3 py-3 font-medium">{participant.name}</td>
-                                              <td className="px-3 py-3 font-mono text-xs">{formatWhatsapp(participant.whatsapp)}</td>
+                                              <td className="px-3 py-3 font-mono text-xs">{participantWhatsappLabel(participant.whatsapp)}</td>
                                               <td className="px-3 py-3">{registeredLabel(participant)}</td>
                                               <td className="px-3 py-3">
                                                   <StatusBadge
@@ -235,7 +237,7 @@ export const ParticipantTable = () => {
                                     />
                                 </div>
                                 <p className="font-mono text-xs">
-                                    {participant.memberNumber ?? 'Non-member'} · {formatWhatsapp(participant.whatsapp)}
+                                    {participant.memberNumber ?? 'Non-member'} · {participantWhatsappLabel(participant.whatsapp)}
                                 </p>
                                 <p className="text-muted-foreground text-xs">Didaftarkan: {registeredLabel(participant)}</p>
                                 <div className="flex justify-start">
