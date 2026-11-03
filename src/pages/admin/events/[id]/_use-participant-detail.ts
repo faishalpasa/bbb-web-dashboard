@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { getEventParticipantDetail } from '@/services/event';
+import { getEventParticipantDetail, getParticipantFile } from '@/services/event';
 import type { ParticipantDetail } from '@/types/event';
 import { errorMessage } from '@/utils/error';
 
@@ -37,5 +37,29 @@ export const useParticipantDetail = (eventId: string | undefined, participantId:
 
     const retry = useCallback(() => setAttempt((value) => value + 1), []);
 
-    return { detail, error, isLoading, retry };
+    // Files are private: they are fetched with the admin's token and saved from memory, never opened through a public URL.
+    const [downloadError, setDownloadError] = useState<string | null>(null);
+    const downloadFile = useCallback(
+        async (fileId: string, name: string) => {
+            if (!eventId || !participantId) return;
+
+            setDownloadError(null);
+
+            try {
+                const response = await getParticipantFile(eventId, participantId, fileId);
+                const url = URL.createObjectURL(response.data);
+                const link = document.createElement('a');
+
+                link.href = url;
+                link.download = name;
+                link.click();
+                URL.revokeObjectURL(url);
+            } catch (failure) {
+                setDownloadError(errorMessage(failure));
+            }
+        },
+        [eventId, participantId],
+    );
+
+    return { detail, error, isLoading, retry, downloadFile, downloadError };
 };

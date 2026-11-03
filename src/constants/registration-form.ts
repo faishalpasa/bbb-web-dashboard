@@ -8,4 +8,5 @@ export const REGISTRATION_FIELD_TYPES: { value: RegistrationFieldType; label: st
     { value: 'select', label: 'Select' },
     { value: 'radio', label: 'Radio' },
     { value: 'checkbox', label: 'Checkbox' },
+    { value: 'file', label: 'File upload' },
 ];

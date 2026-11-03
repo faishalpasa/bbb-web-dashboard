@@ -1,17 +1,22 @@
+import type { ReactNode } from 'react';
+
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { Download } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PARTICIPANT_STATUS_TONES } from '@/constants/event';
 import { formatRegisteredAt } from '@/utils/date';
+import { formatFileSize } from '@/utils/file';
 
 import { usePageContext } from '../_context';
 import { useParticipantDetail } from '../_use-participant-detail';
 
 interface DetailRowProps {
     label: string;
-    children: string;
+    children: ReactNode;
     testId: string;
 }
 
@@ -25,7 +30,7 @@ const DetailRow = ({ label, children, testId }: DetailRowProps) => (
 
 export const ParticipantDetailDialog = () => {
     const { event, detailParticipant, closeDetail } = usePageContext();
-    const { detail, error, isLoading, retry } = useParticipantDetail(event?.id, detailParticipant?.id ?? null);
+    const { detail, error, isLoading, retry, downloadFile, downloadError } = useParticipantDetail(event?.id, detailParticipant?.id ?? null);
     const participant = detail?.participant ?? detailParticipant;
     const response = detail?.registrationResponse ?? null;
 
@@ -87,9 +92,27 @@ export const ParticipantDetailDialog = () => {
                                     label={answer.label}
                                     testId={`event_detail_participant_detail_answer_${answer.fieldId}`}
                                 >
-                                    {answer.displayValue ?? 'Tidak diisi'}
+                                    {answer.type === 'file' && answer.file ? (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="bg-card h-auto min-h-11 max-w-full justify-start gap-2 py-2 break-all whitespace-normal"
+                                            onClick={() => void downloadFile(answer.file!.id, answer.file!.name)}
+                                            data-test-id={`event_detail_participant_detail_file_${answer.fieldId}`}
+                                        >
+                                            <Download className="size-4 shrink-0" aria-hidden="true" />
+                                            {answer.file.name} ({formatFileSize(answer.file.size)})
+                                        </Button>
+                                    ) : (
+                                        (answer.displayValue ?? 'Tidak diisi')
+                                    )}
                                 </DetailRow>
                             ))}
+                            {downloadError && (
+                                <p role="alert" className="text-destructive py-2 text-sm" data-test-id="event_detail_participant_detail_file_error">
+                                    {downloadError}
+                                </p>
+                            )}
                             <DetailRow label="Dikirim" testId="event_detail_participant_detail_submitted">
                                 {formatRegisteredAt(response.submittedAt)}
                             </DetailRow>

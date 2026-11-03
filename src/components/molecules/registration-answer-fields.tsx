@@ -32,6 +32,11 @@ export const RegistrationAnswerFields = ({ definition, values, errors, disabled 
                     error={errors[field.id]}
                     data-test-id={`registration_field_${field.id}`}
                 >
+                    {field.type === 'file' && (
+                        <p className="text-muted-foreground text-sm" data-test-id={`registration_answer_${field.id}`}>
+                            Berkas diunggah langsung oleh peserta saat mendaftar sendiri, jadi tidak diisi di sini.
+                        </p>
+                    )}
                     {field.type === 'input' && (
                         <Input
                             {...common}

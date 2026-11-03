@@ -175,6 +175,19 @@ export const getEventParticipantDetail = async (eventId: string, participantId: 
     }
 };
 
+export const getParticipantFile = async (eventId: string, participantId: string, fileId: string): Promise<ServiceResponse<Blob>> => {
+    try {
+        const { data } = await axiosClient.get<Blob>(
+            `/admin/events/${encodeURIComponent(eventId)}/participants/${encodeURIComponent(participantId)}/files/${encodeURIComponent(fileId)}`,
+            { responseType: 'blob' },
+        );
+
+        return { data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
 export const getEventParticipantsExport = async (eventId: string, search: string): Promise<ServiceResponse<Blob>> => {
     try {
         const { data } = await axiosClient.get<Blob>(`/admin/events/${eventId}/participants/export`, {

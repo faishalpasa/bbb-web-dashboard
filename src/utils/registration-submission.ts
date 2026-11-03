@@ -23,7 +23,8 @@ export const registrationSubmission = (
         }
         const value = typeof raw === 'string' ? raw.trim() || null : null;
         if (Array.isArray(raw)) errors[field.id] = 'Isian jawaban tidak valid.';
-        if (field.required && value === null) errors[field.id] = 'Isian ini wajib diisi.';
+        // An admin cannot upload on a participant's behalf, so a required file never blocks adding one.
+        if (field.required && value === null && field.type !== 'file') errors[field.id] = 'Isian ini wajib diisi.';
         const max = field.type === 'textarea' ? 5000 : 255;
         if (value !== null && Array.from(value).length > max) errors[field.id] = `Jawaban maksimal ${max} karakter.`;
         if (value !== null && (field.type === 'radio' || field.type === 'select') && !field.options.some((option) => option.id === value))

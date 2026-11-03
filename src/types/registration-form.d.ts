@@ -1,4 +1,4 @@
-export type RegistrationFieldType = 'input' | 'textarea' | 'select' | 'radio' | 'checkbox';
+export type RegistrationFieldType = 'input' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'file';
 export interface RegistrationFormData {
     registrationForm: RegistrationFormDefinition;
     identity: { name: string; email: string };
@@ -39,6 +39,8 @@ export interface RegistrationAnswerSnapshot {
     options: RegistrationOption[];
     value: string | string[] | null;
     displayValue: string | null;
+    /** For a `file` question: the file the participant attached (download it with its id). */
+    file?: { id: string; name: string; size: number; mime: string } | null;
 }
 
 export interface RegistrationResponse {
