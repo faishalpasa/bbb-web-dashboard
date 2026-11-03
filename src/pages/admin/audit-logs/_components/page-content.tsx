@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { TablePagination } from '@/components/molecules/table-pagination';
@@ -17,13 +18,12 @@ export const PageContent = () => {
 
     return (
         <div className="space-y-4">
-            <header>
-                <h1 className="text-2xl font-semibold">Log</h1>
-                <p className="text-muted-foreground text-sm">Riwayat perubahan data dan tindakan admin. Hanya superadmin.</p>
-            </header>
-
-            <section className="border-border bg-card overflow-hidden rounded-lg border" data-test-id="audit_logs_root" aria-busy={isLoading}>
-                <div className="flex gap-1 overflow-x-auto p-3" role="tablist" aria-label="Jenis log" data-test-id="audit_logs_tabs">
+            <AdminPageHeader data-test-id="audit_logs_header">
+                <header>
+                    <h1 className="text-2xl font-semibold">Log</h1>
+                    <p className="text-muted-foreground text-sm">Riwayat perubahan data dan tindakan admin. Hanya superadmin.</p>
+                </header>
+                <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Jenis log" data-test-id="audit_logs_tabs">
                     {tabs.map((tab) => (
                         <button
                             key={tab.value || 'all'}
@@ -41,7 +41,9 @@ export const PageContent = () => {
                         </button>
                     ))}
                 </div>
+            </AdminPageHeader>
 
+            <section className="border-border bg-card overflow-hidden rounded-lg border" data-test-id="audit_logs_root" aria-busy={isLoading}>
                 {failure ? (
                     <div className="space-y-3 p-4">
                         <FeedbackToast data-test-id="audit_logs_alert_error">{failure.message}</FeedbackToast>

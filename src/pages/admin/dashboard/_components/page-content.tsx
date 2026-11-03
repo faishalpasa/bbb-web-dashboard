@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,14 +36,16 @@ export const PageContent = () => {
 
     return (
         <div className="space-y-4">
-            <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <h1 className="text-2xl font-semibold">Dashboard</h1>
-                {dashboard && (
-                    <p className="text-muted-foreground text-sm" data-test-id="dashboard_text_as_of">
-                        Data per {formatLongDate(dashboard.asOf)}
-                    </p>
-                )}
-            </header>
+            <AdminPageHeader data-test-id="dashboard_header">
+                <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <h1 className="text-2xl font-semibold">Dashboard</h1>
+                    {dashboard && (
+                        <p className="text-muted-foreground text-sm" data-test-id="dashboard_text_as_of">
+                            Data per {formatLongDate(dashboard.asOf)}
+                        </p>
+                    )}
+                </header>
+            </AdminPageHeader>
 
             {isLoading && !dashboard && <DashboardSkeleton />}
 

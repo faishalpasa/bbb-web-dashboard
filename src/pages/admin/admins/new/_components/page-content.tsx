@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
 import { LoaderCircle } from 'lucide-react';
 
@@ -16,23 +17,25 @@ export const PageContent = () => {
         usePageContext();
 
     return (
-        <div className="max-w-2xl space-y-4">
-            <header className="space-y-2">
-                <nav aria-label="Breadcrumb" className="text-sm">
-                    <Link to={ROUTES.admins} className="underline underline-offset-4" data-test-id="admin_new_link_breadcrumb_admins">
-                        Admin
-                    </Link>
-                    <span className="text-muted-foreground"> / Tambah admin</span>
-                </nav>
-                <h1 className="text-2xl font-semibold">Tambah admin</h1>
-                <p className="text-muted-foreground text-sm">Kirim undangan agar admin baru dapat membuat password dan masuk ke dashboard.</p>
-                <RequiredNote />
-            </header>
+        <div className="space-y-4">
+            <AdminPageHeader data-test-id="admin_new_header">
+                <header className="space-y-2">
+                    <nav aria-label="Breadcrumb" className="text-sm">
+                        <Link to={ROUTES.admins} className="underline underline-offset-4" data-test-id="admin_new_link_breadcrumb_admins">
+                            Admin
+                        </Link>
+                        <span className="text-muted-foreground"> / Tambah admin</span>
+                    </nav>
+                    <h1 className="text-2xl font-semibold">Tambah admin</h1>
+                    <p className="text-muted-foreground text-sm">Kirim undangan agar admin baru dapat membuat password dan masuk ke dashboard.</p>
+                    <RequiredNote />
+                </header>
+            </AdminPageHeader>
 
             {submitError && <FeedbackToast data-test-id="admin_new_alert_error">{submitError}</FeedbackToast>}
 
             {invitation && (
-                <section className="border-border bg-card rounded-lg border p-4 text-sm" data-test-id="admin_new_invitation_result">
+                <section className="border-border bg-card max-w-2xl rounded-lg border p-4 text-sm" data-test-id="admin_new_invitation_result">
                     <span className="font-medium">Link undangan untuk {invitation.name}.</span>{' '}
                     <a
                         href={invitation.invitationPath}
@@ -46,7 +49,12 @@ export const PageContent = () => {
                 </section>
             )}
 
-            <form className="border-border bg-card space-y-5 rounded-lg border p-5" noValidate onSubmit={handleSubmit} data-test-id="admin_new_form">
+            <form
+                className="border-border bg-card max-w-2xl space-y-5 rounded-lg border p-5"
+                noValidate
+                onSubmit={handleSubmit}
+                data-test-id="admin_new_form"
+            >
                 <FormField id="adminName" label="Nama" error={errors.name} data-test-id="admin_new_name">
                     <Input
                         id="adminName"

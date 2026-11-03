@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link, useParams } from '@tanstack/react-router';
 import { LoaderCircle } from 'lucide-react';
 
@@ -63,25 +64,27 @@ const EditForm = ({ memberId, preferences }: EditFormProps) => {
 
     return (
         <form className="space-y-4" onSubmit={handleSubmit} noValidate data-test-id="member_edit_form">
-            <header className="space-y-2">
-                <nav aria-label="Breadcrumb" className="text-sm">
-                    <Link to={ROUTES.members} className="underline underline-offset-4" data-test-id="member_edit_link_breadcrumb_members">
-                        Member
-                    </Link>
-                    <span className="text-muted-foreground"> / </span>
-                    <Link
-                        to={ROUTES.memberDetail}
-                        params={{ memberId }}
-                        className="underline underline-offset-4"
-                        data-test-id="member_edit_link_breadcrumb_detail"
-                    >
-                        {member.name}
-                    </Link>
-                    <span className="text-muted-foreground"> / Edit data</span>
-                </nav>
-                <h1 className="text-2xl font-semibold">Edit data member</h1>
-                <RequiredNote />
-            </header>
+            <AdminPageHeader data-test-id="member_edit_header">
+                <header className="space-y-2">
+                    <nav aria-label="Breadcrumb" className="text-sm">
+                        <Link to={ROUTES.members} className="underline underline-offset-4" data-test-id="member_edit_link_breadcrumb_members">
+                            Member
+                        </Link>
+                        <span className="text-muted-foreground"> / </span>
+                        <Link
+                            to={ROUTES.memberDetail}
+                            params={{ memberId }}
+                            className="underline underline-offset-4"
+                            data-test-id="member_edit_link_breadcrumb_detail"
+                        >
+                            {member.name}
+                        </Link>
+                        <span className="text-muted-foreground"> / Edit data</span>
+                    </nav>
+                    <h1 className="text-2xl font-semibold">Edit data member</h1>
+                    <RequiredNote />
+                </header>
+            </AdminPageHeader>
 
             {(submitError || form.regionError) && (
                 <FeedbackToast data-test-id="member_edit_alert_submit">{submitError ?? form.regionError}</FeedbackToast>

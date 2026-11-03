@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
 import { LoaderCircle } from 'lucide-react';
 
@@ -27,16 +28,18 @@ export const PageContent = () => {
             noValidate
             data-test-id="event_new_form"
         >
-            <header className="space-y-2">
-                <nav aria-label="Breadcrumb" className="text-sm">
-                    <Link to={ROUTES.events} className="underline underline-offset-4" data-test-id="event_new_link_breadcrumb_events">
-                        Kegiatan
-                    </Link>
-                    <span className="text-muted-foreground"> / Kegiatan baru</span>
-                </nav>
-                <h1 className="text-2xl font-semibold">Kegiatan baru</h1>
-                <RequiredNote />
-            </header>
+            <AdminPageHeader data-test-id="event_new_header">
+                <header className="space-y-2">
+                    <nav aria-label="Breadcrumb" className="text-sm">
+                        <Link to={ROUTES.events} className="underline underline-offset-4" data-test-id="event_new_link_breadcrumb_events">
+                            Kegiatan
+                        </Link>
+                        <span className="text-muted-foreground"> / Kegiatan baru</span>
+                    </nav>
+                    <h1 className="text-2xl font-semibold">Kegiatan baru</h1>
+                    <RequiredNote />
+                </header>
+            </AdminPageHeader>
 
             {submitError && <FeedbackToast data-test-id="event_new_alert_error">{submitError}</FeedbackToast>}
 

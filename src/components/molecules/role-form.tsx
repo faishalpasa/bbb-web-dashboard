@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
 
 import { AlertMessage } from '@/components/molecules/alert-message';
@@ -22,12 +23,14 @@ export const RoleForm = ({ editor }: RoleFormProps) => {
 
     return (
         <div className="space-y-4">
-            <header className="space-y-1">
-                <Link to={ROUTES.roles} className="text-muted-foreground text-sm hover:underline" data-test-id="role_link_back">
-                    ← Daftar role
-                </Link>
-                <h1 className="text-2xl font-semibold">{isCreating ? 'Buat Role' : `Role ${role?.label ?? ''}`}</h1>
-            </header>
+            <AdminPageHeader data-test-id="role_form_header">
+                <header className="space-y-1">
+                    <Link to={ROUTES.roles} className="text-muted-foreground text-sm hover:underline" data-test-id="role_link_back">
+                        ← Daftar role
+                    </Link>
+                    <h1 className="text-2xl font-semibold">{isCreating ? 'Buat Role' : `Role ${role?.label ?? ''}`}</h1>
+                </header>
+            </AdminPageHeader>
             {notice && (
                 <FeedbackToast tone="success" data-test-id="roles_notice">
                     {notice}

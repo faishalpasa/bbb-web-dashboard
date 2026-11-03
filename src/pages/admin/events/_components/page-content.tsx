@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
 
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
@@ -17,25 +18,26 @@ export const PageContent = () => {
 
     return (
         <div className="space-y-4">
-            <header className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-semibold">Kegiatan</h1>
-                    {list && (
-                        <p className="text-muted-foreground text-sm" data-test-id="events_text_summary">
-                            {list.summary.upcomingTotal} kegiatan mendatang
-                        </p>
+            <AdminPageHeader data-test-id="events_header">
+                <header className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-semibold">Kegiatan</h1>
+                        {list && (
+                            <p className="text-muted-foreground text-sm" data-test-id="events_text_summary">
+                                {list.summary.upcomingTotal} kegiatan mendatang
+                            </p>
+                        )}
+                    </div>
+                    {canManageEvents && (
+                        <Button asChild>
+                            <Link to={ROUTES.eventNew} data-test-id="events_link_create">
+                                Kegiatan Baru
+                            </Link>
+                        </Button>
                     )}
-                </div>
-                {canManageEvents && (
-                    <Button asChild>
-                        <Link to={ROUTES.eventNew} data-test-id="events_link_create">
-                            Kegiatan Baru
-                        </Link>
-                    </Button>
-                )}
-            </header>
-
-            <EventFilters />
+                </header>
+                <EventFilters />
+            </AdminPageHeader>
 
             <section className="border-border bg-card overflow-hidden rounded-lg border">
                 {failure ? (

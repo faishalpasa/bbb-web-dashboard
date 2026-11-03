@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
 
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
@@ -14,19 +15,21 @@ export const PageContent = () => {
 
     return (
         <div className="space-y-4">
-            <header className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h1 className="text-2xl font-semibold">Role dan Permission</h1>
-                    <p className="text-muted-foreground text-sm">
-                        Satu akun admin memiliki satu role. Permission baru hanya ditambah lewat migration database.
-                    </p>
-                </div>
-                <PermissionGate permission={P.ROLE_CREATE}>
-                    <Button asChild data-test-id="roles_button_create">
-                        <Link to={ROUTES.roleNew}>Buat Role</Link>
-                    </Button>
-                </PermissionGate>
-            </header>
+            <AdminPageHeader data-test-id="roles_header">
+                <header className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h1 className="text-2xl font-semibold">Role dan Permission</h1>
+                        <p className="text-muted-foreground text-sm">
+                            Satu akun admin memiliki satu role. Permission baru hanya ditambah lewat migration database.
+                        </p>
+                    </div>
+                    <PermissionGate permission={P.ROLE_CREATE}>
+                        <Button asChild data-test-id="roles_button_create">
+                            <Link to={ROUTES.roleNew}>Buat Role</Link>
+                        </Button>
+                    </PermissionGate>
+                </header>
+            </AdminPageHeader>
             {failure && (
                 <div className="space-y-2">
                     <FeedbackToast data-test-id="roles_error">{failure}</FeedbackToast>

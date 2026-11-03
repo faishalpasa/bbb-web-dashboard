@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { LoaderCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -90,8 +91,8 @@ export const PageContent = () => {
         return (
             <div className="space-y-4" aria-busy="true" data-test-id="settings_loading">
                 <Skeleton className="h-10 w-64" />
-                <Skeleton className="h-48 max-w-3xl rounded-lg" />
-                <Skeleton className="h-40 max-w-3xl rounded-lg" />
+                <Skeleton className="h-48 rounded-lg" />
+                <Skeleton className="h-40 rounded-lg" />
             </div>
         );
     }
@@ -107,21 +108,23 @@ export const PageContent = () => {
             data-test-id="settings_form"
         >
             <fieldset disabled={!can(P.SETTING_UPDATE) || isSaving} className="contents">
-                <header className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-semibold">Pengaturan</h1>
-                        <p className="text-muted-foreground text-sm">Perubahan pengaturan langsung berlaku untuk semua member.</p>
-                        <div className="mt-2">
-                            <RequiredNote />
+                <AdminPageHeader data-test-id="settings_header">
+                    <header className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-semibold">Pengaturan</h1>
+                            <p className="text-muted-foreground text-sm">Perubahan pengaturan langsung berlaku untuk semua member.</p>
+                            <div className="mt-2">
+                                <RequiredNote />
+                            </div>
                         </div>
-                    </div>
-                    <PermissionGate permission={P.SETTING_UPDATE}>
-                        <Button type="submit" disabled={isSaving} data-test-id="settings_button_save">
-                            {isSaving && <LoaderCircle className="animate-spin" />}
-                            Simpan Pengaturan
-                        </Button>
-                    </PermissionGate>
-                </header>
+                        <PermissionGate permission={P.SETTING_UPDATE}>
+                            <Button type="submit" disabled={isSaving} data-test-id="settings_button_save">
+                                {isSaving && <LoaderCircle className="animate-spin" />}
+                                Simpan Pengaturan
+                            </Button>
+                        </PermissionGate>
+                    </header>
+                </AdminPageHeader>
 
                 {notice && (
                     <FeedbackToast revision={notice} tone={notice.tone} data-test-id="settings_alert_notice">
@@ -129,7 +132,7 @@ export const PageContent = () => {
                     </FeedbackToast>
                 )}
 
-                <div className="max-w-3xl space-y-4">
+                <div className="space-y-4">
                     <Card
                         title="Aturan kegiatan"
                         description="Berlaku untuk semua kegiatan. Admin tetap bisa menambah peserta sampai akhir hari acara."

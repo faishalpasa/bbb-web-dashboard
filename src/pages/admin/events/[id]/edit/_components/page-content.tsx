@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link, useParams } from '@tanstack/react-router';
 import { EllipsisVertical, LoaderCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -104,25 +105,27 @@ const EditForm = () => {
             noValidate
             data-test-id="event_edit_form"
         >
-            <header className="space-y-2">
-                <nav aria-label="Breadcrumb" className="text-sm">
-                    <Link to={ROUTES.events} className="underline underline-offset-4" data-test-id="event_edit_link_breadcrumb_events">
-                        Kegiatan
-                    </Link>
-                    <span className="text-muted-foreground"> / </span>
-                    <Link
-                        to={ROUTES.eventDetail}
-                        params={{ eventId }}
-                        className="underline underline-offset-4"
-                        data-test-id="event_edit_link_breadcrumb_detail"
-                    >
-                        {event.title}
-                    </Link>
-                    <span className="text-muted-foreground"> / Edit</span>
-                </nav>
-                <h1 className="text-2xl font-semibold">Edit kegiatan</h1>
-                <RequiredNote />
-            </header>
+            <AdminPageHeader data-test-id="event_edit_header">
+                <header className="space-y-2">
+                    <nav aria-label="Breadcrumb" className="text-sm">
+                        <Link to={ROUTES.events} className="underline underline-offset-4" data-test-id="event_edit_link_breadcrumb_events">
+                            Kegiatan
+                        </Link>
+                        <span className="text-muted-foreground"> / </span>
+                        <Link
+                            to={ROUTES.eventDetail}
+                            params={{ eventId }}
+                            className="underline underline-offset-4"
+                            data-test-id="event_edit_link_breadcrumb_detail"
+                        >
+                            {event.title}
+                        </Link>
+                        <span className="text-muted-foreground"> / Edit</span>
+                    </nav>
+                    <h1 className="text-2xl font-semibold">Edit kegiatan</h1>
+                    <RequiredNote />
+                </header>
+            </AdminPageHeader>
 
             {(submitError || notice) && (
                 <FeedbackToast revision={notice} tone={submitError ? 'error' : (notice?.tone ?? 'error')} data-test-id="event_edit_alert_notice">

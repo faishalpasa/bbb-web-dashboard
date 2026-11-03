@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
 import { Mail } from 'lucide-react';
 
@@ -57,84 +58,86 @@ export const PageContent = () => {
 
     return (
         <div className="space-y-4">
-            <header className="space-y-2">
-                <nav aria-label="Breadcrumb" className="text-sm">
-                    <Link to={ROUTES.members} className="underline underline-offset-4" data-test-id="member_detail_link_breadcrumb_members">
-                        Member
-                    </Link>
-                    <span className="text-muted-foreground"> / {member.name}</span>
-                </nav>
+            <AdminPageHeader data-test-id="member_detail_header">
+                <header className="space-y-2">
+                    <nav aria-label="Breadcrumb" className="text-sm">
+                        <Link to={ROUTES.members} className="underline underline-offset-4" data-test-id="member_detail_link_breadcrumb_members">
+                            Member
+                        </Link>
+                        <span className="text-muted-foreground"> / {member.name}</span>
+                    </nav>
 
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <h1 className="text-2xl font-semibold">{member.name}</h1>
-                        {member.memberNumber && <span className="font-mono text-sm">{member.memberNumber}</span>}
-                        <StatusBadge
-                            tone={MEMBER_STATUS_TONES[member.status.value]}
-                            label={member.status.label}
-                            data-test-id="member_detail_badge_status"
-                        />
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                        {member.email && (
-                            <Button asChild variant="outline" size="icon" className="bg-card size-11 md:size-10">
-                                <a
-                                    href={`mailto:${encodeURIComponent(member.email)}`}
-                                    aria-label={`Hubungi ${member.name} lewat email`}
-                                    title="Hubungi lewat email"
-                                    data-test-id="member_detail_link_email"
-                                >
-                                    <Mail aria-hidden="true" />
-                                </a>
-                            </Button>
-                        )}
-                        {member.whatsapp && (
-                            <WhatsappButton
-                                href={whatsappChatUrl(member.whatsapp, memberGreetingMessage(member.name))}
-                                label={`Hubungi ${member.name} lewat WhatsApp`}
-                                className="bg-card size-11 md:size-10"
-                                iconClassName="size-4"
-                                data-test-id="member_detail_link_chat"
+                    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h1 className="text-2xl font-semibold">{member.name}</h1>
+                            {member.memberNumber && <span className="font-mono text-sm">{member.memberNumber}</span>}
+                            <StatusBadge
+                                tone={MEMBER_STATUS_TONES[member.status.value]}
+                                label={member.status.label}
+                                data-test-id="member_detail_badge_status"
                             />
-                        )}
-                        {can(P.MEMBER_UPDATE) && member.actions.canEdit && (
-                            <Button asChild variant="outline" className="bg-card">
-                                <Link to={ROUTES.memberEdit} params={{ memberId: member.id }} data-test-id="member_detail_link_edit">
-                                    Edit
-                                </Link>
-                            </Button>
-                        )}
-                        {can(P.MEMBER_RESET_PASSWORD) && member.actions.canResetPassword && (
-                            <Button
-                                variant="outline"
-                                className="bg-card"
-                                disabled={isSendingReset}
-                                title="Kirim link reset password ke email member"
-                                onClick={() => void sendResetPassword()}
-                                data-test-id="member_detail_button_reset_password"
-                            >
-                                {isSendingReset ? 'Mengirim…' : 'Reset Password'}
-                            </Button>
-                        )}
-                        {can(P.MEMBER_DEACTIVATE) && member.actions.canDeactivate && (
-                            <Button
-                                variant="outline"
-                                className="bg-card border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
-                                onClick={() => openStatusDialog('deactivate')}
-                                data-test-id="member_detail_button_deactivate"
-                            >
-                                Nonaktifkan
-                            </Button>
-                        )}
-                        {can(P.MEMBER_ACTIVATE) && member.actions.canActivate && (
-                            <Button onClick={() => openStatusDialog('activate')} data-test-id="member_detail_button_activate">
-                                Aktifkan
-                            </Button>
-                        )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                            {member.email && (
+                                <Button asChild variant="outline" size="icon" className="bg-card size-11 md:size-10">
+                                    <a
+                                        href={`mailto:${encodeURIComponent(member.email)}`}
+                                        aria-label={`Hubungi ${member.name} lewat email`}
+                                        title="Hubungi lewat email"
+                                        data-test-id="member_detail_link_email"
+                                    >
+                                        <Mail aria-hidden="true" />
+                                    </a>
+                                </Button>
+                            )}
+                            {member.whatsapp && (
+                                <WhatsappButton
+                                    href={whatsappChatUrl(member.whatsapp, memberGreetingMessage(member.name))}
+                                    label={`Hubungi ${member.name} lewat WhatsApp`}
+                                    className="bg-card size-11 md:size-10"
+                                    iconClassName="size-4"
+                                    data-test-id="member_detail_link_chat"
+                                />
+                            )}
+                            {can(P.MEMBER_UPDATE) && member.actions.canEdit && (
+                                <Button asChild variant="outline" className="bg-card">
+                                    <Link to={ROUTES.memberEdit} params={{ memberId: member.id }} data-test-id="member_detail_link_edit">
+                                        Edit
+                                    </Link>
+                                </Button>
+                            )}
+                            {can(P.MEMBER_RESET_PASSWORD) && member.actions.canResetPassword && (
+                                <Button
+                                    variant="outline"
+                                    className="bg-card"
+                                    disabled={isSendingReset}
+                                    title="Kirim link reset password ke email member"
+                                    onClick={() => void sendResetPassword()}
+                                    data-test-id="member_detail_button_reset_password"
+                                >
+                                    {isSendingReset ? 'Mengirim…' : 'Reset Password'}
+                                </Button>
+                            )}
+                            {can(P.MEMBER_DEACTIVATE) && member.actions.canDeactivate && (
+                                <Button
+                                    variant="outline"
+                                    className="bg-card border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
+                                    onClick={() => openStatusDialog('deactivate')}
+                                    data-test-id="member_detail_button_deactivate"
+                                >
+                                    Nonaktifkan
+                                </Button>
+                            )}
+                            {can(P.MEMBER_ACTIVATE) && member.actions.canActivate && (
+                                <Button onClick={() => openStatusDialog('activate')} data-test-id="member_detail_button_activate">
+                                    Aktifkan
+                                </Button>
+                            )}
+                        </div>
                     </div>
-                </div>
-            </header>
+                </header>
+            </AdminPageHeader>
 
             {resetMessage && (
                 <FeedbackToast revision={resetMessage} tone={resetMessage.tone} data-test-id="member_detail_alert_reset">

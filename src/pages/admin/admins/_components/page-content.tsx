@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
 
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
@@ -43,19 +44,21 @@ export const PageContent = () => {
 
     return (
         <div className="space-y-4">
-            <header className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h1 className="text-2xl font-semibold">Admin</h1>
-                    <p className="text-muted-foreground text-sm">Kelola akun admin sesuai izin yang diberikan.</p>
-                </div>
-                {can(P.ADMIN_INVITE) && (
-                    <Button asChild>
-                        <Link to={ROUTES.adminNew} data-test-id="admins_link_new">
-                            Tambah Admin
-                        </Link>
-                    </Button>
-                )}
-            </header>
+            <AdminPageHeader data-test-id="admins_header">
+                <header className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h1 className="text-2xl font-semibold">Admin</h1>
+                        <p className="text-muted-foreground text-sm">Kelola akun admin sesuai izin yang diberikan.</p>
+                    </div>
+                    {can(P.ADMIN_INVITE) && (
+                        <Button asChild>
+                            <Link to={ROUTES.adminNew} data-test-id="admins_link_new">
+                                Tambah Admin
+                            </Link>
+                        </Button>
+                    )}
+                </header>
+            </AdminPageHeader>
 
             {notice && (
                 <FeedbackToast revision={notice} tone={notice.tone} data-test-id="admins_alert_notice">

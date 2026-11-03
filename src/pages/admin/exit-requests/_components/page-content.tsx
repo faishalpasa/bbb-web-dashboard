@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
@@ -37,14 +38,16 @@ export const PageContent = () => {
 
     return (
         <div className="space-y-4">
-            <header>
-                <h1 className="text-2xl font-semibold">Permintaan Keluar</h1>
-                {list && (
-                    <p className="text-muted-foreground text-sm" data-test-id="exit_requests_text_summary">
-                        {list.summary.pendingTotal} permintaan menunggu keputusan
-                    </p>
-                )}
-            </header>
+            <AdminPageHeader data-test-id="exit_requests_header">
+                <header>
+                    <h1 className="text-2xl font-semibold">Permintaan Keluar</h1>
+                    {list && (
+                        <p className="text-muted-foreground text-sm" data-test-id="exit_requests_text_summary">
+                            {list.summary.pendingTotal} permintaan menunggu keputusan
+                        </p>
+                    )}
+                </header>
+            </AdminPageHeader>
 
             {notice && (
                 <FeedbackToast tone="success" data-test-id="exit_requests_alert_notice">

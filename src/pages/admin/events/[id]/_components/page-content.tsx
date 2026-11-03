@@ -1,3 +1,4 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
 
 import { CancelReasonField } from '@/components/molecules/cancel-reason-field';
@@ -84,66 +85,73 @@ export const PageContent = () => {
 
     return (
         <div className="space-y-4">
-            <header className="space-y-2">
-                <nav aria-label="Breadcrumb" className="text-sm">
-                    <Link to={ROUTES.events} className="underline underline-offset-4" data-test-id="event_detail_link_breadcrumb_events">
-                        Kegiatan
-                    </Link>
-                    <span className="text-muted-foreground"> / {can(P.EVENT_PARTICIPANT_VIEW) ? 'Peserta' : 'Detail'}</span>
-                </nav>
+            <AdminPageHeader data-test-id="event_detail_header">
+                <header className="space-y-2">
+                    <nav aria-label="Breadcrumb" className="text-sm">
+                        <Link to={ROUTES.events} className="underline underline-offset-4" data-test-id="event_detail_link_breadcrumb_events">
+                            Kegiatan
+                        </Link>
+                        <span className="text-muted-foreground"> / {can(P.EVENT_PARTICIPANT_VIEW) ? 'Peserta' : 'Detail'}</span>
+                    </nav>
 
-                <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-                    <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-3">
-                            <h1 className="text-2xl font-semibold">{event.title}</h1>
-                            <StatusBadge
-                                tone={EVENT_STATUS_TONES[event.status.value]}
-                                label={event.status.label}
-                                data-test-id="event_detail_badge_status"
-                            />
+                    <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+                        <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <h1 className="text-2xl font-semibold">{event.title}</h1>
+                                <StatusBadge
+                                    tone={EVENT_STATUS_TONES[event.status.value]}
+                                    label={event.status.label}
+                                    data-test-id="event_detail_badge_status"
+                                />
+                            </div>
+                            <p className="text-muted-foreground text-sm" data-test-id="event_detail_text_schedule">
+                                {event.startsAt ? `${formatEventRange(event.startsAt, event.endsAt, event.timezone)}. ` : ''}
+                                {place ? `${event.format.label}, ${place}.` : ''}
+                            </p>
                         </div>
-                        <p className="text-muted-foreground text-sm" data-test-id="event_detail_text_schedule">
-                            {event.startsAt ? `${formatEventRange(event.startsAt, event.endsAt, event.timezone)}. ` : ''}
-                            {place ? `${event.format.label}, ${place}.` : ''}
-                        </p>
-                    </div>
 
-                    <div className="flex flex-wrap gap-2">
-                        {can(P.EVENT_UPDATE) && event.actions.canEdit && (
-                            <Button asChild variant="outline" className="bg-card">
-                                <Link to={ROUTES.eventEdit} params={{ eventId: event.id }} data-test-id="event_detail_link_edit">
-                                    Edit Kegiatan
-                                </Link>
-                            </Button>
-                        )}
-                        {can(P.EVENT_PARTICIPANT_CREATE) && event.actions.canAddParticipants && (
-                            <Button variant="outline" className="bg-card" onClick={openAddDialog} data-test-id="event_detail_button_add_participant">
-                                Tambah Peserta
-                            </Button>
-                        )}
-                        {can(P.EVENT_CLOSE) && event.actions.canClose && (
-                            <Button onClick={() => setCloseDialogOpen(true)} data-test-id="event_detail_button_close">
-                                Tutup Acara
-                            </Button>
-                        )}
-                        {can(P.EVENT_DUPLICATE) && (
-                            <Button
-                                variant="warning"
-                                disabled={isDuplicating}
-                                onClick={() => void duplicateEvent()}
-                                data-test-id="event_detail_button_duplicate"
-                            >
-                                {isDuplicating ? 'Menduplikasi…' : 'Duplikat Kegiatan'}
-                            </Button>
-                        )}
-                        {can(P.EVENT_CANCEL) && event.actions.canCancel && (
-                            <Button variant="destructive" onClick={() => setCancelDialogOpen(true)} data-test-id="event_detail_button_cancel">
-                                Batalkan Kegiatan
-                            </Button>
-                        )}
+                        <div className="flex flex-wrap gap-2">
+                            {can(P.EVENT_UPDATE) && event.actions.canEdit && (
+                                <Button asChild variant="outline" className="bg-card">
+                                    <Link to={ROUTES.eventEdit} params={{ eventId: event.id }} data-test-id="event_detail_link_edit">
+                                        Edit Kegiatan
+                                    </Link>
+                                </Button>
+                            )}
+                            {can(P.EVENT_PARTICIPANT_CREATE) && event.actions.canAddParticipants && (
+                                <Button
+                                    variant="outline"
+                                    className="bg-card"
+                                    onClick={openAddDialog}
+                                    data-test-id="event_detail_button_add_participant"
+                                >
+                                    Tambah Peserta
+                                </Button>
+                            )}
+                            {can(P.EVENT_CLOSE) && event.actions.canClose && (
+                                <Button onClick={() => setCloseDialogOpen(true)} data-test-id="event_detail_button_close">
+                                    Tutup Acara
+                                </Button>
+                            )}
+                            {can(P.EVENT_DUPLICATE) && (
+                                <Button
+                                    variant="warning"
+                                    disabled={isDuplicating}
+                                    onClick={() => void duplicateEvent()}
+                                    data-test-id="event_detail_button_duplicate"
+                                >
+                                    {isDuplicating ? 'Menduplikasi…' : 'Duplikat Kegiatan'}
+                                </Button>
+                            )}
+                            {can(P.EVENT_CANCEL) && event.actions.canCancel && (
+                                <Button variant="destructive" onClick={() => setCancelDialogOpen(true)} data-test-id="event_detail_button_cancel">
+                                    Batalkan Kegiatan
+                                </Button>
+                            )}
+                        </div>
                     </div>
-                </div>
-            </header>
+                </header>
+            </AdminPageHeader>
 
             {notice && (
                 <FeedbackToast revision={notice} tone={notice.tone} data-test-id="event_detail_alert_notice">
