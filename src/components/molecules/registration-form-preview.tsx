@@ -49,13 +49,7 @@ export const RegistrationFormPreview = ({ definition }: RegistrationFormPreviewP
                         />
                     )}
                     {field.type === 'file' && (
-                        <Input
-                            className="bg-card"
-                            type="file"
-                            aria-labelledby={`preview-label-${field.id}`}
-                            accept="image/jpeg,image/png,application/pdf"
-                            disabled
-                        />
+                        <Input className="bg-card" type="file" aria-labelledby={`preview-label-${field.id}`} accept="image/jpeg,image/png" disabled />
                     )}
                     {field.type === 'select' && (
                         <NativeSelect aria-labelledby={`preview-label-${field.id}`} defaultValue="">
