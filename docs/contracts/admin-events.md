@@ -21,6 +21,7 @@ Status: **di MySQL (langkah 13)**. Diimplementasi di `bbb-api` dan dipakai `web-
 | `POST` | `/api/admin/events/{id}/cancel` | body opsional `{ reason?: string }` (teks biasa, di-trim, maks. 500 karakter; kosong = tanpa alasan; `422` untuk `reason` yang bukan teks atau terlalu panjang). -> `EventDetail`; `422` bila bukan `published`. Setelah commit, setiap pendaftar yang masih `registered` (member dan tamu) diantrekan email pembatalan yang memuat alasan bila ada; status pendaftaran tidak diubah. Alasan juga masuk ke log audit (dipotong 100 karakter) |
 | `POST` | `/api/admin/events/{id}/close` | -> `EventDetail`; `422` bila bukan `published` |
 | `GET` | `/api/admin/events/{id}/participants?search&page&perPage` | `{ items: EventParticipant[], meta, summary }` |
+| `GET` | `/api/admin/events/export?search&status&format&dateFrom&dateTo&sortBy&sortDirection` | `text/csv` (`kegiatan-bbb-bff.csv`): Judul, Mulai, Selesai, Zona waktu, Format, Status, Terdaftar, Kapasitas, Hadir, Ramah non-member; semua kegiatan yang cocok dengan filter, tanpa paginasi; izin `event-export`; dicatat di log audit (Ekspor data) |
 | `GET` | `/api/admin/events/{id}/participants/export?search` | `text/csv` (`peserta-{slug}.csv`): Nomor, Nama, Email, WhatsApp, Jenis, Didaftarkan, Didaftarkan oleh, Status; semua peserta yang cocok dengan pencarian, tanpa paginasi, tanpa peserta yang membatalkan; dicatat di log audit (Ekspor data); sel yang diawali `= + - @` diberi awalan `'` |
 | `POST` | `/api/admin/events/{id}/participants` | `{ memberId }` atau `{ name, email, whatsapp }` -> `EventParticipant` (`201`) |
 | `PUT` | `/api/admin/events/{id}/participants/{participantId}/attendance` | `{ present: boolean }` -> `{ participant, summary }` |
@@ -76,6 +77,8 @@ interface EventDetail extends EventListItem {
     venueName: string | null;
     address: string | null;
     mapUrl: string | null; // link Maps (offline) atau link meeting (online)
+    surveyUrl: string | null; // dikirim lewat email ke peserta yang hadir saat acara selesai; harus http(s)
+    documentationUrl: string | null; // boleh diisi belakangan; tampil di halaman kegiatan member yang hadir
     bannerUrl: string | null;
     usesQuota: boolean;
     attendanceCode: string;
@@ -89,6 +92,7 @@ interface EventInput {
     title: string; slug: string | null; description: string | null; bannerUrl: string | null;
     timezone: string; startsAt: string | null; endsAt: string | null; format: 'online' | 'offline';
     venueName: string | null; address: string | null; mapUrl: string | null;
+    surveyUrl: string | null; documentationUrl: string | null;
     usesQuota: boolean; capacity: number | null; allowsNonMember: boolean;
     attendanceCode: string | null; publish: boolean;
 }

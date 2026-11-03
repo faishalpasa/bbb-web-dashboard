@@ -11,6 +11,7 @@ export const PERMISSIONS = {
     MEMBER_NOTE_UPDATE: 'member-note-update',
     EVENT_VIEW: 'event-view',
     EVENT_CREATE: 'event-create',
+    EVENT_EXPORT: 'event-export',
     EVENT_UPDATE: 'event-update',
     EVENT_PUBLISH: 'event-publish',
     EVENT_DUPLICATE: 'event-duplicate',

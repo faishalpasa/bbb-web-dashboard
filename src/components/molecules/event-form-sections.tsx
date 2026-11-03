@@ -264,6 +264,45 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
                 </FormField>
             </Section>
 
+            <Section title="Survei dan dokumentasi" data-test-id={`${testId}_after_event`}>
+                <FormField
+                    id="surveyUrl"
+                    label="Link survei"
+                    hint="Wajib saat kegiatan diterbitkan. Dikirim lewat email ke peserta yang hadir saat kegiatan selesai."
+                    error={errors.surveyUrl}
+                    data-test-id={`${testId}_survey_url`}
+                >
+                    <Input
+                        id="surveyUrl"
+                        type="url"
+                        aria-required="true"
+                        value={fields.surveyUrl}
+                        onChange={(event) => setField('surveyUrl', event.target.value)}
+                        placeholder="https://forms.gle/..."
+                        className="bg-card h-11 font-mono"
+                        data-test-id={`${testId}_input_survey_url`}
+                    />
+                </FormField>
+                <FormField
+                    id="documentationUrl"
+                    label="Link dokumentasi"
+                    hint="Wajib saat kegiatan diterbitkan. Peserta yang hadir melihatnya di halaman kegiatan dan di email terima kasih."
+                    error={errors.documentationUrl}
+                    data-test-id={`${testId}_documentation_url`}
+                >
+                    <Input
+                        id="documentationUrl"
+                        type="url"
+                        aria-required="true"
+                        value={fields.documentationUrl}
+                        onChange={(event) => setField('documentationUrl', event.target.value)}
+                        placeholder="https://drive.google.com/..."
+                        className="bg-card h-11 font-mono"
+                        data-test-id={`${testId}_input_documentation_url`}
+                    />
+                </FormField>
+            </Section>
+
             <Section title="Kuota" data-test-id={`${testId}_quota`}>
                 <ToggleRow
                     id="usesQuota"

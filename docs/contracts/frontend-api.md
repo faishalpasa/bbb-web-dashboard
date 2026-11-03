@@ -130,12 +130,14 @@ Akses notifikasi memerlukan JWT member dan profil non-migrated. Member `exit_req
 | `PUT` | `/api/member/password` | `{ currentPassword, password }` -> `{ message }` |
 | `GET` | `/api/member/community-rules` | `CommunityRules` |
 | `GET` | `/api/public/community-rules` | `PublicCommunityRules` (tanpa login) |
+| `GET` | `/api/public/legal-content` | `{ faqHtml, privacyPolicyHtml }` (tanpa login; HTML dari pengaturan admin, sudah dibersihkan; 60 permintaan per menit) |
+| `GET` | `/api/regions/countries` | `{ code, name }[]` (kode ISO 3166-1 alpha-2, nama Indonesia, tanpa Indonesia) |
 | `GET` | `/api/regions/provinces` | `RegionOption[]` |
 | `GET` | `/api/regions/regencies?provinceCode=...` | `RegionOption[]` |
 | `GET` | `/api/regions/districts?regencyCode=...` | `RegionOption[]` |
 | `GET` | `/api/regions/villages?districtCode=...` | `VillageOption[]` |
 
-`VillageOption` berbentuk `{ code, value, label, postalCode }`; `label` hanya nama wilayah dan frontend menampilkannya sebagai `Nama Kelurahan - Kodepos`. Field wajib profil: nama, tahun lahir, WhatsApp ternormalisasi `628...`, preferensi partisipasi, provinsi, kabupaten/kota, kecamatan, kelurahan, kode pos, dan versi persetujuan/peraturan. Payload memakai `villageCode`; respons `MemberProfile` memuat `village: VillageOption | null`, sedangkan draft migrasi memuat `villageCode` string (kosong untuk data lama). Opsi preferensi berasal dari server; mock tidak menetapkan enum bisnis baru.
+`VillageOption` berbentuk `{ code, value, label, postalCode }`; `label` hanya nama wilayah dan frontend menampilkannya sebagai `Nama Kelurahan - Kodepos`. Field wajib profil: nama, tahun lahir, WhatsApp ternormalisasi `628...`, preferensi partisipasi, provinsi, kabupaten/kota, kecamatan, kelurahan, kode pos, dan versi persetujuan/peraturan. Payload memakai `villageCode`; respons `MemberProfile` memuat `village: VillageOption | null`, sedangkan draft migrasi memuat `villageCode` string (kosong untuk data lama). Domisili: `domicileType` `indonesia` (default) atau `overseas`. Untuk `overseas`, kirim `countryCode` (wajib, dari `/api/regions/countries`) dan `overseasCity` (opsional, maks 120); provinsi sampai kelurahan dan kode pos tidak dikirim dan disimpan kosong. Respons `MemberProfile` dan draft memuat `domicileType`, `country: { code, name } | null` (draft: `countryCode`) dan `overseasCity`. Opsi preferensi berasal dari server; mock tidak menetapkan enum bisnis baru.
 
 Keputusan versi untuk implementasi persisten langkah 6 (16 Oktober 2026): `consentVersion` dan `rulesVersion` mengikuti `app_settings.rules_version` dari admin. Tipe payload tetap **string**, berisi angka versi seperti `"1"`/`"2"`, bukan tanggal; respons pengaturan admin tetap `rulesVersion: number`. FE membaca versi dari server dan mengirim kembali tanpa menetapkan angka/tanggal sendiri. Fixture tanggal lama masih ada sampai flow terkait dimigrasi; histori persetujuan lama tidak ditulis ulang sebagai persetujuan baru secara otomatis.
 
@@ -147,7 +149,7 @@ Edit data diri memakai form yang sama dengan onboarding, dengan email read-only.
 
 Ubah password: password lama wajib sesuai; password baru minimal 8 karakter dan berbeda dari password lama. Error field memakai `currentPassword` dan `password`; respons sukses tetap `{ message }` tanpa token baru. Untuk member di database, hash password diganti dan epoch sesi user naik: **sesi perangkat yang mengganti password tetap hidup** (token dan refresh-nya tetap berlaku), sedangkan token semua perangkat lain, termasuk refresh-nya, menjadi `401`; perangkat yang masuk setelahnya memakai epoch baru. Lupa password lewat tautan (`POST /api/password/reset`) mengakhiri **semua** sesi lama; hanya sesi baru dari reset yang hidup. Email pemberitahuan "password berubah" diantrekan setelah transaksi selesai (tanpa tautan atau rahasia; pengiriman nyata menunggu provider email).
 
-`CommunityRules` berbentuk `{ version, updatedByLabel, sections: [{ title, body }], whatsappGroupUrl }`. Body adalah plain text dengan baris baru (bukan HTML); frontend tidak merender HTML dari server. Sumbernya pengaturan admin: `version` adalah `rules_version` sebagai string angka ("1", "2"); bila `rules_summary` terisi, `sections` berisi **satu** section `{ title: "Aturan komunitas", body: <ringkasan apa adanya> }`, dan selama kosong tetap placeholder artboard 6m sampai copy final tersedia; `updatedByLabel` "Diperbarui oleh {nama admin}" bila admin pengubah ringkasan diketahui, selain itu "Diperbarui oleh admin". `whatsappGroupUrl` dari pengaturan yang sama dengan Beranda; kosong berarti tombol nonaktif. Kontak admin dan URL dokumen eksternal belum ditentukan.
+`CommunityRules` berbentuk `{ version, updatedByLabel, sections: [{ title, body, bodyHtml }], whatsappGroupUrl }`. `body` adalah teks biasa (untuk email dan klien yang hanya mengenal teks); `bodyHtml` adalah HTML dari editor teks pengaturan, sudah dibersihkan API (tag p, br, strong, em, u, s, ul, ol, li, h2, h3, blockquote, a) dan boleh dirender frontend. Sumbernya pengaturan admin: `version` adalah `rules_version` sebagai string angka ("1", "2"); bila `rules_summary` terisi, `sections` berisi **satu** section `{ title: "Aturan komunitas", body: <teks biasa>, bodyHtml: <HTML bersih> }`, dan selama kosong tetap placeholder artboard 6m sampai copy final tersedia; `updatedByLabel` "Diperbarui oleh {nama admin}" bila admin pengubah ringkasan diketahui, selain itu "Diperbarui oleh admin". `whatsappGroupUrl` dari pengaturan yang sama dengan Beranda; kosong berarti tombol nonaktif. Kontak admin dan URL dokumen eksternal belum ditentukan.
 
 `GET /api/public/community-rules` (tanpa token; token basi diabaikan; 60 permintaan per menit) mengembalikan `PublicCommunityRules` = `{ version: string, sections: [{ title, body }] }`, isi yang sama dengan `CommunityRules` tetapi **tanpa** `whatsappGroupUrl` (tautan grup khusus member) dan `updatedByLabel`. Dipakai formulir onboarding untuk menampilkan Aturan Komunitas dari persetujuan, sebab orang yang belum menyelesaikan onboarding belum menjadi member dan tidak bisa memakai endpoint member.
 
@@ -240,6 +242,8 @@ Keduanya tanpa autentikasi dan tanpa token. Wilayah memakai endpoint terbuka `GE
     venueName: string | null;
     address: string | null;
     mapUrl: string | null;          // hanya link Maps untuk offline; null untuk online
+    surveyUrl: string | null;       // hanya di detail dan hanya untuk member yang hadir
+    documentationUrl: string | null;
     usesQuota: boolean;
     capacity: number | null;        // null bila usesQuota false
     registeredCount: number | null; // null bila usesQuota false; UI tidak menampilkan info kuota

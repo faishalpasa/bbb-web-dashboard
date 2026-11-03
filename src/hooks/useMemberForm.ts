@@ -2,9 +2,9 @@ import { useReadingProfile } from '@/hooks/useReadingProfile';
 import type { ReadingProfileOptions } from '@/types/reading-profile';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { getDistricts, getProvinces, getRegencies, getVillages } from '@/services/region';
+import { getCountries, getDistricts, getProvinces, getRegencies, getVillages } from '@/services/region';
 import type { MemberDetail, MemberEditInput } from '@/types/member';
-import type { DistrictOption, RegionOption, VillageOption } from '@/types/region';
+import type { CountryOption, DistrictOption, DomicileType, RegionOption, VillageOption } from '@/types/region';
 import { fieldErrorMessage } from '@/utils/error';
 import { isValidWhatsapp, normalizeWhatsapp, toLocalWhatsapp } from '@/utils/string';
 
@@ -21,7 +21,9 @@ export type MemberFieldName =
     | 'regencyCode'
     | 'districtCode'
     | 'villageCode'
-    | 'postalCode';
+    | 'postalCode'
+    | 'countryCode'
+    | 'overseasCity';
 
 export type MemberFormErrors = Partial<Record<MemberFieldName, string>>;
 
@@ -36,6 +38,9 @@ export interface MemberFormFields {
     districtCode: string;
     villageCode: string;
     postalCode: string;
+    domicileType: DomicileType;
+    countryCode: string;
+    overseasCity: string;
 }
 
 const EMPTY_FIELDS: MemberFormFields = {
@@ -49,6 +54,9 @@ const EMPTY_FIELDS: MemberFormFields = {
     districtCode: '',
     villageCode: '',
     postalCode: '',
+    domicileType: 'indonesia',
+    countryCode: '',
+    overseasCity: '',
 };
 
 const SERVER_FIELD_NAMES: MemberFieldName[] = [
@@ -62,6 +70,8 @@ const SERVER_FIELD_NAMES: MemberFieldName[] = [
     'districtCode',
     'villageCode',
     'postalCode',
+    'countryCode',
+    'overseasCity',
 ];
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -83,6 +93,9 @@ const fieldsFromMember = (member: MemberDetail): MemberFormFields => ({
     districtCode: member.district?.code ?? '',
     villageCode: member.village?.code ?? '',
     postalCode: member.postalCode,
+    domicileType: member.domicileType,
+    countryCode: member.country?.code ?? '',
+    overseasCity: member.overseasCity ?? '',
 });
 
 // Shared by the create and edit member screens: field state and the region cascade through village.
@@ -94,6 +107,7 @@ export const useMemberForm = (member?: MemberDetail, options: ReadingProfileOpti
     const [regencies, setRegencies] = useState<RegionOption[]>([]);
     const [districts, setDistricts] = useState<DistrictOption[]>([]);
     const [villages, setVillages] = useState<VillageOption[]>([]);
+    const [countries, setCountries] = useState<CountryOption[]>([]);
     // A slow answer for a district the admin already left must not replace the list of the current one.
     const villageRequest = useRef(0);
     const resetVillages = () => {
@@ -108,6 +122,7 @@ export const useMemberForm = (member?: MemberDetail, options: ReadingProfileOpti
         const loadRegions = async () => {
             try {
                 const provinceResponse = await getProvinces();
+                const countryResponse = await getCountries();
                 const regencyResponse = member?.province ? await getRegencies(member.province.code) : null;
                 const districtResponse = member?.regency ? await getDistricts(member.regency.code) : null;
                 const villageResponse = member?.district ? await getVillages(member.district.code) : null;
@@ -115,6 +130,7 @@ export const useMemberForm = (member?: MemberDetail, options: ReadingProfileOpti
                 if (isCancelled) return;
 
                 setProvinces(provinceResponse.data);
+                setCountries(countryResponse.data);
                 setRegencies(regencyResponse?.data ?? []);
                 setDistricts(districtResponse?.data ?? []);
                 setVillages(villageResponse?.data ?? []);
@@ -134,6 +150,26 @@ export const useMemberForm = (member?: MemberDetail, options: ReadingProfileOpti
         setFields((current) => ({ ...current, [name]: value }));
         setErrors((current) => ({ ...current, [name]: undefined }));
     }, []);
+
+    // Switching between Indonesia and abroad drops the answers of the other side, so nothing stale is sent.
+    const handleDomicileTypeChange = (domicileType: DomicileType) => {
+        setFields((current) =>
+            domicileType === 'overseas'
+                ? { ...current, domicileType, provinceCode: '', regencyCode: '', districtCode: '', villageCode: '', postalCode: '' }
+                : { ...current, domicileType, countryCode: '', overseasCity: '' },
+        );
+        setErrors((current) => ({
+            ...current,
+            provinceCode: undefined,
+            regencyCode: undefined,
+            districtCode: undefined,
+            villageCode: undefined,
+            countryCode: undefined,
+        }));
+        setRegencies([]);
+        setDistricts([]);
+        resetVillages();
+    };
 
     const handleProvinceChange = async (provinceCode: string) => {
         setFields((current) => ({ ...current, provinceCode, regencyCode: '', districtCode: '', villageCode: '', postalCode: '' }));
@@ -202,10 +238,14 @@ export const useMemberForm = (member?: MemberDetail, options: ReadingProfileOpti
         else if (options.requireEmail && !EMAIL_PATTERN.test(fields.email.trim())) nextErrors.email = 'Email tidak valid.';
         if (!fields.whatsapp.trim()) nextErrors.whatsapp = 'Nomor WhatsApp harus diisi.';
         else if (!isValidWhatsapp(whatsapp)) nextErrors.whatsapp = 'Nomor WhatsApp tidak valid.';
-        if (!fields.provinceCode) nextErrors.provinceCode = 'Pilih provinsi.';
-        if (!fields.regencyCode) nextErrors.regencyCode = 'Pilih kabupaten atau kota.';
-        if (!fields.districtCode) nextErrors.districtCode = 'Pilih kecamatan.';
-        if (!fields.villageCode) nextErrors.villageCode = 'Pilih kelurahan.';
+        if (fields.domicileType === 'overseas') {
+            if (!fields.countryCode) nextErrors.countryCode = 'Pilih negara.';
+        } else {
+            if (!fields.provinceCode) nextErrors.provinceCode = 'Pilih provinsi.';
+            if (!fields.regencyCode) nextErrors.regencyCode = 'Pilih kabupaten atau kota.';
+            if (!fields.districtCode) nextErrors.districtCode = 'Pilih kecamatan.';
+            if (!fields.villageCode) nextErrors.villageCode = 'Pilih kelurahan.';
+        }
 
         setErrors(nextErrors);
 
@@ -217,12 +257,27 @@ export const useMemberForm = (member?: MemberDetail, options: ReadingProfileOpti
             birthYear: Number(fields.birthYear),
             whatsapp,
             participationPreference: fields.participationPreference || null,
-            provinceCode: fields.provinceCode,
-            regencyCode: fields.regencyCode,
-            districtCode: fields.districtCode,
-            villageCode: fields.villageCode,
-            // There is no postal code field: it always comes from the selected kelurahan.
-            postalCode: villages.find((village) => village.code === fields.villageCode)?.postalCode ?? fields.postalCode,
+            domicileType: fields.domicileType,
+            // Abroad there is no region chain and no postal code; in Indonesia the postal code comes from the selected kelurahan.
+            ...(fields.domicileType === 'overseas'
+                ? {
+                      provinceCode: '',
+                      regencyCode: '',
+                      districtCode: '',
+                      villageCode: '',
+                      postalCode: '',
+                      countryCode: fields.countryCode,
+                      overseasCity: fields.overseasCity.trim(),
+                  }
+                : {
+                      provinceCode: fields.provinceCode,
+                      regencyCode: fields.regencyCode,
+                      districtCode: fields.districtCode,
+                      villageCode: fields.villageCode,
+                      postalCode: villages.find((village) => village.code === fields.villageCode)?.postalCode ?? fields.postalCode,
+                      countryCode: '',
+                      overseasCity: '',
+                  }),
         };
     };
 
@@ -252,9 +307,11 @@ export const useMemberForm = (member?: MemberDetail, options: ReadingProfileOpti
         regencies,
         districts,
         villages,
+        countries,
         regionError,
         birthYears: memberBirthYears(),
         setField,
+        handleDomicileTypeChange,
         handleProvinceChange,
         handleRegencyChange,
         handleDistrictChange,

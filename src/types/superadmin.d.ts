@@ -9,7 +9,8 @@ export interface AdminSettings {
     engagedWindowMonths: number;
     adminWhatsapp: string | null;
     whatsappGroupUrl: string | null;
-    shareRecommendationUrl: string | null;
+    faqContent: string; // HTML dari editor teks; API membersihkannya
+    privacyPolicyContent: string;
     rulesSummary: string;
     rulesVersion: number;
     updatedBy: string;

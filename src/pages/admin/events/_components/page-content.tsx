@@ -1,5 +1,6 @@
 import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
+import { Download } from 'lucide-react';
 
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ import { EventTable } from './event-table';
 
 export const PageContent = () => {
     const { can } = usePermissions();
-    const { list, failure, reload } = usePageContext();
+    const { list, failure, isExporting, exportError, exportEvents, reload } = usePageContext();
     const canManageEvents = can(P.EVENT_CREATE);
 
     return (
@@ -28,16 +29,26 @@ export const PageContent = () => {
                             </p>
                         )}
                     </div>
-                    {canManageEvents && (
-                        <Button asChild>
-                            <Link to={ROUTES.eventNew} data-test-id="events_link_create">
-                                Kegiatan Baru
-                            </Link>
-                        </Button>
-                    )}
+                    <div className="flex flex-wrap gap-2">
+                        {canManageEvents && (
+                            <Button asChild>
+                                <Link to={ROUTES.eventNew} data-test-id="events_link_create">
+                                    Kegiatan Baru
+                                </Link>
+                            </Button>
+                        )}
+                        {can(P.EVENT_EXPORT) && (
+                            <Button variant="outline" onClick={() => void exportEvents()} disabled={isExporting} data-test-id="events_button_export">
+                                <Download aria-hidden="true" />
+                                {isExporting ? 'Menyiapkan…' : 'Expor'}
+                            </Button>
+                        )}
+                    </div>
                 </header>
                 <EventFilters />
             </AdminPageHeader>
+
+            {exportError && <FeedbackToast data-test-id="events_alert_export_error">{exportError}</FeedbackToast>}
 
             <section className="border-border bg-card overflow-hidden rounded-lg border">
                 {failure ? (

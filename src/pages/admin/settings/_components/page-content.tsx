@@ -6,10 +6,10 @@ import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { FormField } from '@/components/molecules/form-field';
 import { PermissionGate } from '@/components/molecules/permission-gate';
 import { RequiredNote } from '@/components/molecules/required-mark';
+import { RichTextEditor } from '@/components/molecules/rich-text-editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Textarea } from '@/components/ui/textarea';
 import { PERMISSIONS as P } from '@/constants/permission';
 import { SETTINGS_DEMO_WEEKDAYS } from '@/constants/superadmin';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -202,46 +202,50 @@ export const PageContent = () => {
                                 data-test-id="settings_input_whatsapp_group_url"
                             />
                         </FormField>
-                        <FormField
-                            id="shareRecommendationUrl"
-                            label="Link Berbagi Rekomendasi"
-                            isOptional
-                            hint="Harus diawali https://"
-                            error={errors.shareRecommendationUrl}
-                            data-test-id="settings_share_recommendation_url"
-                        >
-                            <Input
-                                id="shareRecommendationUrl"
-                                type="url"
-                                value={fields.shareRecommendationUrl}
-                                onChange={(event) => setField('shareRecommendationUrl', event.target.value)}
-                                placeholder="https://..."
-                                className="bg-card h-11 font-mono"
-                                data-test-id="settings_input_share_recommendation_url"
-                            />
-                        </FormField>
                     </Card>
 
                     <Card
-                        title="Aturan komunitas"
-                        description="Ringkasan tampil di halaman sukses daftar dan di email konfirmasi."
+                        title="Aturan komunitas, FAQ, dan Kebijakan Data Pribadi"
+                        description="Ketiganya dibuka sebagai popup dari menu profil member. Aturan Komunitas juga tampil di halaman sukses daftar dan di email konfirmasi (sebagai teks biasa)."
                         data-test-id="settings_card_rules"
                     >
                         <FormField
                             id="rulesSummary"
-                            label="Ringkasan aturan"
+                            label="Aturan Komunitas"
                             isOptional
                             error={errors.rulesSummary}
                             data-test-id="settings_rules_summary"
                         >
-                            <Textarea
+                            <RichTextEditor
                                 id="rulesSummary"
                                 value={fields.rulesSummary}
-                                maxLength={5000}
-                                onChange={(event) => setField('rulesSummary', event.target.value)}
-                                placeholder="[Tulis ringkasan aturan komunitas di sini.]"
-                                className="min-h-32"
-                                data-test-id="settings_input_rules_summary"
+                                onChange={(html) => setField('rulesSummary', html)}
+                                aria-label="Isi Aturan Komunitas"
+                                data-test-id="settings_editor_rules"
+                            />
+                        </FormField>
+                        <FormField id="faqContent" label="FAQ" isOptional error={errors.faqContent} data-test-id="settings_faq_content">
+                            <RichTextEditor
+                                id="faqContent"
+                                value={fields.faqContent}
+                                onChange={(html) => setField('faqContent', html)}
+                                aria-label="Isi FAQ"
+                                data-test-id="settings_editor_faq"
+                            />
+                        </FormField>
+                        <FormField
+                            id="privacyPolicyContent"
+                            label="Kebijakan Data Pribadi"
+                            isOptional
+                            error={errors.privacyPolicyContent}
+                            data-test-id="settings_privacy_content"
+                        >
+                            <RichTextEditor
+                                id="privacyPolicyContent"
+                                value={fields.privacyPolicyContent}
+                                onChange={(html) => setField('privacyPolicyContent', html)}
+                                aria-label="Isi Kebijakan Data Pribadi"
+                                data-test-id="settings_editor_privacy"
                             />
                         </FormField>
                         <p className="text-sm" data-test-id="settings_text_rules_version">

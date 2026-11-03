@@ -1,9 +1,10 @@
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { getEventOptions, getEvents } from '@/services/event';
+import { toast } from '@/components/ui/toast';
+import { getEventOptions, getEvents, getEventsExport } from '@/services/event';
 import type { LoadFailure } from '@/types/api';
 import type { EventList, EventListQuery, EventOptions, EventSortBy, EventSortDirection } from '@/types/event';
-import { toLoadFailure } from '@/utils/error';
+import { errorMessage, toLoadFailure } from '@/utils/error';
 
 const SEARCH_DEBOUNCE_MS = 350;
 
@@ -32,6 +33,8 @@ interface PageContextValue {
     list: EventList | null;
     failure: LoadFailure | null;
     isLoading: boolean;
+    isExporting: boolean;
+    exportError: string | null;
     setSearchText: (value: string) => void;
     applyFilters: (values: EventFilterValues) => void;
     resetFilters: () => void;
@@ -39,6 +42,7 @@ interface PageContextValue {
     goToPage: (page: number) => void;
     setPerPage: (perPage: number) => void;
     reload: () => void;
+    exportEvents: () => Promise<void>;
 }
 
 const PageContext = createContext<PageContextValue | null>(null);
@@ -46,6 +50,8 @@ const PageContext = createContext<PageContextValue | null>(null);
 export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [query, setQuery] = useState<EventListQuery>(INITIAL_QUERY);
     const [searchText, setSearchTextState] = useState('');
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportError, setExportError] = useState<string | null>(null);
     const [options, setOptions] = useState<EventOptions | null>(null);
     const [list, setList] = useState<EventList | null>(null);
     const [failure, setFailure] = useState<LoadFailure | null>(null);
@@ -110,6 +116,28 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         void load();
     }, [query, reloadToken]);
 
+    // Exports what the list currently shows: the same filters and sort, every page of it.
+    const exportEvents = useCallback(async () => {
+        setIsExporting(true);
+        setExportError(null);
+
+        try {
+            const response = await getEventsExport(query);
+            const url = URL.createObjectURL(response.data);
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = 'kegiatan-bbb-bff.csv';
+            link.click();
+            URL.revokeObjectURL(url);
+            toast.add({ type: 'success', title: 'File expor kegiatan siap diunduh.' });
+        } catch (error) {
+            setExportError(errorMessage(error));
+        } finally {
+            setIsExporting(false);
+        }
+    }, [query]);
+
     const value = useMemo<PageContextValue>(
         () => ({
             query,
@@ -119,6 +147,8 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             list,
             failure,
             isLoading,
+            isExporting,
+            exportError,
             setSearchText: setSearchTextState,
             applyFilters,
             resetFilters,
@@ -126,8 +156,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             goToPage: (page) => setQuery((current) => ({ ...current, page })),
             setPerPage: (perPage) => setQuery((current) => ({ ...current, perPage, page: 1 })),
             reload: () => setReloadToken((token) => token + 1),
+            exportEvents,
         }),
-        [query, searchText, options, list, failure, isLoading, applyFilters, resetFilters, setSort],
+        [query, searchText, options, list, failure, isLoading, isExporting, exportError, applyFilters, resetFilters, setSort, exportEvents],
     );
 
     return <PageContext.Provider value={value}>{children}</PageContext.Provider>;

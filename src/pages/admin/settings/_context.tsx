@@ -14,7 +14,8 @@ export type SettingsFieldName =
     | 'engagedWindowMonths'
     | 'adminWhatsapp'
     | 'whatsappGroupUrl'
-    | 'shareRecommendationUrl'
+    | 'faqContent'
+    | 'privacyPolicyContent'
     | 'rulesSummary';
 
 export type SettingsFields = Record<SettingsFieldName, string>;
@@ -27,7 +28,8 @@ const FIELD_NAMES: SettingsFieldName[] = [
     'engagedWindowMonths',
     'adminWhatsapp',
     'whatsappGroupUrl',
-    'shareRecommendationUrl',
+    'faqContent',
+    'privacyPolicyContent',
     'rulesSummary',
 ];
 
@@ -53,7 +55,8 @@ const toFields = (settings: AdminSettings): SettingsFields => ({
     engagedWindowMonths: String(settings.engagedWindowMonths),
     adminWhatsapp: settings.adminWhatsapp ? toLocalWhatsapp(settings.adminWhatsapp) : '',
     whatsappGroupUrl: settings.whatsappGroupUrl ?? '',
-    shareRecommendationUrl: settings.shareRecommendationUrl ?? '',
+    faqContent: settings.faqContent,
+    privacyPolicyContent: settings.privacyPolicyContent,
     rulesSummary: settings.rulesSummary,
 });
 
@@ -131,7 +134,8 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 engagedWindowMonths: Number(fields.engagedWindowMonths),
                 adminWhatsapp: fields.adminWhatsapp.trim() ? whatsapp : null,
                 whatsappGroupUrl: fields.whatsappGroupUrl.trim() || null,
-                shareRecommendationUrl: fields.shareRecommendationUrl.trim() || null,
+                faqContent: fields.faqContent,
+                privacyPolicyContent: fields.privacyPolicyContent,
                 rulesSummary: fields.rulesSummary,
             });
 

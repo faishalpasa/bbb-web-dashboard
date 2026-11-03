@@ -36,6 +36,8 @@ export interface EventDetail extends EventListItem {
     venueName: string | null;
     address: string | null;
     mapUrl: string | null;
+    surveyUrl: string | null;
+    documentationUrl: string | null;
     bannerUrl: string | null;
     usesQuota: boolean;
     attendanceCode: string;
@@ -65,6 +67,8 @@ export interface EventInput {
     venueName: string | null;
     address: string | null;
     mapUrl: string | null;
+    surveyUrl: string | null;
+    documentationUrl: string | null;
     usesQuota: boolean;
     capacity: number | null;
     allowsNonMember: boolean;

@@ -1,6 +1,6 @@
 import type { Identifier, PaginatedCollection, SelectOption } from '@/types/api';
 import type { ReadingProfile, ReadingProfileInput, ReadingProfileOptions } from '@/types/reading-profile';
-import type { DistrictOption, RegionOption, VillageOption } from '@/types/region';
+import type { CountryOption, DistrictOption, DomicileType, RegionOption, VillageOption } from '@/types/region';
 
 export type MemberAdminStatus = 'active' | 'exit_requested' | 'awaiting_data' | 'inactive';
 export type MemberSortBy = 'memberNumber' | 'name' | 'joinedAt';
@@ -72,6 +72,9 @@ export interface MemberDetail extends ReadingProfile {
     district: DistrictOption | null;
     village: VillageOption | null;
     postalCode: string;
+    domicileType: DomicileType;
+    country: CountryOption | null;
+    overseasCity: string | null;
     preference: SelectOption | null;
     whatsappGroupJoinedAt: string | null;
     signupMethod: { value: 'google' | 'email' | 'admin'; label: string };
@@ -93,6 +96,9 @@ export interface MemberEditInput extends ReadingProfileInput {
     districtCode: string;
     villageCode: string;
     postalCode: string;
+    domicileType: DomicileType;
+    countryCode: string;
+    overseasCity: string;
 }
 
 export interface MemberCreateInput extends MemberEditInput {

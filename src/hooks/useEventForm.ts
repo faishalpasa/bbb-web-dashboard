@@ -21,6 +21,8 @@ export type EventFieldName =
     | 'venueName'
     | 'address'
     | 'mapUrl'
+    | 'surveyUrl'
+    | 'documentationUrl'
     | 'capacity'
     | 'attendanceCode';
 
@@ -38,6 +40,8 @@ export interface EventFormFields {
     venueName: string;
     address: string;
     mapUrl: string;
+    surveyUrl: string;
+    documentationUrl: string;
     usesQuota: boolean;
     capacity: string;
     allowsNonMember: boolean;
@@ -56,6 +60,8 @@ const EMPTY_FIELDS: EventFormFields = {
     venueName: '',
     address: '',
     mapUrl: '',
+    surveyUrl: '',
+    documentationUrl: '',
     usesQuota: true,
     capacity: EVENT_DEFAULT_CAPACITY,
     allowsNonMember: true,
@@ -74,6 +80,8 @@ const SERVER_FIELD_NAMES: EventFieldName[] = [
     'venueName',
     'address',
     'mapUrl',
+    'surveyUrl',
+    'documentationUrl',
     'capacity',
     'attendanceCode',
 ];
@@ -90,6 +98,8 @@ const fieldsFromEvent = (event: EventDetail): EventFormFields => ({
     venueName: event.venueName ?? '',
     address: event.address ?? '',
     mapUrl: event.mapUrl ?? '',
+    surveyUrl: event.surveyUrl ?? '',
+    documentationUrl: event.documentationUrl ?? '',
     usesQuota: event.usesQuota,
     capacity: event.capacity === null ? EVENT_DEFAULT_CAPACITY : String(event.capacity),
     allowsNonMember: event.allowsNonMember,
@@ -189,6 +199,8 @@ export const useEventForm = (event?: EventDetail) => {
             venueName: fields.venueName.trim() || null,
             address: fields.address.trim() || null,
             mapUrl: fields.mapUrl.trim() || null,
+            surveyUrl: fields.surveyUrl.trim() || null,
+            documentationUrl: fields.documentationUrl.trim() || null,
             usesQuota: fields.usesQuota,
             capacity: fields.usesQuota ? Number(fields.capacity) || null : null,
             allowsNonMember: fields.allowsNonMember,

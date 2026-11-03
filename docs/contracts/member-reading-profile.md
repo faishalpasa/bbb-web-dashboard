@@ -13,7 +13,7 @@ interface ReadingInterestOption { id: string; code: string; label: string }
 interface ReadingProfileOptions {
     readingInterests: ReadingInterestOption[]; // urut position katalog
     literacyParticipationInterests: { value: string; label: string }[]; // yes/no/maybe
-    preferredContactChannels: { value: string; label: string }[]; // email/whatsapp
+    preferredContactChannels: { value: string; label: string }[]; // email/whatsapp/both ("Email dan WhatsApp")
 }
 interface ReadingProfile {
     instagramAccount: string | null;
@@ -31,7 +31,7 @@ interface ReadingProfileInput {
     goodreadsAccount?: string | null;
     favoriteBooksAuthors?: string | null;
     literacyParticipationInterest?: 'yes' | 'no' | 'maybe' | null;
-    preferredContactChannel?: 'email' | 'whatsapp' | null;
+    preferredContactChannel?: 'email' | 'whatsapp' | 'both' | null;
     readingInterestOther?: string | null;
     readingInterestIds?: string[]; // UUID unik dari katalog; [] mengosongkan pilihan
 }

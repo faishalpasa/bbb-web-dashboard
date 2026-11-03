@@ -28,14 +28,12 @@ export const MemberProfile = () => {
 
     if (!member) return null;
 
-    const domicile = [
-        member.village?.label,
-        member.district?.label,
-        member.regency?.label,
-        `${member.province?.label ?? ''} ${member.postalCode}`.trim(),
-    ]
-        .filter(Boolean)
-        .join(', ');
+    const domicile =
+        member.domicileType === 'overseas'
+            ? [member.overseasCity, member.country?.name].filter(Boolean).join(', ')
+            : [member.village?.label, member.district?.label, member.regency?.label, `${member.province?.label ?? ''} ${member.postalCode}`.trim()]
+                  .filter(Boolean)
+                  .join(', ');
 
     return (
         <div className="space-y-4">

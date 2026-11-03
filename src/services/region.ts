@@ -1,5 +1,5 @@
 import type { ApiEnvelope, ServiceResponse } from '@/types/api';
-import type { DistrictOption, RegionOption, VillageOption } from '@/types/region';
+import type { CountryOption, DistrictOption, RegionOption, VillageOption } from '@/types/region';
 import { axiosClient } from '@/utils/api';
 import { toServiceError } from '@/utils/error';
 
@@ -36,6 +36,16 @@ export const getDistricts = async (regencyCode: string): Promise<ServiceResponse
 export const getVillages = async (districtCode: string): Promise<ServiceResponse<VillageOption[]>> => {
     try {
         const { data } = await axiosClient.get<ApiEnvelope<VillageOption[]>>('/regions/villages', { params: { districtCode } });
+
+        return { data: data.data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
+export const getCountries = async (): Promise<ServiceResponse<CountryOption[]>> => {
+    try {
+        const { data } = await axiosClient.get<ApiEnvelope<CountryOption[]>>('/regions/countries');
 
         return { data: data.data, status: true };
     } catch (error) {

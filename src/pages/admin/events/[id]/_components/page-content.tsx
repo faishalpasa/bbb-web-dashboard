@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 
 import { CancelReasonField } from '@/components/molecules/cancel-reason-field';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
+import { EventPerformanceBar } from '@/components/molecules/event-performance-bar';
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { Button } from '@/components/ui/button';
@@ -179,6 +180,22 @@ export const PageContent = () => {
                     setelah acara ditutup.
                 </p>
             </div>
+
+            <section className="border-border bg-card space-y-3 rounded-lg border p-4" data-test-id="event_detail_performance">
+                <div>
+                    <h2 className="font-semibold">Performa kegiatan</h2>
+                    <p className="text-muted-foreground text-sm">
+                        Persentase hadir = hadir ÷ terdaftar (di luar pembatalan).
+                        {event.status.value === 'published' && ' Angka masih berjalan sampai acara ditutup.'}
+                    </p>
+                </div>
+                <EventPerformanceBar
+                    title={event.title}
+                    registered={summary?.registered ?? event.registered}
+                    attended={summary?.attended ?? event.present}
+                    data-test-id="event_detail_performance_bar"
+                />
+            </section>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.6fr]">
                 <section

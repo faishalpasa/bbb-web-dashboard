@@ -41,6 +41,18 @@ export const getEvents = async (query: EventListQuery): Promise<ServiceResponse<
     }
 };
 
+export const getEventsExport = async (query: EventListQuery): Promise<ServiceResponse<Blob>> => {
+    try {
+        // Every page of what the filters match, so the paging fields stay out of the request.
+        const params = compactParams({ ...query, page: undefined, perPage: undefined });
+        const { data } = await axiosClient.get<Blob>('/admin/events/export', { params, responseType: 'blob' });
+
+        return { data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
 export const getEventOptions = async (): Promise<ServiceResponse<EventOptions>> => {
     try {
         const { data } = await axiosClient.get<ApiEnvelope<EventOptions>>('/admin/events/options');

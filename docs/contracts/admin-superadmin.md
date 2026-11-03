@@ -30,8 +30,9 @@ interface AdminSettings {
     engagedWindowMonths: number; // "Terlibat" = hadir minimal 1 kegiatan dalam N bulan terakhir
     adminWhatsapp: string | null; // 628...
     whatsappGroupUrl: string | null; // harus diawali https://chat.whatsapp.com/
-    shareRecommendationUrl: string | null; // harus diawali https://
-    rulesSummary: string;
+    faqContent: string; // HTML dari editor teks (tebal, miring, garis bawah, judul, daftar, link); API membersihkannya
+    privacyPolicyContent: string; // sama; isi Kebijakan Data Pribadi
+    rulesSummary: string; // Aturan Komunitas sebagai HTML dari editor teks; teks biasa lama dibaca sebagai paragraf. Maks 30.000 karakter
     rulesVersion: number; // naik 1 setiap ringkasan aturan berubah
     updatedBy: string;
     updatedAt: string;

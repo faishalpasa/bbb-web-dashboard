@@ -40,6 +40,7 @@ Semua route di bawah berawalan `/api/admin`. Aksi memerlukan view modul terkait 
 | event-close | POST /events/{id}/close |
 | event-participant-view | GET /events/{id}/participants; juga membutuhkan event-view |
 | event-participant-create | POST /events/{id}/participants |
+| event-export | GET /events/export (butuh event-view) |
 | event-participant-export | GET /events/{id}/participants/export |
 | event-participant-attendance-update | PUT /events/{id}/participants/{id}/attendance |
 | exit-request-view | GET /exit-requests |
