@@ -16,7 +16,7 @@ export const RegistrationFormPreview = ({ definition }: RegistrationFormPreviewP
         <p className="text-muted-foreground mb-4 text-sm">
             Pratinjau saja, bukan formulir pendaftaran aktif. Nama dan Email otomatis terisi untuk member yang sudah login.
         </p>
-        {/* Text fields are read-only (nothing can be typed); selects and radios stay usable so the choices can be opened and tried. */}
+        {/* Text fields are read-only; choices remain usable in the preview. */}
         <fieldset className="space-y-4" aria-label="Pratinjau formulir pendaftaran">
             <label className="grid gap-2 text-sm">
                 Nama *<Input className="bg-card" placeholder="Nama peserta" readOnly />
@@ -63,6 +63,16 @@ export const RegistrationFormPreview = ({ definition }: RegistrationFormPreviewP
                             {field.options.map((option, optionIndex) => (
                                 <label key={option.id} className="flex min-h-11 items-center gap-2">
                                     <input type="radio" name={`preview-${field.id}`} value={option.id} />
+                                    {option.label || `Pilihan ${optionIndex + 1}`}
+                                </label>
+                            ))}
+                        </div>
+                    )}
+                    {field.type === 'checkbox' && (
+                        <div role="group" aria-labelledby={`preview-label-${field.id}`}>
+                            {field.options.map((option, optionIndex) => (
+                                <label key={option.id} className="flex min-h-11 items-center gap-2">
+                                    <input type="checkbox" name={`preview-${field.id}`} value={option.id} />
                                     {option.label || `Pilihan ${optionIndex + 1}`}
                                 </label>
                             ))}

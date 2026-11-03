@@ -10,7 +10,7 @@ Salinan dokumen ini harus identik di bbb-api, web-app, dan web-dashboard. Tambah
 - Urutan custom field dapat diganti lewat drag-and-drop pada pegangan khusus, keyboard, atau tombol naik/turun. Nama/Email tetap di awal. ID field/opsi, nilai, dan required tidak berubah saat dipindahkan; pengurutan ikut terkunci setelah pendaftaran pertama.
 - Nama dan Email selalu wajib, urutan pertama dan kedua; bukan custom field, tidak bisa dihapus, diganti tipe, atau dibuat opsional. Email divalidasi server.
 - Member dashboard: Nama dan Email otomatis terisi dari identitas member, read-only. Identitas tetap ditentukan token/memberId yang diotorisasi, bukan input browser. Tidak mengubah profil.
-- Custom field boleh kosong (tidak ada pertanyaan tambahan). Jenis: Input, Textarea, Select, Radio; masing-masing dapat wajib atau opsional.
+- Custom field boleh kosong (tidak ada pertanyaan tambahan). Jenis: Input, Textarea, Select, Radio, Checkbox; masing-masing dapat wajib atau opsional.
 - Form publik berubah menjadi Nama + Email + custom, dengan persetujuan tetap dipertahankan. WhatsApp, wilayah, dan tahun lahir tidak lagi menjadi field tetap/wajib untuk daftar kegiatan. Onboarding/profil member tidak berubah.
 - Admin tambah peserta juga harus melengkapi custom field wajib; tidak ada bypass source=admin.
 - Struktur form terkunci setelah pendaftaran pertama yang berhasil, termasuk bila kemudian semua peserta membatalkan. Detail kegiatan tetap mengikuti aturan edit existing.
@@ -23,7 +23,7 @@ Salinan dokumen ini harus identik di bbb-api, web-app, dan web-dashboard. Tambah
 
 - Maksimal 30 custom field per event; label field maksimal 255 karakter.
 - Input maksimal 255 karakter; Textarea maksimal 5.000 karakter.
-- Select/Radio maksimal 50 pilihan per field, label pilihan maksimal 255 karakter.
+- Select/Radio/Checkbox maksimal 50 pilihan per field, label pilihan maksimal 255 karakter.
 - Batas definisi ditegakkan pada tahap 2; batas jawaban akan ditegakkan validator submit tahap 4. Label di-trim dan tidak boleh kosong.
 
 ## Bentuk definisi dan isian
@@ -31,7 +31,7 @@ Salinan dokumen ini harus identik di bbb-api, web-app, dan web-dashboard. Tambah
 Nama/Email adalah field sistem terpisah, tidak dimasukkan ke fields/answers. ID adalah UUID string. Semua datetime ISO 8601 UTC. Array fields/options menentukan urutan tampilan.
 
 ```ts
-type RegistrationFieldType = 'input' | 'textarea' | 'select' | 'radio';
+type RegistrationFieldType = 'input' | 'textarea' | 'select' | 'radio' | 'checkbox';
 interface RegistrationOption { id: string; label: string }
 interface RegistrationField {
     id: string;
@@ -49,7 +49,7 @@ interface AdminRegistrationForm extends RegistrationFormDefinition {
 }
 interface RegistrationAnswerInput {
     fieldId: string;
-    value: string | null; // teks untuk input/textarea; option UUID untuk select/radio
+    value: string | string[] | null; // teks; UUID tunggal untuk select/radio; UUID[] untuk checkbox
 }
 interface RegistrationSubmissionInput {
     formVersion: number;
@@ -66,8 +66,8 @@ interface RegistrationAnswerSnapshot {
     label: string;
     required: boolean;
     options: RegistrationOption[];
-    value: string | null;
-    displayValue: string | null; // label pilihan saat submit, atau teks
+    value: string | string[] | null;
+    displayValue: string | null; // teks, satu label, atau label Checkbox dipisah baris baru
 }
 interface RegistrationResponse {
     id: string;
@@ -81,7 +81,7 @@ interface RegistrationResponse {
 
 Input definisi memakai RegistrationFormDefinition. Editor membuat UUID untuk field/opsi baru dan mempertahankan ID saat edit; server memastikan ID tidak milik event/field lain. Update mengirim versi yang dibaca, server yang menaikkan version; create memakai version=1. Client tidak boleh menetapkan versi berikutnya sendiri.
 
-Jawaban optional yang kosong dinormalisasi null; field optional boleh tidak ada di request, lalu dimasukkan sebagai null ke snapshot. Tidak boleh ada fieldId ganda/tidak dikenal/milik event lain. Select/Radio single-choice, bukan multi-select, value harus ID opsi dari field tersebut; array/nested object ditolak. Snapshot disusun dari definisi server, bukan label/type/options/displayValue yang dikirim browser.
+Jawaban optional yang kosong dinormalisasi null; field optional boleh tidak ada di request, lalu dimasukkan sebagai null ke snapshot. Tidak boleh ada fieldId ganda/tidak dikenal/milik event lain. Select/Radio single-choice: value harus satu ID opsi dari field tersebut. Checkbox multi-select: value berupa array ID opsi unik dari field tersebut, maksimal 50, disimpan mengikuti urutan definisi; array kosong dinormalisasi null dan wajib minimal satu opsi jika required. Scalar untuk Checkbox, array untuk tipe lain, ID tidak dikenal, duplikat, dan nested object ditolak. Snapshot disusun dari definisi server, bukan label/type/options/displayValue yang dikirim browser.
 
 ## Endpoint target
 
@@ -124,7 +124,7 @@ Contoh submit member (ID ilustratif, bukan fixture credential):
 
 ## Validasi, lock, dan error
 
-- Definisi: tipe dikenal, label terisi, ID unik, required boolean, Input/Textarea tanpa options, Select/Radio punya pilihan nonkosong dengan label dan ID unik. Field sistem tidak dapat dibuat ulang sebagai field sistem custom; label custom bukan key identitas.
+- Definisi: tipe dikenal, label terisi, ID unik, required boolean, Input/Textarea tanpa options, Select/Radio/Checkbox punya pilihan nonkosong dengan label dan ID unik. Field sistem tidak dapat dibuat ulang sebagai field sistem custom; label custom bukan key identitas.
 - Nama/email mengikuti batas existing (255 karakter), trim, email lowercase dan validasi email server. Custom text adalah plain text; render escaped, tidak menerima HTML/script sebagai markup.
 - Definisi berubah sejak editor/form dibuka: 422 dengan code registration_form_changed dan errors.registrationForm.version (edit event) atau errors.formVersion (submit peserta). FE meminta muat ulang; tidak mengulang POST otomatis.
 - Perubahan struktur setelah lockedAt terisi: 422 code registration_form_locked dan errors.registrationForm. Mengirim definisi yang identik diperbolehkan untuk menyimpan detail kegiatan; field, label, tipe, required, options, dan urutan semuanya bagian struktur.
@@ -157,3 +157,7 @@ Contoh submit member (ID ilustratif, bukan fixture credential):
 3. Batas operasional sudah disetujui pada tahap 2: 30 field, label/Input 255, Textarea 5.000, 50 opsi/field dengan label 255 karakter. Bukan pertanyaan terbuka lagi; implementasi UI/submit wajib mengikuti batas ini.
 4. Form lock permanen + data lama: setelah backfill, event existing yang pernah punya peserta tidak bisa ditambah custom field. Ini konsekuensi keputusan first registration lock, bukan fitur unlock admin.
 
+
+## Ekstensi Checkbox (3 November 2026)
+
+Satu pertanyaan Checkbox menerima beberapa pilihan. Definisi, submit, dan snapshot memakai endpoint yang sama di atas. `displayValue` menggabungkan label pilihan sesuai urutan definisi dengan pemisah baris baru agar detail peserta mudah dibaca. Tipe lama tetap bernilai scalar. Tambahkan migration enum kolom `event_registration_fields.type` sebelum kedua FE mengirim definisi Checkbox; jangan edit migration historis. File upload dan grid belum termasuk ekstensi ini.

@@ -4,7 +4,7 @@ import { registrationSubmission } from '@/utils/registration-submission';
 import { useState } from 'react';
 
 export const useRegistrationAnswers = (definition: RegistrationFormDefinition | undefined) => {
-    const [values, setValues] = useState<Record<string, string>>({});
+    const [values, setValues] = useState<Record<string, string | string[]>>({});
     const [errors, setErrors] = useState<Record<string, string | undefined>>({});
     const [blocked, setBlocked] = useState(false);
     const reset = () => {
@@ -33,7 +33,7 @@ export const useRegistrationAnswers = (definition: RegistrationFormDefinition | 
         reset,
         build,
         applyErrors,
-        setValue: (id: string, value: string) => {
+        setValue: (id: string, value: string | string[]) => {
             setValues((current) => ({ ...current, [id]: value }));
             setErrors((current) => ({ ...current, [id]: undefined }));
         },

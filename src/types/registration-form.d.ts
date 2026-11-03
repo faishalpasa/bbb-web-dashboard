@@ -1,11 +1,11 @@
-export type RegistrationFieldType = 'input' | 'textarea' | 'select' | 'radio';
+export type RegistrationFieldType = 'input' | 'textarea' | 'select' | 'radio' | 'checkbox';
 export interface RegistrationFormData {
     registrationForm: RegistrationFormDefinition;
     identity: { name: string; email: string };
 }
 export interface RegistrationSubmissionInput {
     formVersion: number;
-    answers: { fieldId: string; value: string | null }[];
+    answers: { fieldId: string; value: string | string[] | null }[];
 }
 
 export interface RegistrationOption {
@@ -37,7 +37,7 @@ export interface RegistrationAnswerSnapshot {
     label: string;
     required: boolean;
     options: RegistrationOption[];
-    value: string | null;
+    value: string | string[] | null;
     displayValue: string | null;
 }
 

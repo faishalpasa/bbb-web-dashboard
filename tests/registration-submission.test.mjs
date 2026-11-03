@@ -34,3 +34,17 @@ test('submitting disables all inputs and optional radio has a clear action',()=>
     assert.ok(controls.length>=5);assert.ok(controls.every(tag=>tag.includes('disabled')));
     assert.match(html,/registration_clear_radio/);
 });
+test('checkbox submits multiple IDs in definition order and optional empty as null',()=>{
+    const checkbox={id:'multi',type:'checkbox',label:'Bawa siapa?',required:true,options:[{id:'c1',label:'Anak 1'},{id:'c2',label:'Anak 2'},{id:'c3',label:'Teman'}]};
+    const withCheckbox={...definition,fields:[...definition.fields,checkbox]};
+    const result=registrationSubmission(withCheckbox,{...valid,multi:['c3','c1']});
+    assert.deepEqual(result.errors,{});
+    assert.deepEqual(result.input.answers.at(-1),{fieldId:'multi',value:['c1','c3']});
+    assert.equal(registrationSubmission(withCheckbox,valid).errors.multi,'Isian ini wajib diisi.');
+    assert.deepEqual(registrationSubmission({...withCheckbox,fields:[{...checkbox,required:false}]},{}).input.answers[0].value,null);
+    for(const wrong of [['c1','c1'],['unknown'],'c1'])
+        assert.ok(registrationSubmission(withCheckbox,{...valid,multi:wrong}).errors.multi);
+    const html=renderToStaticMarkup(createElement(RegistrationAnswerFields,{definition:withCheckbox,values:{...valid,multi:['c1','c3']},errors:{},onChange(){}}));
+    assert.equal([...html.matchAll(/type="checkbox"/g)].length,3);
+    assert.match(html,/registration_option_c3/);
+});

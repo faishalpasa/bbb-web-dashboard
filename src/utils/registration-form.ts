@@ -3,7 +3,7 @@ import type { RegistrationField, RegistrationFieldType, RegistrationFormDefiniti
 
 export type RegistrationFormErrors = Record<string, string>;
 
-export const hasRegistrationOptions = (type: RegistrationFieldType): boolean => type === 'select' || type === 'radio';
+export const hasRegistrationOptions = (type: RegistrationFieldType): boolean => type === 'select' || type === 'radio' || type === 'checkbox';
 
 export const newRegistrationOption = (id = crypto.randomUUID()): RegistrationOption => ({ id, label: '' });
 

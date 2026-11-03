@@ -30,6 +30,18 @@ test('limits match the approved API constraints and new questions remain optiona
     assert.deepEqual(input.options, []);
 });
 
+test('checkbox definition keeps its options and preview shows independent choices', () => {
+    const checkbox = newRegistrationField('checkbox');
+    checkbox.label = 'Anak yang ikut';
+    checkbox.options[0].label = 'Usia 1-3';
+    checkbox.options.push({ id: 'second', label: 'Usia 3-6' });
+    assert.equal(checkbox.required, false);
+    assert.deepEqual(validateRegistrationDefinition({ version: 1, fields: [checkbox] }), {});
+    assert.deepEqual(registrationPayload({ version: 1, fields: [checkbox] }).fields[0].options, checkbox.options);
+    const html = renderToStaticMarkup(createElement(RegistrationFormPreview, { definition: { version: 1, fields: [checkbox] } }));
+    assert.equal([...html.matchAll(/type="checkbox"/g)].length, 2);
+});
+
 test('drag reorder moves question IDs together with type, required flag and choice IDs without mutation', () => {
     const source = definition();
     source.fields[1].required = true;

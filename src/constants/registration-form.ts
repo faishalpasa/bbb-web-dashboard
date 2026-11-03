@@ -7,4 +7,5 @@ export const REGISTRATION_FIELD_TYPES: { value: RegistrationFieldType; label: st
     { value: 'textarea', label: 'Textarea' },
     { value: 'select', label: 'Select' },
     { value: 'radio', label: 'Radio' },
+    { value: 'checkbox', label: 'Checkbox' },
 ];
