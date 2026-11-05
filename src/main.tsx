@@ -16,6 +16,7 @@ import { AppContextProvider, useAppContext } from '@/app-context';
 import { Toaster } from '@/components/ui/toast';
 import { IS_MOCK_API_ENABLED } from '@/constants/env';
 import { ROUTES } from '@/constants/route';
+import { initSentry } from '@/lib/sentry';
 import { router } from '@/router';
 import { setPermissionDeniedHandler } from '@/utils/api';
 
@@ -50,7 +51,7 @@ const startApp = async () => {
     }
     const root = document.getElementById('root');
     if (!root) throw new Error('Elemen #root tidak ditemukan.');
-    reactRoot = createRoot(root);
+    reactRoot = createRoot(root, initSentry());
     reactRoot.render(
         <AppContextProvider>
             <AppRouter />
