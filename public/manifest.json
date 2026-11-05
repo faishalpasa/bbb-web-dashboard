@@ -1,6 +1,6 @@
 {
-    "name": "BBB Admin (Dev)",
-    "short_name": "BBB Admin (Dev)",
+    "name": "BBB Admin",
+    "short_name": "BBB Admin",
     "description": "Dashboard admin Buibu Baca Buku Best Friends & Family",
     "lang": "id",
     "start_url": "/",
