@@ -1,16 +1,23 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link, useParams } from '@tanstack/react-router';
-import { LoaderCircle } from 'lucide-react';
+import { EllipsisVertical, LoaderCircle } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 import { AlertMessage } from '@/components/molecules/alert-message';
+import { CancelReasonField } from '@/components/molecules/cancel-reason-field';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { EventFormSections } from '@/components/molecules/event-form-sections';
 import { EventTypeCard } from '@/components/molecules/event-type-card';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
+import { PermissionGate } from '@/components/molecules/permission-gate';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EVENT_STATUS_TONES } from '@/constants/event';
+import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
+import { usePermissions } from '@/hooks/usePermissions';
 import { formatEventDateTime } from '@/utils/date';
 
 import { usePageContext } from '../_context';
@@ -22,7 +29,7 @@ export const PageContent = () => {
     if (failure) {
         return (
             <div className="max-w-xl space-y-3">
-                <AlertMessage data-test-id="event_edit_alert_load_error">{failure.message}</AlertMessage>
+                <FeedbackToast data-test-id="event_edit_alert_load_error">{failure.message}</FeedbackToast>
                 <div className="flex gap-2">
                     {!failure.isServerError && (
                         <Button asChild variant="outline">
@@ -52,6 +59,7 @@ export const PageContent = () => {
 };
 
 const EditForm = () => {
+    const { can } = usePermissions();
     const { eventId } = useParams({ strict: false });
     const {
         event,
@@ -60,6 +68,8 @@ const EditForm = () => {
         isCancelDialogOpen,
         isCancelling,
         cancelError,
+        cancelReason,
+        setCancelReason,
         isDuplicating,
         setCancelDialogOpen,
         duplicate,
@@ -95,34 +105,42 @@ const EditForm = () => {
             noValidate
             data-test-id="event_edit_form"
         >
-            <header className="space-y-2">
-                <nav aria-label="Breadcrumb" className="text-sm">
-                    <Link to={ROUTES.events} className="underline underline-offset-4" data-test-id="event_edit_link_breadcrumb_events">
-                        Kegiatan
-                    </Link>
-                    <span className="text-muted-foreground"> / </span>
-                    <Link
-                        to={ROUTES.eventDetail}
-                        params={{ eventId }}
-                        className="underline underline-offset-4"
-                        data-test-id="event_edit_link_breadcrumb_detail"
-                    >
-                        {event.title}
-                    </Link>
-                    <span className="text-muted-foreground"> / Edit</span>
-                </nav>
-                <h1 className="text-2xl font-semibold">Edit kegiatan</h1>
-                <RequiredNote />
-            </header>
+            <AdminPageHeader data-test-id="event_edit_header">
+                <header className="space-y-2">
+                    <nav aria-label="Breadcrumb" className="text-sm">
+                        <Link to={ROUTES.events} className="underline underline-offset-4" data-test-id="event_edit_link_breadcrumb_events">
+                            Kegiatan
+                        </Link>
+                        <span className="text-muted-foreground"> / </span>
+                        <Link
+                            to={ROUTES.eventDetail}
+                            params={{ eventId }}
+                            className="underline underline-offset-4"
+                            data-test-id="event_edit_link_breadcrumb_detail"
+                        >
+                            {event.title}
+                        </Link>
+                        <span className="text-muted-foreground"> / Edit</span>
+                    </nav>
+                    <h1 className="text-2xl font-semibold">Edit kegiatan</h1>
+                    <RequiredNote />
+                </header>
+            </AdminPageHeader>
 
             {(submitError || notice) && (
-                <AlertMessage tone={submitError ? 'error' : (notice?.tone ?? 'error')} data-test-id="event_edit_alert_notice">
+                <FeedbackToast revision={notice} tone={submitError ? 'error' : (notice?.tone ?? 'error')} data-test-id="event_edit_alert_notice">
                     {submitError ?? notice?.text}
-                </AlertMessage>
+                </FeedbackToast>
             )}
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.7fr_1fr]">
-                <EventFormSections form={form} formats={options?.formats ?? []} timezones={options?.timezones ?? []} data-test-id="event_edit" />
+                <EventFormSections
+                    form={form}
+                    formats={options?.formats ?? []}
+                    timezones={options?.timezones ?? []}
+                    disabled={isSubmitting}
+                    data-test-id="event_edit"
+                />
 
                 <div className="space-y-4 lg:sticky lg:top-6">
                     <section className="border-border bg-card space-y-3 rounded-lg border p-5" data-test-id="event_edit_status">
@@ -135,24 +153,26 @@ const EditForm = () => {
                         <p className="text-sm">
                             {isDraft ? 'Kegiatan berstatus draf belum terlihat oleh member.' : 'Kegiatan sudah terlihat oleh member.'}
                         </p>
-                        <div className="grid gap-2">
+                        <div className="flex items-center gap-2">
                             {isDraft ? (
                                 <>
-                                    <Button
-                                        type="button"
-                                        className="h-11 w-full font-semibold"
-                                        disabled={isSubmitting}
-                                        onClick={() => void save(true)}
-                                        data-test-id="event_edit_button_publish"
-                                    >
-                                        {isSubmitting && <LoaderCircle className="animate-spin" />}
-                                        Publikasikan
-                                    </Button>
+                                    <PermissionGate permission={P.EVENT_PUBLISH}>
+                                        <Button
+                                            type="button"
+                                            className="h-11 min-w-0 flex-1 px-3 font-semibold"
+                                            disabled={isSubmitting || form.registration.requiresReload}
+                                            onClick={() => void save(true)}
+                                            data-test-id="event_edit_button_publish"
+                                        >
+                                            {isSubmitting && <LoaderCircle className="animate-spin" />}
+                                            Publikasikan
+                                        </Button>
+                                    </PermissionGate>
                                     <Button
                                         type="submit"
                                         variant="outline"
-                                        className="bg-card h-11 w-full"
-                                        disabled={isSubmitting}
+                                        className="bg-card h-11 min-w-0 flex-1 px-3"
+                                        disabled={isSubmitting || form.registration.requiresReload}
                                         data-test-id="event_edit_button_save_draft"
                                     >
                                         Simpan Draf
@@ -161,14 +181,21 @@ const EditForm = () => {
                             ) : (
                                 <Button
                                     type="submit"
-                                    className="h-11 w-full font-semibold"
-                                    disabled={isSubmitting}
+                                    className="h-11 min-w-0 flex-1 px-3 font-semibold"
+                                    disabled={isSubmitting || form.registration.requiresReload}
                                     data-test-id="event_edit_button_save"
                                 >
                                     {isSubmitting && <LoaderCircle className="animate-spin" />}
                                     Simpan Perubahan
                                 </Button>
                             )}
+                            <EventActionsMenu
+                                canCancel={can(P.EVENT_CANCEL) && event.actions.canCancel}
+                                isDuplicating={isDuplicating}
+                                onDuplicate={() => void duplicate()}
+                                onCopyAnnouncement={() => void copyAnnouncement()}
+                                onCancel={() => setCancelDialogOpen(true)}
+                            />
                         </div>
                     </section>
 
@@ -177,18 +204,14 @@ const EditForm = () => {
                     <section className="border-border bg-card space-y-2 rounded-lg border p-5" data-test-id="event_edit_registration">
                         <h2 className="font-semibold">Jadwal pendaftaran member</h2>
                         {event.registration.closesAt && event.registration.adminAddUntil ? (
-                            <dl className="space-y-1 text-sm">
-                                <div className="flex justify-between gap-3">
+                            <dl className="space-y-4 text-sm">
+                                <div className="space-y-1">
                                     <dt>Daftar dan batal ditutup</dt>
-                                    <dd className="text-right font-mono text-xs">
-                                        {formatEventDateTime(event.registration.closesAt, event.timezone)}
-                                    </dd>
+                                    <dd className="font-mono text-xs">{formatEventDateTime(event.registration.closesAt, event.timezone)}</dd>
                                 </div>
-                                <div className="flex justify-between gap-3">
+                                <div className="space-y-1">
                                     <dt>Admin masih bisa menambah sampai</dt>
-                                    <dd className="text-right font-mono text-xs">
-                                        {formatEventDateTime(event.registration.adminAddUntil, event.timezone)}
-                                    </dd>
+                                    <dd className="font-mono text-xs">{formatEventDateTime(event.registration.adminAddUntil, event.timezone)}</dd>
                                 </div>
                             </dl>
                         ) : (
@@ -196,50 +219,11 @@ const EditForm = () => {
                         )}
                         <p className="text-muted-foreground text-xs">Aturan ini diambil dari Pengaturan dan berlaku untuk semua kegiatan.</p>
                     </section>
-
-                    <section className="border-border bg-card space-y-3 rounded-lg border p-5" data-test-id="event_edit_other">
-                        <h2 className="font-semibold">Lainnya</h2>
-                        <div className="grid gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="bg-card w-full"
-                                disabled={isDuplicating}
-                                onClick={() => void duplicate()}
-                                data-test-id="event_edit_button_duplicate"
-                            >
-                                {isDuplicating ? 'Menduplikasi…' : 'Duplikat kegiatan'}
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="bg-card w-full"
-                                onClick={() => void copyAnnouncement()}
-                                data-test-id="event_edit_button_copy_announcement"
-                            >
-                                Salin teks pengumuman
-                            </Button>
-                            {event.actions.canCancel && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="bg-card border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive w-full"
-                                    onClick={() => setCancelDialogOpen(true)}
-                                    data-test-id="event_edit_button_cancel_event"
-                                >
-                                    Batalkan kegiatan
-                                </Button>
-                            )}
-                        </div>
-                        <p className="text-muted-foreground text-xs">
-                            Membatalkan kegiatan mengirim email ke semua pendaftar dan tidak dihitung sebagai ketidakhadiran.
-                        </p>
-                    </section>
                 </div>
             </div>
 
             <ConfirmationDialog
-                open={isCancelDialogOpen}
+                open={can(P.EVENT_CANCEL) && isCancelDialogOpen}
                 onClose={() => setCancelDialogOpen(false)}
                 onConfirm={() => void cancelEvent()}
                 title="Batalkan kegiatan?"
@@ -250,7 +234,124 @@ const EditForm = () => {
                 error={cancelError}
                 isDestructive
                 data-test-id="event_edit_dialog_cancel"
-            />
+            >
+                <CancelReasonField
+                    value={cancelReason}
+                    onChange={setCancelReason}
+                    disabled={isCancelling}
+                    data-test-id="event_edit_dialog_cancel_reason"
+                />
+            </ConfirmationDialog>
         </form>
+    );
+};
+
+interface EventActionsMenuProps {
+    canCancel: boolean;
+    isDuplicating: boolean;
+    onDuplicate: () => void;
+    onCopyAnnouncement: () => void;
+    onCancel: () => void;
+}
+
+const EventActionsMenu = ({ canCancel, isDuplicating, onDuplicate, onCopyAnnouncement, onCancel }: EventActionsMenuProps) => {
+    const { can } = usePermissions();
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        containerRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+
+        const handlePointerDown = (event: PointerEvent) => {
+            if (event.target instanceof Node && !containerRef.current?.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsOpen(false);
+                triggerRef.current?.focus();
+            }
+        };
+
+        document.addEventListener('pointerdown', handlePointerDown);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('pointerdown', handlePointerDown);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isOpen]);
+
+    const runAction = (action: () => void) => {
+        setIsOpen(false);
+        action();
+    };
+
+    return (
+        <div ref={containerRef} className="relative">
+            <Button
+                ref={triggerRef}
+                type="button"
+                variant="outline"
+                size="icon"
+                className="bg-card h-11 w-11"
+                aria-label="Buka menu lainnya"
+                aria-haspopup="menu"
+                aria-expanded={isOpen}
+                aria-controls="event-edit-more-menu"
+                onClick={() => setIsOpen((currentValue) => !currentValue)}
+                data-test-id="event_edit_button_more"
+            >
+                <EllipsisVertical className="size-5" />
+            </Button>
+
+            {isOpen && (
+                <div
+                    id="event-edit-more-menu"
+                    role="menu"
+                    aria-label="Lainnya"
+                    className="border-border bg-popover absolute top-full right-0 z-20 mt-2 w-60 rounded-md border p-1 shadow-lg"
+                    data-test-id="event_edit_menu_more"
+                >
+                    <p className="text-muted-foreground px-3 py-2 text-xs font-semibold tracking-wide uppercase">Lainnya</p>
+                    {can(P.EVENT_DUPLICATE) && (
+                        <button
+                            type="button"
+                            role="menuitem"
+                            className="hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring w-full rounded-sm px-3 py-2 text-left text-sm outline-hidden focus-visible:ring-2"
+                            disabled={isDuplicating}
+                            onClick={() => runAction(onDuplicate)}
+                            data-test-id="event_edit_button_duplicate"
+                        >
+                            {isDuplicating ? 'Menduplikasi…' : 'Duplikat kegiatan'}
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        role="menuitem"
+                        className="hover:bg-accent focus-visible:bg-accent focus-visible:ring-ring w-full rounded-sm px-3 py-2 text-left text-sm outline-hidden focus-visible:ring-2"
+                        onClick={() => runAction(onCopyAnnouncement)}
+                        data-test-id="event_edit_button_copy_announcement"
+                    >
+                        Salin teks pengumuman
+                    </button>
+                    {canCancel && (
+                        <button
+                            type="button"
+                            role="menuitem"
+                            className="text-destructive hover:bg-destructive/5 focus-visible:bg-destructive/5 focus-visible:ring-destructive w-full rounded-sm px-3 py-2 text-left text-sm outline-hidden focus-visible:ring-2"
+                            onClick={() => runAction(onCancel)}
+                            data-test-id="event_edit_button_cancel_event"
+                        >
+                            Batalkan kegiatan
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
     );
 };

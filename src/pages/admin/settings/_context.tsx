@@ -1,5 +1,6 @@
 import { createContext, type FormEventHandler, type PropsWithChildren, useContext, useEffect, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { getSettings, putSettings } from '@/services/superadmin';
 import type { LoadFailure } from '@/types/api';
 import type { AdminSettings } from '@/types/superadmin';
@@ -9,10 +10,12 @@ import { isValidWhatsapp, normalizeWhatsapp, toLocalWhatsapp } from '@/utils/str
 export type SettingsFieldName =
     | 'registrationCloseMinutes'
     | 'cancellationCloseMinutes'
+    | 'attendanceOpenMinutes'
     | 'engagedWindowMonths'
     | 'adminWhatsapp'
     | 'whatsappGroupUrl'
-    | 'shareRecommendationUrl'
+    | 'faqContent'
+    | 'privacyPolicyContent'
     | 'rulesSummary';
 
 export type SettingsFields = Record<SettingsFieldName, string>;
@@ -21,10 +24,12 @@ export type SettingsErrors = Partial<Record<SettingsFieldName, string>>;
 const FIELD_NAMES: SettingsFieldName[] = [
     'registrationCloseMinutes',
     'cancellationCloseMinutes',
+    'attendanceOpenMinutes',
     'engagedWindowMonths',
     'adminWhatsapp',
     'whatsappGroupUrl',
-    'shareRecommendationUrl',
+    'faqContent',
+    'privacyPolicyContent',
     'rulesSummary',
 ];
 
@@ -46,10 +51,12 @@ const PageContext = createContext<PageContextValue | null>(null);
 const toFields = (settings: AdminSettings): SettingsFields => ({
     registrationCloseMinutes: String(settings.registrationCloseMinutes),
     cancellationCloseMinutes: String(settings.cancellationCloseMinutes),
+    attendanceOpenMinutes: String(settings.attendanceOpenMinutes),
     engagedWindowMonths: String(settings.engagedWindowMonths),
     adminWhatsapp: settings.adminWhatsapp ? toLocalWhatsapp(settings.adminWhatsapp) : '',
     whatsappGroupUrl: settings.whatsappGroupUrl ?? '',
-    shareRecommendationUrl: settings.shareRecommendationUrl ?? '',
+    faqContent: settings.faqContent,
+    privacyPolicyContent: settings.privacyPolicyContent,
     rulesSummary: settings.rulesSummary,
 });
 
@@ -98,6 +105,19 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         if (fields.adminWhatsapp.trim() && !isValidWhatsapp(whatsapp)) {
             setErrors({ adminWhatsapp: 'Nomor WhatsApp tidak valid.' });
+            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+
+            return;
+        }
+
+        // The API checks this too; saying it here saves a round trip. Attendance may not open earlier than registration closes.
+        const registrationMinutes = Number(fields.registrationCloseMinutes);
+
+        if (Number(fields.attendanceOpenMinutes) > registrationMinutes) {
+            setErrors({
+                attendanceOpenMinutes: `Waktu buka absensi tidak boleh lebih besar dari batas member mendaftar (${registrationMinutes} menit).`,
+            });
+            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
 
             return;
         }
@@ -110,10 +130,12 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             const response = await putSettings({
                 registrationCloseMinutes: Number(fields.registrationCloseMinutes),
                 cancellationCloseMinutes: Number(fields.cancellationCloseMinutes),
+                attendanceOpenMinutes: Number(fields.attendanceOpenMinutes),
                 engagedWindowMonths: Number(fields.engagedWindowMonths),
                 adminWhatsapp: fields.adminWhatsapp.trim() ? whatsapp : null,
                 whatsappGroupUrl: fields.whatsappGroupUrl.trim() || null,
-                shareRecommendationUrl: fields.shareRecommendationUrl.trim() || null,
+                faqContent: fields.faqContent,
+                privacyPolicyContent: fields.privacyPolicyContent,
                 rulesSummary: fields.rulesSummary,
             });
 
@@ -132,6 +154,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             setErrors(next);
 
             if (Object.keys(next).length === 0) setNotice({ tone: 'error', text: errorMessage(error) });
+            else toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
         } finally {
             setIsSaving(false);
         }

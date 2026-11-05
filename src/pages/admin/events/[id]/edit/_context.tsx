@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/constants/route';
 import { getEvent, getEventOptions, postCancelEvent, postDuplicateEvent } from '@/services/event';
 import type { LoadFailure } from '@/types/api';
@@ -22,6 +23,8 @@ interface PageContextValue {
     cancelError: string | null;
     isDuplicating: boolean;
     setCancelDialogOpen: (open: boolean) => void;
+    cancelReason: string;
+    setCancelReason: (reason: string) => void;
     duplicate: () => Promise<void>;
     copyAnnouncement: () => Promise<void>;
     cancelEvent: () => Promise<void>;
@@ -41,11 +44,14 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [isCancelDialogOpen, setCancelDialogOpen] = useState(false);
     const [isCancelling, setIsCancelling] = useState(false);
     const [cancelError, setCancelError] = useState<string | null>(null);
+    const [cancelReason, setCancelReason] = useState('');
     const [isDuplicating, setIsDuplicating] = useState(false);
     const [reloadToken, setReloadToken] = useState(0);
 
     useEffect(() => {
         if (!eventId) return;
+
+        let cancelled = false;
 
         const load = async () => {
             setIsLoading(true);
@@ -56,16 +62,21 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             try {
                 const [eventResponse, optionsResponse] = await Promise.all([getEvent(eventId), getEventOptions()]);
 
+                if (cancelled) return;
+
                 setEvent(eventResponse.data);
                 setOptions(optionsResponse.data);
             } catch (error) {
-                setFailure(toLoadFailure(error));
+                if (!cancelled) setFailure(toLoadFailure(error));
             } finally {
-                setIsLoading(false);
+                if (!cancelled) setIsLoading(false);
             }
         };
 
         void load();
+        return () => {
+            cancelled = true;
+        };
     }, [eventId, reloadToken]);
 
     const duplicate = async () => {
@@ -76,6 +87,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         try {
             const response = await postDuplicateEvent(eventId);
+            toast.add({ type: 'success', title: 'Kegiatan berhasil diduplikat.' });
 
             void navigate({ to: ROUTES.eventEdit, params: { eventId: response.data.id } });
         } catch (error) {
@@ -104,7 +116,8 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         setCancelError(null);
 
         try {
-            await postCancelEvent(eventId);
+            await postCancelEvent(eventId, cancelReason);
+            toast.add({ type: 'success', title: 'Kegiatan dibatalkan.' });
             void navigate({ to: ROUTES.eventDetail, params: { eventId } });
         } catch (error) {
             setCancelError(errorMessage(error));
@@ -125,8 +138,11 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         isDuplicating,
         setCancelDialogOpen: (open) => {
             setCancelError(null);
+            if (!open) setCancelReason('');
             setCancelDialogOpen(open);
         },
+        cancelReason,
+        setCancelReason,
         duplicate,
         copyAnnouncement,
         cancelEvent,
@@ -136,7 +152,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     return (
         <PageContext.Provider value={value}>
             {event ? (
-                <EventEditFormProvider key={event.id} event={event}>
+                <EventEditFormProvider key={`${event.id}:${reloadToken}`} event={event}>
                     {children}
                 </EventEditFormProvider>
             ) : (

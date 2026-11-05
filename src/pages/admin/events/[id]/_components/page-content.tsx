@@ -1,22 +1,27 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
 
-import { useAppContext } from '@/app-context';
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { CancelReasonField } from '@/components/molecules/cancel-reason-field';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
+import { EventPerformanceBar } from '@/components/molecules/event-performance-bar';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EVENT_STATUS_TONES } from '@/constants/event';
+import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
+import { usePermissions } from '@/hooks/usePermissions';
 import { formatEventRange } from '@/utils/date';
 import { publicEventUrl } from '@/utils/event';
 
 import { usePageContext } from '../_context';
 import { AddParticipantDialog } from './add-participant-dialog';
+import { ParticipantDetailDialog } from './participant-detail-dialog';
 import { ParticipantTable } from './participant-table';
 
 export const PageContent = () => {
-    const { session } = useAppContext();
+    const { can } = usePermissions();
     const {
         event,
         failure,
@@ -31,13 +36,21 @@ export const PageContent = () => {
         openAddDialog,
         copyText,
         reload,
+        duplicateEvent,
+        isDuplicating,
+        cancelEvent,
+        isCancelling,
+        isCancelDialogOpen,
+        setCancelDialogOpen,
+        cancelError,
+        cancelReason,
+        setCancelReason,
     } = usePageContext();
-    const canManageEvents = session?.can.manageEvents ?? false;
 
     if (failure) {
         return (
             <div className="max-w-xl space-y-3">
-                <AlertMessage data-test-id="event_detail_alert_error">{failure.message}</AlertMessage>
+                <FeedbackToast data-test-id="event_detail_alert_error">{failure.message}</FeedbackToast>
                 <div className="flex gap-2">
                     {!failure.isServerError && (
                         <Button asChild variant="outline">
@@ -73,40 +86,40 @@ export const PageContent = () => {
 
     return (
         <div className="space-y-4">
-            <header className="space-y-2">
-                <nav aria-label="Breadcrumb" className="text-sm">
-                    <Link to={ROUTES.events} className="underline underline-offset-4" data-test-id="event_detail_link_breadcrumb_events">
-                        Kegiatan
-                    </Link>
-                    <span className="text-muted-foreground"> / Peserta</span>
-                </nav>
+            <AdminPageHeader data-test-id="event_detail_header">
+                <header className="space-y-2">
+                    <nav aria-label="Breadcrumb" className="text-sm">
+                        <Link to={ROUTES.events} className="underline underline-offset-4" data-test-id="event_detail_link_breadcrumb_events">
+                            Kegiatan
+                        </Link>
+                        <span className="text-muted-foreground"> / {can(P.EVENT_PARTICIPANT_VIEW) ? 'Peserta' : 'Detail'}</span>
+                    </nav>
 
-                <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-                    <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-3">
-                            <h1 className="text-2xl font-semibold">{event.title}</h1>
-                            <StatusBadge
-                                tone={EVENT_STATUS_TONES[event.status.value]}
-                                label={event.status.label}
-                                data-test-id="event_detail_badge_status"
-                            />
+                    <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+                        <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <h1 className="text-2xl font-semibold">{event.title}</h1>
+                                <StatusBadge
+                                    tone={EVENT_STATUS_TONES[event.status.value]}
+                                    label={event.status.label}
+                                    data-test-id="event_detail_badge_status"
+                                />
+                            </div>
+                            <p className="text-muted-foreground text-sm" data-test-id="event_detail_text_schedule">
+                                {event.startsAt ? `${formatEventRange(event.startsAt, event.endsAt, event.timezone)}. ` : ''}
+                                {place ? `${event.format.label}, ${place}.` : ''}
+                            </p>
                         </div>
-                        <p className="text-muted-foreground text-sm" data-test-id="event_detail_text_schedule">
-                            {event.startsAt ? `${formatEventRange(event.startsAt, event.endsAt, event.timezone)}. ` : ''}
-                            {place ? `${event.format.label}, ${place}.` : ''}
-                        </p>
-                    </div>
 
-                    {canManageEvents && (
                         <div className="flex flex-wrap gap-2">
-                            {event.actions.canEdit && (
+                            {can(P.EVENT_UPDATE) && event.actions.canEdit && (
                                 <Button asChild variant="outline" className="bg-card">
                                     <Link to={ROUTES.eventEdit} params={{ eventId: event.id }} data-test-id="event_detail_link_edit">
                                         Edit Kegiatan
                                     </Link>
                                 </Button>
                             )}
-                            {event.actions.canAddParticipants && (
+                            {can(P.EVENT_PARTICIPANT_CREATE) && event.actions.canAddParticipants && (
                                 <Button
                                     variant="outline"
                                     className="bg-card"
@@ -116,20 +129,35 @@ export const PageContent = () => {
                                     Tambah Peserta
                                 </Button>
                             )}
-                            {event.actions.canClose && (
+                            {can(P.EVENT_CLOSE) && event.actions.canClose && (
                                 <Button onClick={() => setCloseDialogOpen(true)} data-test-id="event_detail_button_close">
                                     Tutup Acara
                                 </Button>
                             )}
+                            {can(P.EVENT_DUPLICATE) && (
+                                <Button
+                                    variant="warning"
+                                    disabled={isDuplicating}
+                                    onClick={() => void duplicateEvent()}
+                                    data-test-id="event_detail_button_duplicate"
+                                >
+                                    {isDuplicating ? 'Menduplikasi…' : 'Duplikat Kegiatan'}
+                                </Button>
+                            )}
+                            {can(P.EVENT_CANCEL) && event.actions.canCancel && (
+                                <Button variant="destructive" onClick={() => setCancelDialogOpen(true)} data-test-id="event_detail_button_cancel">
+                                    Batalkan Kegiatan
+                                </Button>
+                            )}
                         </div>
-                    )}
-                </div>
-            </header>
+                    </div>
+                </header>
+            </AdminPageHeader>
 
             {notice && (
-                <AlertMessage tone={notice.tone} data-test-id="event_detail_alert_notice">
+                <FeedbackToast revision={notice} tone={notice.tone} data-test-id="event_detail_alert_notice">
                     {notice.text}
-                </AlertMessage>
+                </FeedbackToast>
             )}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_1.5fr]">
@@ -152,6 +180,22 @@ export const PageContent = () => {
                     setelah acara ditutup.
                 </p>
             </div>
+
+            <section className="border-border bg-card space-y-3 rounded-lg border p-4" data-test-id="event_detail_performance">
+                <div>
+                    <h2 className="font-semibold">Performa kegiatan</h2>
+                    <p className="text-muted-foreground text-sm">
+                        Persentase hadir = hadir ÷ terdaftar (di luar pembatalan).
+                        {event.status.value === 'published' && ' Angka masih berjalan sampai acara ditutup.'}
+                    </p>
+                </div>
+                <EventPerformanceBar
+                    title={event.title}
+                    registered={summary?.registered ?? event.registered}
+                    attended={summary?.attended ?? event.present}
+                    data-test-id="event_detail_performance_bar"
+                />
+            </section>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.6fr]">
                 <section
@@ -177,7 +221,7 @@ export const PageContent = () => {
                 >
                     <div className="min-w-0">
                         <h2 className="text-sm">Link pendaftaran publik (member dan non-member)</h2>
-                        <p className="truncate font-mono text-sm underline" title={publicUrl}>
+                        <p className="wrap-anywhere font-mono text-sm underline" title={publicUrl}>
                             {publicUrl}
                         </p>
                     </div>
@@ -187,11 +231,32 @@ export const PageContent = () => {
                 </section>
             </div>
 
-            <ParticipantTable />
-            <AddParticipantDialog />
+            {can(P.EVENT_PARTICIPANT_VIEW) && <ParticipantTable />}
+            {can(P.EVENT_PARTICIPANT_CREATE) && <AddParticipantDialog />}
+            {can(P.EVENT_PARTICIPANT_VIEW) && <ParticipantDetailDialog />}
 
             <ConfirmationDialog
-                open={isCloseDialogOpen}
+                open={can(P.EVENT_CANCEL) && isCancelDialogOpen}
+                onClose={() => setCancelDialogOpen(false)}
+                onConfirm={() => void cancelEvent()}
+                title="Batalkan kegiatan?"
+                description="Seluruh peserta terdaftar akan diberi tahu lewat email."
+                confirmLabel="Batalkan Kegiatan"
+                cancelLabel="Kembali"
+                isSubmitting={isCancelling}
+                error={cancelError}
+                isDestructive
+                data-test-id="event_detail_dialog_cancel"
+            >
+                <CancelReasonField
+                    value={cancelReason}
+                    onChange={setCancelReason}
+                    disabled={isCancelling}
+                    data-test-id="event_detail_dialog_cancel_reason"
+                />
+            </ConfirmationDialog>
+            <ConfirmationDialog
+                open={can(P.EVENT_CLOSE) && isCloseDialogOpen}
                 onClose={() => setCloseDialogOpen(false)}
                 onConfirm={() => void closeEvent()}
                 title="Tutup acara?"

@@ -1,20 +1,127 @@
 import { Link } from '@tanstack/react-router';
+import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Mail, Pencil } from 'lucide-react';
 
+import { ROW_ACTION_ITEM_CLASS, RowActionsMenu } from '@/components/molecules/row-actions-menu';
 import { StatusBadge } from '@/components/molecules/status-badge';
-import { Button } from '@/components/ui/button';
+import { TablePagination } from '@/components/molecules/table-pagination';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MEMBER_STATUS_TONES } from '@/constants/member';
+import { MEMBER_DEFAULT_PER_PAGE, MEMBER_PAGE_SIZES, MEMBER_STATUS_TONES } from '@/constants/member';
+import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
+import { usePermissions } from '@/hooks/usePermissions';
+import type { MemberListItem, MemberSortBy, MemberSortDirection } from '@/types/member';
 import { formatTableDate } from '@/utils/date';
 import { formatNumber } from '@/utils/number';
-import { abbreviateRegency, formatWhatsapp } from '@/utils/string';
+import { abbreviateRegency, formatWhatsapp, memberGreetingMessage, whatsappChatUrl } from '@/utils/string';
 
 import { usePageContext } from '../_context';
 
-const HEADERS = ['Nomor', 'Nama', 'No. WhatsApp', 'Domisili', 'Preferensi', 'Status'];
+interface MemberItemProps {
+    member: MemberListItem;
+}
+
+interface MemberActionsProps extends MemberItemProps {
+    canEdit: boolean;
+}
+
+interface SortableHeaderProps {
+    label: string;
+    sortBy: MemberSortBy;
+    activeSortBy: MemberSortBy;
+    direction: MemberSortDirection;
+    onSort: (sortBy: MemberSortBy) => void;
+}
+
+const MemberActions = ({ member, canEdit }: MemberActionsProps) => (
+    <RowActionsMenu label={member.name} data-test-id={`members_actions_${member.id}`}>
+        {(close) => (
+            <>
+                <Link
+                    to={ROUTES.memberDetail}
+                    params={{ memberId: member.id }}
+                    role="menuitem"
+                    className={ROW_ACTION_ITEM_CLASS}
+                    onClick={close}
+                    data-test-id={`members_link_detail_${member.id}`}
+                >
+                    <Eye className="size-4 shrink-0" aria-hidden="true" />
+                    Lihat detail
+                </Link>
+                {canEdit && (
+                    <Link
+                        to={ROUTES.memberEdit}
+                        params={{ memberId: member.id }}
+                        role="menuitem"
+                        className={ROW_ACTION_ITEM_CLASS}
+                        onClick={close}
+                        data-test-id={`members_link_edit_${member.id}`}
+                    >
+                        <Pencil className="size-4 shrink-0" aria-hidden="true" />
+                        Edit member
+                    </Link>
+                )}
+                {member.whatsapp && (
+                    <a
+                        href={whatsappChatUrl(member.whatsapp, memberGreetingMessage(member.name))}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        role="menuitem"
+                        className={ROW_ACTION_ITEM_CLASS}
+                        onClick={close}
+                        data-test-id={`members_link_whatsapp_${member.id}`}
+                    >
+                        <img src="/images/whatsapp.png" alt="" aria-hidden="true" className="size-4 shrink-0" />
+                        Hubungi lewat WhatsApp
+                    </a>
+                )}
+                {member.email && (
+                    <a
+                        href={`mailto:${encodeURIComponent(member.email)}`}
+                        role="menuitem"
+                        className={ROW_ACTION_ITEM_CLASS}
+                        onClick={close}
+                        data-test-id={`members_link_email_${member.id}`}
+                    >
+                        <Mail className="size-4 shrink-0" aria-hidden="true" />
+                        Hubungi lewat email
+                    </a>
+                )}
+            </>
+        )}
+    </RowActionsMenu>
+);
+
+const SortableHeader = ({ label, sortBy, activeSortBy, direction, onSort }: SortableHeaderProps) => {
+    const isActive = sortBy === activeSortBy;
+    const Icon = isActive ? (direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+    const nextDirection = isActive && direction === 'asc' ? 'menurun' : 'menaik';
+
+    return (
+        <button
+            type="button"
+            className="hover:text-foreground inline-flex cursor-pointer items-center gap-1 rounded-sm text-left font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
+            onClick={() => onSort(sortBy)}
+            aria-label={`Urutkan ${label} secara ${nextDirection}`}
+            data-test-id={`members_button_sort_${sortBy}`}
+        >
+            {label}
+            <Icon className="size-3.5" aria-hidden="true" />
+        </button>
+    );
+};
+
+// Regency on the first line and province under it, so a long province name never stretches the column.
+const Domicile = ({ member }: MemberItemProps) => (
+    <>
+        <span className="block">{member.regency ? abbreviateRegency(member.regency) : '-'}</span>
+        {member.province && <span className="text-muted-foreground block text-xs">{member.province}</span>}
+    </>
+);
 
 export const MemberTable = () => {
-    const { list, isLoading, rangeStart, rangeEnd, query, goToPage } = usePageContext();
+    const { canAll } = usePermissions();
+    const canEdit = canAll([P.MEMBER_VIEW, P.MEMBER_UPDATE]);
+    const { list, isLoading, rangeStart, rangeEnd, query, goToPage, setPerPage, setSort } = usePageContext();
     const items = list?.items ?? [];
     const meta = list?.meta;
 
@@ -24,42 +131,84 @@ export const MemberTable = () => {
                 <table className="w-full text-sm">
                     <thead className="bg-secondary/60 text-left">
                         <tr>
-                            {HEADERS.map((header) => (
-                                <th key={header} className="px-3 py-3 font-semibold first:pl-4">
-                                    {header}
-                                </th>
-                            ))}
-                            <th className="px-3 py-3 text-right font-semibold">Ikut / Hadir</th>
-                            <th className="py-3 pr-4 pl-3 font-semibold">Bergabung</th>
+                            <th
+                                className="px-3 py-3 whitespace-nowrap first:pl-4"
+                                aria-sort={query.sortBy === 'memberNumber' ? (query.sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                            >
+                                <SortableHeader
+                                    label="Nomor"
+                                    sortBy="memberNumber"
+                                    activeSortBy={query.sortBy}
+                                    direction={query.sortDirection}
+                                    onSort={setSort}
+                                />
+                            </th>
+                            <th
+                                className="px-3 py-3 whitespace-nowrap"
+                                aria-sort={query.sortBy === 'name' ? (query.sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                            >
+                                <SortableHeader
+                                    label="Nama"
+                                    sortBy="name"
+                                    activeSortBy={query.sortBy}
+                                    direction={query.sortDirection}
+                                    onSort={setSort}
+                                />
+                            </th>
+                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Kontak</th>
+                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Domisili</th>
+                            <th
+                                className="px-3 py-3 whitespace-nowrap"
+                                aria-sort={query.sortBy === 'joinedAt' ? (query.sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                            >
+                                <SortableHeader
+                                    label="Bergabung"
+                                    sortBy="joinedAt"
+                                    activeSortBy={query.sortBy}
+                                    direction={query.sortDirection}
+                                    onSort={setSort}
+                                />
+                            </th>
+                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Preferensi</th>
+                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Status</th>
+                            <th className="px-3 py-3 text-right font-semibold whitespace-nowrap">Ikut / Hadir</th>
+                            <th className="py-3 pr-4 pl-3 text-right font-semibold">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading && items.length === 0
                             ? Array.from({ length: 8 }, (_, index) => (
                                   <tr key={index} className="border-border border-t">
-                                      <td colSpan={8} className="px-4 py-3">
+                                      <td colSpan={9} className="px-4 py-3">
                                           <Skeleton className="h-5 w-full" />
                                       </td>
                                   </tr>
                               ))
                             : items.map((member) => (
                                   <tr key={member.id} className="border-border border-t" data-test-id={`members_row_${member.id}`}>
-                                      <td className="py-3 pr-3 pl-4 font-mono text-xs">{member.memberNumber ?? '-'}</td>
-                                      <td className="px-3 py-3 font-medium">
-                                          <Link
-                                              to={ROUTES.memberDetail}
-                                              params={{ memberId: member.id }}
-                                              className="underline underline-offset-4"
-                                              data-test-id={`members_link_detail_${member.id}`}
+                                      <td className="py-3 pr-3 pl-4 font-mono text-xs whitespace-nowrap">{member.memberNumber ?? '-'}</td>
+                                      <td className="px-3 py-3" data-test-id={`members_cell_name_${member.id}`}>
+                                          <span className="block font-medium">{member.name}</span>
+                                      </td>
+                                      <td className="space-y-1 px-3 py-3" data-test-id={`members_cell_contact_${member.id}`}>
+                                          <span
+                                              className="block font-mono text-xs whitespace-nowrap"
+                                              data-test-id={`members_text_whatsapp_${member.id}`}
                                           >
-                                              {member.name}
-                                          </Link>
+                                              {member.whatsapp ? formatWhatsapp(member.whatsapp) : '-'}
+                                          </span>
+                                          <span
+                                              className="text-muted-foreground block text-xs break-all"
+                                              data-test-id={`members_text_email_${member.id}`}
+                                          >
+                                              {member.email || '-'}
+                                          </span>
                                       </td>
-                                      <td className="px-3 py-3 font-mono text-xs">{formatWhatsapp(member.whatsapp)}</td>
                                       <td className="px-3 py-3">
-                                          {[member.regency && abbreviateRegency(member.regency), member.province].filter(Boolean).join(', ')}
+                                          <Domicile member={member} />
                                       </td>
-                                      <td className="px-3 py-3">
+                                      <td className="px-3 py-3 whitespace-nowrap">{formatTableDate(member.joinedAt)}</td>
+                                      <td className="px-3 py-3 whitespace-nowrap">
                                           {member.preference ? member.preference.label : <span className="text-[#8a6d1f]">Belum diisi</span>}
                                       </td>
                                       <td className="px-3 py-3">
@@ -69,10 +218,15 @@ export const MemberTable = () => {
                                               data-test-id={`members_badge_status_${member.id}`}
                                           />
                                       </td>
-                                      <td className="px-3 py-3 text-right font-mono text-xs">
-                                          {member.joinedEvents} / {member.attendedEvents}
+                                      <td
+                                          className="px-3 py-3 text-right font-mono text-xs whitespace-nowrap"
+                                          data-test-id={`members_cell_events_${member.id}`}
+                                      >
+                                          {formatNumber(member.joinedEvents)} / {formatNumber(member.attendedEvents)}
                                       </td>
-                                      <td className="py-3 pr-4 pl-3">{formatTableDate(member.joinedAt)}</td>
+                                      <td className="py-2 pr-4 pl-3">
+                                          <MemberActions member={member} canEdit={canEdit} />
+                                      </td>
                                   </tr>
                               ))}
                     </tbody>
@@ -93,30 +247,28 @@ export const MemberTable = () => {
                               data-test-id={`members_card_${member.id}`}
                           >
                               <div className="flex items-start justify-between gap-3">
-                                  <Link
-                                      to={ROUTES.memberDetail}
-                                      params={{ memberId: member.id }}
-                                      className="font-semibold underline underline-offset-4"
-                                      data-test-id={`members_card_link_detail_${member.id}`}
-                                  >
-                                      {member.name}
-                                  </Link>
+                                  <p className="font-semibold">{member.name}</p>
                                   <StatusBadge
                                       tone={MEMBER_STATUS_TONES[member.status.value]}
                                       label={member.status.label}
                                       data-test-id={`members_card_badge_status_${member.id}`}
                                   />
                               </div>
-                              <p className="font-mono text-xs">
-                                  {member.memberNumber ?? '-'} · {formatWhatsapp(member.whatsapp)}
+                              <p className="text-muted-foreground text-sm break-all" data-test-id={`members_card_email_${member.id}`}>
+                                  {member.email || '-'}
                               </p>
+                              <p className="text-muted-foreground font-mono text-xs" data-test-id={`members_card_whatsapp_${member.id}`}>
+                                  {member.whatsapp ? formatWhatsapp(member.whatsapp) : '-'}
+                              </p>
+                              <p className="font-mono text-xs">{member.memberNumber ?? '-'}</p>
                               <p className="text-sm">
-                                  {[member.regency && abbreviateRegency(member.regency), member.province].filter(Boolean).join(', ')}
+                                  <Domicile member={member} />
                               </p>
                               <p className="text-muted-foreground text-xs">
                                   {member.preference ? member.preference.label : 'Preferensi belum diisi'} · Ikut {member.joinedEvents}, hadir{' '}
                                   {member.attendedEvents} · Bergabung {formatTableDate(member.joinedAt)}
                               </p>
+                              <MemberActions member={member} canEdit={canEdit} />
                           </li>
                       ))}
             </ul>
@@ -128,31 +280,22 @@ export const MemberTable = () => {
             )}
 
             <footer className="border-border flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm">
-                <p data-test-id="members_text_range">
+                <p className="sr-only" data-test-id="members_text_range">
                     {meta && meta.total > 0
                         ? `Menampilkan ${formatNumber(rangeStart)} sampai ${formatNumber(rangeEnd)} dari ${formatNumber(meta.total)} data`
                         : 'Tidak ada data'}
                 </p>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isLoading || query.page <= 1}
-                        onClick={() => goToPage(query.page - 1)}
-                        data-test-id="members_button_previous"
-                    >
-                        Sebelumnya
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isLoading || !meta || query.page >= meta.lastPage}
-                        onClick={() => goToPage(query.page + 1)}
-                        data-test-id="members_button_next"
-                    >
-                        Berikutnya
-                    </Button>
-                </div>
+                <TablePagination
+                    total={meta?.total ?? 0}
+                    perPage={query.perPage ?? MEMBER_DEFAULT_PER_PAGE}
+                    pageSizes={MEMBER_PAGE_SIZES}
+                    onPerPageChange={setPerPage}
+                    currentPage={meta?.currentPage ?? query.page}
+                    lastPage={meta?.lastPage ?? 1}
+                    isLoading={isLoading || !meta}
+                    onPageChange={goToPage}
+                    data-test-id="members_pagination"
+                />
             </footer>
         </section>
     );

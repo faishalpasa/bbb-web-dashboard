@@ -1,6 +1,6 @@
 import type { Identifier } from '@/types/api';
 
-export type ParticipationPreferenceValue = 'online' | 'offline' | 'both' | 'unset';
+export type MemberDashboardStatus = 'active' | 'migrated' | 'exit_requested' | 'unsubscribed';
 
 export interface DashboardUpcomingEvent {
     id: Identifier;
@@ -10,23 +10,20 @@ export interface DashboardUpcomingEvent {
     quota: number | null;
 }
 
-export interface DashboardAttendance {
+export interface DashboardEventPerformance {
     eventId: Identifier;
     eventTitle: string;
     startsAt: string;
     registered: number;
     attended: number;
-    absent: number;
     percent: number;
-    averagePercent: number;
-    averageEventCount: number;
 }
 
 export interface AdminDashboard {
     asOf: string;
     stats: {
         members: { total: number; newThisMonth: number };
-        engaged: { total: number; minAttendance: number; windowMonths: number };
+        activeMembers: { total: number };
         exitRequests: { pending: number; overdue: number; overdueAfterDays: number };
         upcomingEvents: { total: number; full: number };
     };
@@ -37,7 +34,7 @@ export interface AdminDashboard {
         unclosedPastEvents: { count: number };
     };
     upcomingEvents: DashboardUpcomingEvent[];
-    participationPreferences: { value: ParticipationPreferenceValue; label: string; percent: number }[];
-    provinces: { name: string; percent: number }[];
-    latestAttendance: DashboardAttendance | null;
+    memberGrowth: { month: string; newMembers: number }[];
+    memberStatuses: { status: MemberDashboardStatus; label: string; count: number }[];
+    eventPerformance: DashboardEventPerformance[];
 }

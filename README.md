@@ -17,10 +17,9 @@ Before integrating API auth, configure its environment to preserve both frontend
 
 ```dotenv
 CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174
-SANCTUM_STATEFUL_DOMAINS=localhost:5173,localhost:5174
 ```
 
-Do not change API `FRONTEND_URL` to the admin URL: current email/Google redirects belong to the member app. Agree on admin auth/redirects before wiring them. Apps on localhost share API session cookies; session isolation is a pending contract decision.
+Do not change API `FRONTEND_URL` to the admin URL: current email/Google redirects belong to the member app. Agree on admin auth/redirects before wiring them. The admin app signs in with its own Bearer token (`bbb.admin.token` in localStorage, 30 minute lifetime, refreshed on 401); see `docs/plans/bearer-auth.md` in web-app and bbb-api.
 
 ## Structure
 
@@ -40,7 +39,7 @@ src/
   constants/              # routes and environment flags
   services/               # verb-prefixed Axios services
   types/                  # typed request/response contracts
-  utils/                  # shared Axios/CSRF and error handling
+  utils/                  # shared Axios/Bearer and error handling
   hooks/
   lib/
   mocks/                  # dev-only MSW; health endpoint only

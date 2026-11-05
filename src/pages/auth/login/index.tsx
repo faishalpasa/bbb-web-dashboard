@@ -9,7 +9,7 @@ export const PageLogin = () => {
 
     return (
         <PageContextProvider>
-            <AuthLayout title="Masuk ke dashboard admin" description="Gunakan email dan password akun admin Anda.">
+            <AuthLayout title="Masuk ke dashboard admin" description="Gunakan email dan password akun adminmu.">
                 <PageContent />
             </AuthLayout>
         </PageContextProvider>

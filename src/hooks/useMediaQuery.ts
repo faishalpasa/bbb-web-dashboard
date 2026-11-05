@@ -2,19 +2,17 @@ import { useEffect, useState } from 'react';
 
 const DESKTOP_MIN_WIDTH = 768;
 
-const isDesktopWidth = () => window.innerWidth >= DESKTOP_MIN_WIDTH;
-
-export const useMediaQuery = () => {
-    const [isDesktop, setIsDesktop] = useState(isDesktopWidth);
+export const useMediaQuery = (minWidth = DESKTOP_MIN_WIDTH) => {
+    const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= minWidth);
 
     useEffect(() => {
-        const handleResize = () => setIsDesktop(isDesktopWidth());
+        const handleResize = () => setIsDesktop(window.innerWidth >= minWidth);
 
         handleResize();
         window.addEventListener('resize', handleResize);
 
         return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    }, [minWidth]);
 
     return { isDesktop, isMobile: !isDesktop };
 };

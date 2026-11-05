@@ -1,3 +1,4 @@
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { LoaderCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -49,11 +50,7 @@ export const RejectForm = ({ 'data-test-id': testId }: RejectFormProps) => {
                 orang lain.
             </p>
 
-            {rejectError && (
-                <p role="alert" className="text-destructive text-sm" data-test-id={`${testId}_error`}>
-                    {rejectError}
-                </p>
-            )}
+            {rejectError && <FeedbackToast data-test-id={`${testId}_error`}>{rejectError}</FeedbackToast>}
 
             <div className="flex justify-end gap-2">
                 <Button

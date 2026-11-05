@@ -1,3 +1,5 @@
+import { PERMISSIONS as P } from '@/constants/permission';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Link } from '@tanstack/react-router';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +12,7 @@ import { ProgressBar } from './progress-bar';
 
 export const UpcomingEvents = () => {
     const { dashboard } = usePageContext();
+    const { can } = usePermissions();
     const events = dashboard?.upcomingEvents ?? [];
 
     return (
@@ -40,15 +43,17 @@ export const UpcomingEvents = () => {
                                     </div>
                                 )}
                             </div>
-                            <Button asChild variant="outline" size="sm" className="shrink-0">
-                                <Link
-                                    to={ROUTES.eventDetail}
-                                    params={{ eventId: event.id }}
-                                    data-test-id={`dashboard_link_event_participants_${event.id}`}
-                                >
-                                    Peserta
-                                </Link>
-                            </Button>
+                            {can(P.EVENT_VIEW) && (
+                                <Button asChild variant="outline" size="sm" className="shrink-0">
+                                    <Link
+                                        to={ROUTES.eventDetail}
+                                        params={{ eventId: event.id }}
+                                        data-test-id={`dashboard_link_event_participants_${event.id}`}
+                                    >
+                                        {can(P.EVENT_PARTICIPANT_VIEW) ? 'Peserta' : 'Detail'}
+                                    </Link>
+                                </Button>
+                            )}
                         </li>
                     ))}
                 </ul>

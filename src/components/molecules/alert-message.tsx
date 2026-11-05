@@ -11,7 +11,7 @@ export const AlertMessage = ({ children, tone = 'error', 'data-test-id': testId 
     <div
         className={cn(
             'rounded-md border p-3 text-sm font-medium',
-            tone === 'error' ? 'border-destructive/40 bg-destructive/5 text-destructive' : 'border-[#0f3b45]/30 bg-[#dbe8ea]/60 text-[#0f3b45]',
+            tone === 'error' ? 'border-destructive/40 bg-destructive/5 text-destructive' : 'border-[#0a5c5a]/30 bg-[#d6ecea]/60 text-[#0a5c5a]',
         )}
         role={tone === 'error' ? 'alert' : 'status'}
         data-test-id={testId}

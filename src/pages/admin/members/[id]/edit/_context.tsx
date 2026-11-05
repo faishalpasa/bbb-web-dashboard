@@ -5,6 +5,7 @@ import { ROUTES } from '@/constants/route';
 import { getMember, getMemberOptions } from '@/services/member';
 import type { LoadFailure, SelectOption } from '@/types/api';
 import type { MemberDetail } from '@/types/member';
+import type { ReadingProfileOptions } from '@/types/reading-profile';
 import { toLoadFailure } from '@/utils/error';
 
 import { MemberEditFormProvider } from './_form-context';
@@ -25,6 +26,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const navigate = useNavigate();
     const [member, setMember] = useState<MemberDetail | null>(null);
     const [preferences, setPreferences] = useState<SelectOption[]>([]);
+    const [readingOptions, setReadingOptions] = useState<ReadingProfileOptions | null>(null);
     const [failure, setFailure] = useState<LoadFailure | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [reloadToken, setReloadToken] = useState(0);
@@ -41,6 +43,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
                 setMember(memberResponse.data);
                 setPreferences(optionsResponse.data.preferences);
+                setReadingOptions(optionsResponse.data.readingProfileOptions);
             } catch (error) {
                 setFailure(toLoadFailure(error));
             } finally {
@@ -64,7 +67,13 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
     return (
         <PageContext.Provider value={value}>
-            {member ? <MemberEditFormProvider member={member}>{children}</MemberEditFormProvider> : children}
+            {member && readingOptions ? (
+                <MemberEditFormProvider key={`${member.id}:${reloadToken}`} member={member} options={readingOptions}>
+                    {children}
+                </MemberEditFormProvider>
+            ) : (
+                children
+            )}
         </PageContext.Provider>
     );
 };

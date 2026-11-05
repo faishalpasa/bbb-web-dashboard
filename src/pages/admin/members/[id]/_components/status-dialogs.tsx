@@ -1,8 +1,11 @@
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
+import { PERMISSIONS as P } from '@/constants/permission';
+import { usePermissions } from '@/hooks/usePermissions';
 
 import { usePageContext } from '../_context';
 
 export const StatusDialogs = () => {
+    const { can } = usePermissions();
     const { member, statusDialog, statusError, isChangingStatus, closeStatusDialog, confirmStatusChange } = usePageContext();
 
     if (!member) return null;
@@ -11,7 +14,7 @@ export const StatusDialogs = () => {
 
     return (
         <ConfirmationDialog
-            open={statusDialog !== null}
+            open={statusDialog !== null && can(isDeactivate ? P.MEMBER_DEACTIVATE : P.MEMBER_ACTIVATE)}
             onClose={closeStatusDialog}
             onConfirm={() => void confirmStatusChange()}
             title={isDeactivate ? 'Nonaktifkan member?' : 'Aktifkan kembali member?'}

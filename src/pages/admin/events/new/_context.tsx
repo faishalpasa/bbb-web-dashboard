@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/constants/route';
 import { type EventForm, useEventForm } from '@/hooks/useEventForm';
 import { getEventOptions, postEvent } from '@/services/event';
@@ -37,20 +38,25 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     }, []);
 
     const save = async (publish: boolean) => {
+        if (isSubmitting) return;
         setSubmitError(null);
 
         const input = form.buildInput(publish);
 
-        if (!input) return;
+        if (!input) {
+            setSubmitError('Periksa isian formulir yang ditandai di bawah.');
+            return;
+        }
 
         setIsSubmitting(true);
 
         try {
             const response = await postEvent(input);
+            toast.add({ type: 'success', title: publish ? 'Kegiatan dipublikasikan.' : 'Draf kegiatan disimpan.' });
 
             void navigate({ to: ROUTES.eventDetail, params: { eventId: response.data.id } });
         } catch (error) {
-            if (!form.applyServerErrors(error)) setSubmitError(errorMessage(error));
+            setSubmitError(form.applyServerErrors(error) ? 'Periksa isian formulir yang ditandai di bawah.' : errorMessage(error));
         } finally {
             setIsSubmitting(false);
         }

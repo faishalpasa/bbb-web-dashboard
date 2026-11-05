@@ -1,6 +1,7 @@
-import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 
 import { useAppContext } from '@/app-context';
+import { useClientPagination, type ClientPagination } from '@/hooks/useClientPagination';
 import { getExitRequests, postApproveExitRequest, postRejectExitRequest } from '@/services/exit-request';
 import type { LoadFailure } from '@/types/api';
 import type { ExitRequest, ExitRequestList } from '@/types/exit-request';
@@ -8,6 +9,7 @@ import { errorMessage, fieldErrorMessage, toLoadFailure } from '@/utils/error';
 
 interface PageContextValue {
     list: ExitRequestList | null;
+    pagination: ClientPagination<ExitRequest>;
     failure: LoadFailure | null;
     isLoading: boolean;
     notice: string | null;
@@ -34,6 +36,7 @@ const PageContext = createContext<PageContextValue | null>(null);
 export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const { refreshSession } = useAppContext();
     const [list, setList] = useState<ExitRequestList | null>(null);
+    const pagination = useClientPagination(list?.items ?? []);
     const [failure, setFailure] = useState<LoadFailure | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [notice, setNotice] = useState<string | null>(null);
@@ -121,6 +124,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const value = useMemo<PageContextValue>(
         () => ({
             list,
+            pagination,
             failure,
             isLoading,
             notice,
@@ -156,6 +160,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         }),
         [
             list,
+            pagination,
             failure,
             isLoading,
             notice,

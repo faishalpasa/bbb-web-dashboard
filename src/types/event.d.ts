@@ -1,4 +1,5 @@
 import type { Identifier, PaginatedCollection, SelectOption } from '@/types/api';
+import type { AdminRegistrationForm, RegistrationFormDefinition } from '@/types/registration-form';
 
 export type EventStatus = 'draft' | 'published' | 'completed' | 'cancelled';
 export type EventTimezone = 'WIB' | 'WITA' | 'WIT';
@@ -16,6 +17,7 @@ export interface EventListItem {
     registered: number;
     capacity: number | null;
     attended: number | null;
+    allowsNonMember: boolean;
 }
 
 export interface EventList extends PaginatedCollection<EventListItem> {
@@ -34,13 +36,15 @@ export interface EventDetail extends EventListItem {
     venueName: string | null;
     address: string | null;
     mapUrl: string | null;
+    surveyUrl: string | null;
+    documentationUrl: string | null;
     bannerUrl: string | null;
     usesQuota: boolean;
-    allowsNonMember: boolean;
     attendanceCode: string;
     publicPath: string;
     present: number;
     registration: { closesAt: string | null; adminAddUntil: string | null };
+    registrationForm: AdminRegistrationForm;
     actions: {
         canEdit: boolean;
         canPublish: boolean;
@@ -63,11 +67,14 @@ export interface EventInput {
     venueName: string | null;
     address: string | null;
     mapUrl: string | null;
+    surveyUrl: string | null;
+    documentationUrl: string | null;
     usesQuota: boolean;
     capacity: number | null;
     allowsNonMember: boolean;
     attendanceCode: string | null;
     publish: boolean;
+    registrationForm?: RegistrationFormDefinition;
 }
 
 export interface EventParticipant {
@@ -81,6 +88,12 @@ export interface EventParticipant {
     status: { value: ParticipantStatus; label: string };
 }
 
+export interface ParticipantDetail {
+    participant: EventParticipant;
+    // null for people who registered before the form existed; never reconstructed from their profile.
+    registrationResponse: import('@/types/registration-form').RegistrationResponse | null;
+}
+
 export interface ParticipantSummary {
     registered: number;
     attended: number;
@@ -91,14 +104,34 @@ export interface EventParticipantList extends PaginatedCollection<EventParticipa
     summary: ParticipantSummary;
 }
 
+export type EventSortBy = 'startsAt' | 'title';
+export type EventSortDirection = 'asc' | 'desc';
+
 export interface EventListQuery {
+    perPage?: number;
+    search: string;
     status: string;
+    format: string;
+    /** First day (YYYY-MM-DD) an event may start on, in WIB; empty = no lower bound. */
+    dateFrom: string;
+    /** Last day (YYYY-MM-DD) an event may start on, in WIB; empty = no upper bound. */
+    dateTo: string;
+    sortBy: EventSortBy;
+    sortDirection: EventSortDirection;
     page: number;
 }
 
 export interface ParticipantListQuery {
+    perPage?: number;
     search: string;
     page: number;
 }
 
-export type ParticipantInput = { memberId: string } | { name: string; email: string; whatsapp: string };
+export type ParticipantInput = import('@/types/registration-form').RegistrationSubmissionInput &
+    ({ memberId: string } | { name: string; email: string; consentAcknowledged: boolean });
+
+export interface EventMemberOption {
+    id: Identifier;
+    name: string;
+    memberNumber: string | null;
+}

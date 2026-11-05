@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { Button } from '@/components/ui/button';
 
 interface ConfirmationDialogProps {
@@ -11,6 +12,7 @@ interface ConfirmationDialogProps {
     description: string;
     confirmLabel: string;
     isSubmitting: boolean;
+    isConfirmDisabled?: boolean;
     error: string | null;
     isDestructive?: boolean;
     cancelLabel?: string;
@@ -26,6 +28,7 @@ export const ConfirmationDialog = ({
     description,
     confirmLabel,
     isSubmitting,
+    isConfirmDisabled = false,
     error,
     isDestructive = false,
     cancelLabel = 'Tidak jadi',
@@ -39,17 +42,13 @@ export const ConfirmationDialog = ({
                 <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
             {children}
-            {error && (
-                <p role="alert" className="text-destructive px-4 text-sm sm:px-0" data-test-id={`${testId}_error`}>
-                    {error}
-                </p>
-            )}
+            {error && <FeedbackToast data-test-id={`${testId}_error`}>{error}</FeedbackToast>}
             <DialogFooter>
                 <Button
                     className="h-11 w-full font-semibold"
                     variant={isDestructive ? 'destructive' : 'default'}
                     onClick={onConfirm}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isConfirmDisabled}
                     data-test-id={`${testId}_button_confirm`}
                 >
                     {isSubmitting ? 'Memproses…' : confirmLabel}

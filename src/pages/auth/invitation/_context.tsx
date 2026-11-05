@@ -2,10 +2,12 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { createContext, type FormEventHandler, type PropsWithChildren, useContext, useEffect, useRef, useState } from 'react';
 
 import { useAppContext } from '@/app-context';
+import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/constants/route';
 import { getInvitation, postAcceptInvitation } from '@/services/superadmin';
 import type { InvitationDetail } from '@/types/superadmin';
 import { errorMessage, fieldErrorMessage, isServiceError } from '@/utils/error';
+import { landingRoute } from '@/utils/permission';
 
 type InvitationState = 'loading' | 'ready' | 'invalid';
 
@@ -56,6 +58,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 setInvitation((await getInvitation(token.current)).data);
                 setState('ready');
             } catch (error) {
+                toast.add({ type: 'error', title: errorMessage(error) });
                 setInvalidMessage(errorMessage(error));
                 setAdminWhatsappUrl(isServiceError(error) ? (error.data?.adminWhatsappUrl ?? null) : null);
                 setState('invalid');
@@ -77,8 +80,10 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             const response = await postAcceptInvitation(token.current, password);
 
             setSession(response.data);
-            void navigate({ to: ROUTES.dashboard });
+            toast.add({ type: 'success', title: 'Akun admin berhasil diaktifkan.' });
+            void navigate({ to: landingRoute(response.data) });
         } catch (error) {
+            toast.add({ type: 'error', title: errorMessage(error) });
             const fieldError = fieldErrorMessage(error, 'password');
 
             if (fieldError) {

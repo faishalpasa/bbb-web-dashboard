@@ -1,7 +1,8 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
 import { LoaderCircle } from 'lucide-react';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { MemberFormSections } from '@/components/molecules/member-form-sections';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { Button } from '@/components/ui/button';
@@ -25,23 +26,25 @@ export const PageContent = () => {
 
     return (
         <form className="space-y-4" onSubmit={handleSubmit} noValidate data-test-id="member_new_form">
-            <header className="space-y-2">
-                <nav aria-label="Breadcrumb" className="text-sm">
-                    <Link to={ROUTES.members} className="underline underline-offset-4" data-test-id="member_new_link_breadcrumb_members">
-                        Member
-                    </Link>
-                    <span className="text-muted-foreground"> / Member baru</span>
-                </nav>
-                <h1 className="text-2xl font-semibold">Member baru</h1>
-                <RequiredNote />
-            </header>
+            <AdminPageHeader data-test-id="member_new_header">
+                <header className="space-y-2">
+                    <nav aria-label="Breadcrumb" className="text-sm">
+                        <Link to={ROUTES.members} className="underline underline-offset-4" data-test-id="member_new_link_breadcrumb_members">
+                            Member
+                        </Link>
+                        <span className="text-muted-foreground"> / Member baru</span>
+                    </nav>
+                    <h1 className="text-2xl font-semibold">Member baru</h1>
+                    <RequiredNote />
+                </header>
+            </AdminPageHeader>
 
             {(submitError || form.regionError) && (
-                <AlertMessage data-test-id="member_new_alert_error">{submitError ?? form.regionError}</AlertMessage>
+                <FeedbackToast data-test-id="member_new_alert_error">{submitError ?? form.regionError}</FeedbackToast>
             )}
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.86fr_1fr]">
-                <MemberFormSections form={form} preferences={preferences} isEmailEditable data-test-id="member_new" />
+                <MemberFormSections form={form} preferences={preferences} isEmailEditable disabled={isSubmitting} data-test-id="member_new" />
 
                 <div className="space-y-4">
                     <section className="border-border bg-card space-y-4 rounded-lg border p-5" data-test-id="member_new_account">

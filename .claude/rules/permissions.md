@@ -2,13 +2,15 @@
 
 Authorization is server-authoritative. Hiding a button is not authorization; the API must reject the request regardless of the UI.
 
+RBAC D–E: session.permissions is the effective grant list. Use PERMISSIONS and usePermissions/PermissionGate for route/sidebar/action visibility, plus API actions flags for business state. The role table below describes initial grants, not restrictions on custom roles. Legacy session.can is compatibility-only; never use it for new dashboard authorization. Role management (F) uses a module tree with parent/child switches per docs/contracts/admin-rbac.md; the catalog is migration-only.
+
 ## Roles
 
 | Role | Scope |
 | --- | --- |
 | `member` | Own profile, own registrations, attendance, and exit request |
-| `admin` | Member and event operations, participants, exit-request review |
-| `superadmin` | All admin abilities plus admin management, settings, and audit logs |
+| `admin` | Dashboard, event operations, and participants |
+| `superadmin` | All admin abilities plus members, exit-request review, admin management, settings, and audit logs |
 
 ## UI rules
 

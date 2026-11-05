@@ -1,7 +1,8 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link, useParams } from '@tanstack/react-router';
 import { LoaderCircle } from 'lucide-react';
 
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { MemberFormSections } from '@/components/molecules/member-form-sections';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { StatusBadge } from '@/components/molecules/status-badge';
@@ -21,7 +22,7 @@ export const PageContent = () => {
     if (failure) {
         return (
             <div className="max-w-xl space-y-3">
-                <AlertMessage data-test-id="member_edit_alert_error">{failure.message}</AlertMessage>
+                <FeedbackToast data-test-id="member_edit_alert_error">{failure.message}</FeedbackToast>
                 <div className="flex gap-2">
                     {!failure.isServerError && (
                         <Button asChild variant="outline">
@@ -63,32 +64,40 @@ const EditForm = ({ memberId, preferences }: EditFormProps) => {
 
     return (
         <form className="space-y-4" onSubmit={handleSubmit} noValidate data-test-id="member_edit_form">
-            <header className="space-y-2">
-                <nav aria-label="Breadcrumb" className="text-sm">
-                    <Link to={ROUTES.members} className="underline underline-offset-4" data-test-id="member_edit_link_breadcrumb_members">
-                        Member
-                    </Link>
-                    <span className="text-muted-foreground"> / </span>
-                    <Link
-                        to={ROUTES.memberDetail}
-                        params={{ memberId }}
-                        className="underline underline-offset-4"
-                        data-test-id="member_edit_link_breadcrumb_detail"
-                    >
-                        {member.name}
-                    </Link>
-                    <span className="text-muted-foreground"> / Edit data</span>
-                </nav>
-                <h1 className="text-2xl font-semibold">Edit data member</h1>
-                <RequiredNote />
-            </header>
+            <AdminPageHeader data-test-id="member_edit_header">
+                <header className="space-y-2">
+                    <nav aria-label="Breadcrumb" className="text-sm">
+                        <Link to={ROUTES.members} className="underline underline-offset-4" data-test-id="member_edit_link_breadcrumb_members">
+                            Member
+                        </Link>
+                        <span className="text-muted-foreground"> / </span>
+                        <Link
+                            to={ROUTES.memberDetail}
+                            params={{ memberId }}
+                            className="underline underline-offset-4"
+                            data-test-id="member_edit_link_breadcrumb_detail"
+                        >
+                            {member.name}
+                        </Link>
+                        <span className="text-muted-foreground"> / Edit data</span>
+                    </nav>
+                    <h1 className="text-2xl font-semibold">Edit data member</h1>
+                    <RequiredNote />
+                </header>
+            </AdminPageHeader>
 
             {(submitError || form.regionError) && (
-                <AlertMessage data-test-id="member_edit_alert_submit">{submitError ?? form.regionError}</AlertMessage>
+                <FeedbackToast data-test-id="member_edit_alert_submit">{submitError ?? form.regionError}</FeedbackToast>
             )}
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.86fr_1fr]">
-                <MemberFormSections form={form} preferences={preferences} isEmailEditable={false} data-test-id="member_edit" />
+                <MemberFormSections
+                    form={form}
+                    preferences={preferences}
+                    isEmailEditable={false}
+                    disabled={isSubmitting}
+                    data-test-id="member_edit"
+                />
 
                 <div className="space-y-4">
                     <section className="border-border bg-card space-y-3 rounded-lg border p-5" data-test-id="member_edit_membership">

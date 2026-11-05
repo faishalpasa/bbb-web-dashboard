@@ -1,6 +1,9 @@
 import { type ChangeEvent, useRef } from 'react';
 
+import { DateTimeField } from '@/components/molecules/date-time-field';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { FormField } from '@/components/molecules/form-field';
+import { RegistrationFormBuilder } from '@/components/molecules/registration-form-builder';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,11 +13,13 @@ import { Textarea } from '@/components/ui/textarea';
 import type { EventForm } from '@/hooks/useEventForm';
 import { cn } from '@/lib/utils';
 import type { SelectOption } from '@/types/api';
+import { NUMBER_INPUT_PROPS } from '@/utils/number-input';
 
 interface EventFormSectionsProps {
     form: EventForm;
     formats: SelectOption[];
     timezones: SelectOption[];
+    disabled?: boolean;
     'data-test-id': string;
 }
 
@@ -46,7 +51,7 @@ const ToggleRow = ({ id, label, description, checked, onChange, 'data-test-id': 
     </div>
 );
 
-export const EventFormSections = ({ form, formats, timezones, 'data-test-id': testId }: EventFormSectionsProps) => {
+export const EventFormSections = ({ form, formats, timezones, disabled = false, 'data-test-id': testId }: EventFormSectionsProps) => {
     const { fields, errors, isUploadingBanner, isGeneratingCode, codeError, setField, setTitle, regenerateCode, uploadBanner } = form;
     const bannerInput = useRef<HTMLInputElement>(null);
 
@@ -59,7 +64,9 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
     };
 
     return (
-        <div className="space-y-4">
+        <fieldset disabled={disabled} className="min-w-0 space-y-4">
+            <legend className="sr-only">Data kegiatan</legend>
+            {codeError && <FeedbackToast data-test-id={`${testId}_code_error`}>{codeError}</FeedbackToast>}
             <Section title="Informasi" data-test-id={`${testId}_information`}>
                 <FormField id="title" label="Judul" error={errors.title} data-test-id={`${testId}_title`}>
                     <Input
@@ -89,13 +96,13 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
                     <Label className="text-sm font-medium">Banner</Label>
                     <div className="flex flex-wrap items-center gap-4">
                         <div
-                            className="border-input bg-secondary/60 text-muted-foreground flex aspect-video w-48 shrink-0 items-center justify-center overflow-hidden rounded-md border border-dashed text-xs"
+                            className="border-input text-muted-foreground flex aspect-[4/5] w-48 shrink-0 items-center justify-center overflow-hidden rounded-md border border-dashed bg-neutral-100 text-xs"
                             data-test-id={`${testId}_banner_preview`}
                         >
                             {fields.bannerUrl ? (
                                 <img src={fields.bannerUrl} alt="Pratinjau banner" className="size-full object-cover" />
                             ) : (
-                                'Rasio 16:9'
+                                'Rasio 4:5'
                             )}
                         </div>
                         <div className="space-y-2">
@@ -121,7 +128,7 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
                                     </Button>
                                 )}
                             </div>
-                            <p className="text-muted-foreground text-xs">JPG atau PNG. Ukuran disesuaikan otomatis.</p>
+                            <p className="text-muted-foreground text-xs">JPG atau PNG, rasio 4:5 (portrait). Maks. 5 MB.</p>
                         </div>
                         <input
                             ref={bannerInput}
@@ -141,26 +148,22 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
             </Section>
 
             <Section title="Waktu" data-test-id={`${testId}_schedule`}>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="grid max-w-lg gap-4">
                     <FormField id="startsAt" label="Mulai" error={errors.startsAt} data-test-id={`${testId}_starts_at`}>
-                        <Input
+                        <DateTimeField
                             id="startsAt"
-                            type="datetime-local"
                             value={fields.startsAt}
-                            aria-required="true"
-                            onChange={(event) => setField('startsAt', event.target.value)}
-                            className="bg-card h-11"
+                            onChange={(value) => setField('startsAt', value)}
+                            invalid={Boolean(errors.startsAt)}
                             data-test-id={`${testId}_input_starts_at`}
                         />
                     </FormField>
                     <FormField id="endsAt" label="Selesai" error={errors.endsAt} data-test-id={`${testId}_ends_at`}>
-                        <Input
+                        <DateTimeField
                             id="endsAt"
-                            type="datetime-local"
                             value={fields.endsAt}
-                            aria-required="true"
-                            onChange={(event) => setField('endsAt', event.target.value)}
-                            className="bg-card h-11"
+                            onChange={(value) => setField('endsAt', value)}
+                            invalid={Boolean(errors.endsAt)}
                             data-test-id={`${testId}_input_ends_at`}
                         />
                     </FormField>
@@ -180,7 +183,7 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
                         </NativeSelect>
                     </FormField>
                 </div>
-                <p className="text-muted-foreground -mt-2 text-sm">Jam diisi sesuai zona waktu acara.</p>
+                <p className="text-muted-foreground -mt-2 text-sm">Jam diisi sesuai zona waktu acara, dalam pilihan per 30 menit.</p>
             </Section>
 
             <Section title="Lokasi" data-test-id={`${testId}_location`}>
@@ -240,7 +243,11 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
                     id="mapUrl"
                     label={fields.format === 'online' ? 'Link meeting' : 'Link Maps'}
                     isOptional={fields.format === 'offline'}
-                    hint="Untuk kegiatan online, isi link meeting. Link hanya tampil untuk peserta yang sudah terdaftar."
+                    hint={
+                        fields.format === 'online'
+                            ? 'Isi link Zoom kegiatan, misalnya https://zoom.us/j/1234567890. Link hanya tampil untuk peserta yang sudah terdaftar.'
+                            : undefined
+                    }
                     error={errors.mapUrl}
                     data-test-id={`${testId}_map_url`}
                 >
@@ -250,9 +257,48 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
                         value={fields.mapUrl}
                         aria-required={fields.format === 'online'}
                         onChange={(event) => setField('mapUrl', event.target.value)}
-                        placeholder="https://maps.app.goo.gl/..."
+                        placeholder={fields.format === 'online' ? 'https://zoom.us/j/1234567890?pwd=...' : 'https://maps.app.goo.gl/...'}
                         className="bg-card h-11 font-mono"
                         data-test-id={`${testId}_input_map_url`}
+                    />
+                </FormField>
+            </Section>
+
+            <Section title="Survei dan dokumentasi" data-test-id={`${testId}_after_event`}>
+                <FormField
+                    id="surveyUrl"
+                    label="Link survei"
+                    hint="Wajib saat kegiatan diterbitkan. Dikirim lewat email ke peserta yang hadir saat kegiatan selesai."
+                    error={errors.surveyUrl}
+                    data-test-id={`${testId}_survey_url`}
+                >
+                    <Input
+                        id="surveyUrl"
+                        type="url"
+                        aria-required="true"
+                        value={fields.surveyUrl}
+                        onChange={(event) => setField('surveyUrl', event.target.value)}
+                        placeholder="https://forms.gle/..."
+                        className="bg-card h-11 font-mono"
+                        data-test-id={`${testId}_input_survey_url`}
+                    />
+                </FormField>
+                <FormField
+                    id="documentationUrl"
+                    label="Link dokumentasi"
+                    hint="Wajib saat kegiatan diterbitkan. Peserta yang hadir melihatnya di halaman kegiatan dan di email terima kasih."
+                    error={errors.documentationUrl}
+                    data-test-id={`${testId}_documentation_url`}
+                >
+                    <Input
+                        id="documentationUrl"
+                        type="url"
+                        aria-required="true"
+                        value={fields.documentationUrl}
+                        onChange={(event) => setField('documentationUrl', event.target.value)}
+                        placeholder="https://drive.google.com/..."
+                        className="bg-card h-11 font-mono"
+                        data-test-id={`${testId}_input_documentation_url`}
                     />
                 </FormField>
             </Section>
@@ -276,7 +322,7 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
                     >
                         <Input
                             id="capacity"
-                            inputMode="numeric"
+                            {...NUMBER_INPUT_PROPS}
                             value={fields.capacity}
                             aria-required="true"
                             onChange={(event) => setField('capacity', event.target.value.replace(/\D/g, ''))}
@@ -292,7 +338,7 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
                     id="attendanceCode"
                     label="Kode kehadiran"
                     hint="Huruf dan angka tanpa spasi. Panitia membagikan kode ini saat acara berlangsung, lalu member memasukkannya untuk mencatat kehadiran."
-                    error={errors.attendanceCode ?? codeError ?? undefined}
+                    error={errors.attendanceCode}
                     data-test-id={`${testId}_attendance_code`}
                 >
                     <div className="flex gap-2">
@@ -319,6 +365,7 @@ export const EventFormSections = ({ form, formats, timezones, 'data-test-id': te
                     </div>
                 </FormField>
             </Section>
-        </div>
+            <RegistrationFormBuilder builder={form.registration} disabled={disabled} />
+        </fieldset>
     );
 };

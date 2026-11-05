@@ -38,6 +38,10 @@ export default [
         },
     },
     {
+        files: ['tests/**/*.mjs'],
+        languageOptions: { globals: globals.node },
+    },
+    {
         ignores: ['node_modules', 'dist', 'public'],
     },
     prettier, // Turn off all rules that might conflict with Prettier

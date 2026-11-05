@@ -1,15 +1,18 @@
 import { useParams } from '@tanstack/react-router';
-import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 
+import { toast } from '@/components/ui/toast';
+import { useClientPagination, type ClientPagination } from '@/hooks/useClientPagination';
 import { getMember, postActivateMember, postDeactivateMember, postMemberResetPassword, putMemberNote } from '@/services/member';
 import type { LoadFailure } from '@/types/api';
-import type { MemberDetail } from '@/types/member';
+import type { MemberDetail, MemberHistoryItem } from '@/types/member';
 import { errorMessage, toLoadFailure } from '@/utils/error';
 
 type StatusDialog = 'deactivate' | 'activate' | null;
 
 interface PageContextValue {
     member: MemberDetail | null;
+    historyPagination: ClientPagination<MemberHistoryItem>;
     failure: LoadFailure | null;
     isLoading: boolean;
     note: string;
@@ -34,6 +37,7 @@ const PageContext = createContext<PageContextValue | null>(null);
 export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const { memberId } = useParams({ strict: false });
     const [member, setMember] = useState<MemberDetail | null>(null);
+    const historyPagination = useClientPagination(member?.history ?? [], memberId);
     const [failure, setFailure] = useState<LoadFailure | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [note, setNote] = useState('');
@@ -114,6 +118,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
             setMember(response.data);
             setStatusDialog(null);
+            toast.add({ type: 'success', title: statusDialog === 'activate' ? 'Member diaktifkan kembali.' : 'Member dinonaktifkan.' });
         } catch (error) {
             setStatusError(errorMessage(error));
         } finally {
@@ -124,6 +129,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const value = useMemo<PageContextValue>(
         () => ({
             member,
+            historyPagination,
             failure,
             isLoading,
             note,
@@ -147,6 +153,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         }),
         [
             member,
+            historyPagination,
             failure,
             isLoading,
             note,

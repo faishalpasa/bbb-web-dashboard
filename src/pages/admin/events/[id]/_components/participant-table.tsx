@@ -1,18 +1,23 @@
-import { Check, X } from 'lucide-react';
+import { Check, Download, X } from 'lucide-react';
 
-import { useAppContext } from '@/app-context';
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { TablePagination } from '@/components/molecules/table-pagination';
+import { WhatsappButton } from '@/components/molecules/whatsapp-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PARTICIPANT_STATUS_TONES } from '@/constants/event';
+import { PERMISSIONS as P } from '@/constants/permission';
+import { usePermissions } from '@/hooks/usePermissions';
 import type { EventParticipant } from '@/types/event';
 import { formatRegisteredAt } from '@/utils/date';
-import { formatWhatsapp } from '@/utils/string';
+import { attendanceConfirmationMessage, formatWhatsapp, whatsappChatUrl } from '@/utils/string';
 
 import { usePageContext } from '../_context';
+
+const participantWhatsappLabel = (whatsapp: string): string => (whatsapp.trim() ? formatWhatsapp(whatsapp) : '-');
 
 const registeredLabel = (participant: EventParticipant): string =>
     participant.source === 'admin' ? 'Oleh admin' : formatRegisteredAt(participant.registeredAt);
@@ -22,10 +27,10 @@ interface AttendanceActionProps {
 }
 
 const AttendanceAction = ({ participant }: AttendanceActionProps) => {
-    const { session } = useAppContext();
+    const { can } = usePermissions();
     const { event, pendingParticipantIds, toggleAttendance } = usePageContext();
     const isPending = pendingParticipantIds.includes(participant.id);
-    const canMark = (session?.can.manageEvents ?? false) && (event?.actions.canMarkAttendance ?? false);
+    const canMark = can(P.EVENT_PARTICIPANT_ATTENDANCE_UPDATE) && (event?.actions.canMarkAttendance ?? false);
 
     if (!canMark) return null;
 
@@ -58,8 +63,68 @@ const AttendanceAction = ({ participant }: AttendanceActionProps) => {
     );
 };
 
+// Needs no capability: it only reads data that is already on the row.
+const WhatsappAction = ({ participant }: AttendanceActionProps) => {
+    const { event } = usePageContext();
+
+    if (!participant.whatsapp || !event) return null;
+
+    return (
+        <WhatsappButton
+            href={whatsappChatUrl(participant.whatsapp, attendanceConfirmationMessage(participant.name, event.title))}
+            label={`Konfirmasi kehadiran ${participant.name} lewat WhatsApp`}
+            text="Chat"
+            size="sm"
+            data-test-id={`event_detail_link_whatsapp_${participant.id}`}
+        />
+    );
+};
+
+// Answers load on demand, so the row only needs the permission that guards the participant list itself.
+const DetailAction = ({ participant }: AttendanceActionProps) => {
+    const { can } = usePermissions();
+    const { openDetail } = usePageContext();
+
+    if (!can(P.EVENT_PARTICIPANT_VIEW)) return null;
+
+    return (
+        <Button
+            variant="outline"
+            size="sm"
+            className="bg-card"
+            onClick={() => openDetail(participant)}
+            aria-label={`Lihat detail ${participant.name}`}
+            data-test-id={`event_detail_button_detail_${participant.id}`}
+        >
+            Detail
+        </Button>
+    );
+};
+
+const ParticipantActions = ({ participant }: AttendanceActionProps) => (
+    <div className="flex items-center justify-end gap-2">
+        <DetailAction participant={participant} />
+        <WhatsappAction participant={participant} />
+        <AttendanceAction participant={participant} />
+    </div>
+);
+
 export const ParticipantTable = () => {
-    const { participants, participantsFailure, isLoadingParticipants, page, searchText, setSearchText, goToPage, reload } = usePageContext();
+    const { can } = usePermissions();
+    const {
+        participants,
+        participantsFailure,
+        isLoadingParticipants,
+        isExporting,
+        page,
+        perPage,
+        changePerPage,
+        searchText,
+        setSearchText,
+        goToPage,
+        exportParticipants,
+        reload,
+    } = usePageContext();
     const items = participants?.items ?? [];
     const meta = participants?.meta;
     const rangeStart = meta && meta.total > 0 ? (meta.currentPage - 1) * meta.perPage + 1 : 0;
@@ -71,24 +136,38 @@ export const ParticipantTable = () => {
             data-test-id="event_detail_participants"
             aria-busy={isLoadingParticipants}
         >
-            <div className="grid gap-1.5 p-4">
-                <Label htmlFor="participantSearch" className="text-xs font-normal">
-                    Cari peserta
-                </Label>
-                <Input
-                    id="participantSearch"
-                    type="search"
-                    value={searchText}
-                    onChange={(event) => setSearchText(event.target.value)}
-                    placeholder="Nama atau nomor member"
-                    className="bg-card h-10 max-w-sm"
-                    data-test-id="event_detail_input_search"
-                />
+            <div className="flex flex-wrap items-end justify-between gap-3 p-4">
+                <div className="grid w-full max-w-sm gap-1.5">
+                    <Label htmlFor="participantSearch" className="text-xs font-normal">
+                        Cari peserta
+                    </Label>
+                    <Input
+                        id="participantSearch"
+                        type="search"
+                        value={searchText}
+                        onChange={(event) => setSearchText(event.target.value)}
+                        placeholder="Nama atau nomor member"
+                        className="bg-card h-10"
+                        data-test-id="event_detail_input_search"
+                    />
+                </div>
+                {can(P.EVENT_PARTICIPANT_EXPORT) && (
+                    <Button
+                        variant="outline"
+                        className="bg-card"
+                        disabled={isExporting || isLoadingParticipants || items.length === 0}
+                        onClick={() => void exportParticipants()}
+                        data-test-id="event_detail_button_export"
+                    >
+                        <Download aria-hidden="true" />
+                        {isExporting ? 'Menyiapkan…' : 'Expor'}
+                    </Button>
+                )}
             </div>
 
             {participantsFailure ? (
                 <div className="space-y-3 p-4">
-                    <AlertMessage data-test-id="event_detail_alert_participants_error">{participantsFailure.message}</AlertMessage>
+                    <FeedbackToast data-test-id="event_detail_alert_participants_error">{participantsFailure.message}</FeedbackToast>
                     <Button variant="outline" onClick={reload} data-test-id="event_detail_button_participants_retry">
                         Coba lagi
                     </Button>
@@ -124,7 +203,7 @@ export const ParticipantTable = () => {
                                           >
                                               <td className="py-3 pr-3 pl-4 font-mono text-xs">{participant.memberNumber ?? 'Non-member'}</td>
                                               <td className="px-3 py-3 font-medium">{participant.name}</td>
-                                              <td className="px-3 py-3 font-mono text-xs">{formatWhatsapp(participant.whatsapp)}</td>
+                                              <td className="px-3 py-3 font-mono text-xs">{participantWhatsappLabel(participant.whatsapp)}</td>
                                               <td className="px-3 py-3">{registeredLabel(participant)}</td>
                                               <td className="px-3 py-3">
                                                   <StatusBadge
@@ -133,8 +212,8 @@ export const ParticipantTable = () => {
                                                       data-test-id={`event_detail_badge_status_${participant.id}`}
                                                   />
                                               </td>
-                                              <td className="py-2 pr-4 pl-3 text-right">
-                                                  <AttendanceAction participant={participant} />
+                                              <td className="py-2 pr-4 pl-3">
+                                                  <ParticipantActions participant={participant} />
                                               </td>
                                           </tr>
                                       ))}
@@ -158,10 +237,12 @@ export const ParticipantTable = () => {
                                     />
                                 </div>
                                 <p className="font-mono text-xs">
-                                    {participant.memberNumber ?? 'Non-member'} · {formatWhatsapp(participant.whatsapp)}
+                                    {participant.memberNumber ?? 'Non-member'} · {participantWhatsappLabel(participant.whatsapp)}
                                 </p>
                                 <p className="text-muted-foreground text-xs">Didaftarkan: {registeredLabel(participant)}</p>
-                                <AttendanceAction participant={participant} />
+                                <div className="flex justify-start">
+                                    <ParticipantActions participant={participant} />
+                                </div>
                             </li>
                         ))}
                     </ul>
@@ -176,29 +257,19 @@ export const ParticipantTable = () => {
                     )}
 
                     <footer className="border-border flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm">
-                        <p data-test-id="event_detail_text_range">
+                        <p className="sr-only" data-test-id="event_detail_text_range">
                             {meta && meta.total > 0 ? `Menampilkan ${rangeStart} sampai ${rangeEnd} dari ${meta.total} peserta` : 'Tidak ada peserta'}
                         </p>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={isLoadingParticipants || page <= 1}
-                                onClick={() => goToPage(page - 1)}
-                                data-test-id="event_detail_button_previous"
-                            >
-                                Sebelumnya
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={isLoadingParticipants || !meta || page >= meta.lastPage}
-                                onClick={() => goToPage(page + 1)}
-                                data-test-id="event_detail_button_next"
-                            >
-                                Berikutnya
-                            </Button>
-                        </div>
+                        <TablePagination
+                            total={meta?.total ?? 0}
+                            perPage={perPage}
+                            onPerPageChange={changePerPage}
+                            currentPage={meta?.currentPage ?? page}
+                            lastPage={meta?.lastPage ?? 1}
+                            isLoading={isLoadingParticipants || !meta}
+                            onPageChange={goToPage}
+                            data-test-id="event_detail_pagination"
+                        />
                     </footer>
                 </>
             )}

@@ -1,7 +1,10 @@
 import type { Identifier, PaginatedCollection, SelectOption } from '@/types/api';
-import type { DistrictOption, RegionOption } from '@/types/region';
+import type { ReadingProfile, ReadingProfileInput, ReadingProfileOptions } from '@/types/reading-profile';
+import type { CountryOption, DistrictOption, DomicileType, RegionOption, VillageOption } from '@/types/region';
 
-export type MemberAdminStatus = 'active' | 'exit_requested' | 'email_bounced' | 'awaiting_data' | 'inactive';
+export type MemberAdminStatus = 'active' | 'exit_requested' | 'awaiting_data' | 'inactive';
+export type MemberSortBy = 'memberNumber' | 'name' | 'joinedAt';
+export type MemberSortDirection = 'asc' | 'desc';
 
 export type MemberHistoryStatus = 'registered' | 'present' | 'absent';
 
@@ -9,6 +12,7 @@ export interface MemberListItem {
     id: Identifier;
     memberNumber: string | null;
     name: string;
+    email: string;
     whatsapp: string;
     regency: string | null;
     province: string | null;
@@ -29,11 +33,16 @@ export interface MemberListQuery {
     provinceCode: string;
     preference: string;
     attendance: string;
+    /** Ids of the chosen reading interests (favourite genres), comma-separated; a member matches any of them. */
+    readingInterests: string;
+    sortBy: MemberSortBy;
+    sortDirection: MemberSortDirection;
     page: number;
     perPage?: number;
 }
 
 export interface MemberOptions {
+    readingProfileOptions: ReadingProfileOptions;
     statuses: SelectOption[];
     preferences: SelectOption[];
     attendance: SelectOption[];
@@ -49,7 +58,7 @@ export interface MemberHistoryItem {
     status: { value: MemberHistoryStatus; label: string };
 }
 
-export interface MemberDetail {
+export interface MemberDetail extends ReadingProfile {
     id: Identifier;
     memberNumber: string | null;
     status: { value: MemberAdminStatus; label: string };
@@ -61,7 +70,11 @@ export interface MemberDetail {
     province: RegionOption | null;
     regency: RegionOption | null;
     district: DistrictOption | null;
+    village: VillageOption | null;
     postalCode: string;
+    domicileType: DomicileType;
+    country: CountryOption | null;
+    overseasCity: string | null;
     preference: SelectOption | null;
     whatsappGroupJoinedAt: string | null;
     signupMethod: { value: 'google' | 'email' | 'admin'; label: string };
@@ -73,7 +86,7 @@ export interface MemberDetail {
     actions: { canEdit: boolean; canResetPassword: boolean; canDeactivate: boolean; canActivate: boolean };
 }
 
-export interface MemberEditInput {
+export interface MemberEditInput extends ReadingProfileInput {
     name: string;
     birthYear: number;
     whatsapp: string;
@@ -81,7 +94,11 @@ export interface MemberEditInput {
     provinceCode: string;
     regencyCode: string;
     districtCode: string;
+    villageCode: string;
     postalCode: string;
+    domicileType: DomicileType;
+    countryCode: string;
+    overseasCity: string;
 }
 
 export interface MemberCreateInput extends MemberEditInput {

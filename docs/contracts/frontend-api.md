@@ -1,14 +1,18 @@
 # Frontend API contract v1
 
-Status: **dummy-data draft**. Contract ini menjadi boundary antara web app (repo `bbb-web-app`) dan Laravel API (repo `bbb-api`). Kedua repo menyimpan salinan yang sama; ubah keduanya bersamaan. Nama field dan perilaku yang tertulis di sini berasal dari keputusan produk yang sudah dikonfirmasi; nilai enum yang belum final dikirim sebagai pasangan `value` dan label Indonesia agar frontend tidak menebak aturan bisnis.
+Tambahan profil/minat member (20 Oktober 2026): [kontrak shared](member-reading-profile.md). Field opsional, pilihan server dan semantik omitted-preserve berlaku pada onboarding baru/migrasi dan profil; auth/session serta field existing tetap.
+
+Perubahan kegiatan (19 Oktober 2026): [Registration Form](event-registration-form.md). Backend konfigurasi admin tahap 2 tersedia lokal (belum deploy); form member/publik, custom answers dan detail jawaban masih target tahap 4/5. Bagian pendaftaran existing di bawah tetap berlaku untuk event tanpa custom field; writer lama menolak event dengan custom field melalui pengaman 422 registration_form_required sampai flow submit baru siap.
+
+Status: **di MySQL (langkah 21)**. Contract ini menjadi boundary antara web app (repo `bbb-web-app`) dan Laravel API (repo `bbb-api`). Kedua repo menyimpan salinan yang sama; ubah keduanya bersamaan. Nama field dan perilaku yang tertulis di sini berasal dari keputusan produk yang sudah dikonfirmasi; nilai enum yang belum final dikirim sebagai pasangan `value` dan label Indonesia agar frontend tidak menebak aturan bisnis.
 
 ## Transport
 
 - Web app adalah SPA statis; seluruh data berasal dari API lewat HTTP. Tidak ada props dari server.
 - Base URL API adalah `VITE_API_BASE_URL` (lokal: `http://localhost:8000/api`, production: `https://api.<domain>/api`).
 - Healthcheck: `GET /` dan `GET /api/health` (tanpa autentikasi) membalas `{ "data": { "status": "ok", ... } }`.
-- Autentikasi memakai Laravel Sanctum SPA (cookie). Sebelum request mutasi (`POST/PUT/PATCH/DELETE`), frontend memanggil `GET {VITE_API_ORIGIN}/sanctum/csrf-cookie`, lalu mengirim header `X-XSRF-TOKEN` dari cookie `XSRF-TOKEN` dengan `withCredentials`. Respons `419` berarti cookie CSRF kedaluwarsa; frontend mengambil cookie baru dan mengulang sekali.
-- Web app dan API harus satu domain induk (lokal: `localhost:5173` dan `localhost:8000`). API mengizinkan origin web app lewat CORS dengan credentials.
+- Autentikasi memakai JWT. Endpoint yang membuat sesi (login member/admin, `register/verify`, penerimaan undangan admin, Google exchange, refresh) menambahkan `token: { accessToken, tokenType: "Bearer", expiresAt }` ke data yang sudah dibalas (`AuthSession`, data form onboarding, atau sesi admin); frontend menyimpannya dan mengirim `Authorization: Bearer {accessToken}` di setiap request. Tidak ada cookie auth, handshake CSRF, atau `/sanctum/csrf-cookie` (`docs/plans/bearer-auth.md`): API tidak membaca atau mengeset cookie untuk `/api/*`. Access token member berlaku 60 menit, admin 30 menit. `401` pada request yang membawa token berarti token kedaluwarsa atau dicabut: frontend memanggil `POST /api/auth/refresh` sekali, lalu mengulang request; bila refresh gagal, token dihapus dan frontend kembali ke layar masuk. Token tidak boleh muncul di URL atau log.
+- Web app dan API tidak perlu satu domain induk. API hanya mengizinkan origin web app dan dashboard lewat CORS (`CORS_ALLOWED_ORIGINS`), tanpa credentials. Satu-satunya cookie ada di redirect Google (grup web API, di host API) dan tidak pernah dibaca `/api/*`.
 - Respons sukses JSON memakai envelope `{ "data": ... }`.
 - Error validasi memakai status `422` dengan `{ "message", "errors": { "field": ["..."] } }`. Penolakan bisnis (kuota penuh, sudah terdaftar) memakai `422` dengan `message` Indonesia. Data tidak ada: `404 { "message": "Data tidak ditemukan." }`. Link satu kali pakai (verifikasi email dan atur ulang password) yang tidak bisa dipakai dibalas `422 { "message", "code" }` dengan `code` salah satu dari `token_expired`, `token_used`, atau `token_invalid`, sehingga frontend memilih halaman error tanpa mencocokkan teks pesan. Belum masuk: `401`.
 - Semua identifier domain dikirim sebagai string dan semua datetime sebagai ISO 8601 UTC.
@@ -16,7 +20,7 @@ Status: **dummy-data draft**. Contract ini menjadi boundary antara web app (repo
 
 ## Auth/session
 
-Login membuat sesi cookie. Setelah autentikasi berhasil, frontend berpindah halaman dengan router client-side. `GET /api/auth/session` membalas `401` bila belum masuk.
+Login membuat sesi dan mengembalikan token (lihat Token Bearer di bawah). Setelah autentikasi berhasil, frontend menyimpan token dan berpindah halaman dengan router client-side. `GET /api/auth/session` membalas `401` bila belum masuk.
 
 | Method | URL | Result |
 | --- | --- | --- |
@@ -29,11 +33,23 @@ Login membuat sesi cookie. Setelah autentikasi berhasil, frontend berpindah hala
 | `GET` | `/api/onboarding/profile` | `OnboardingProfileData` |
 | `POST` | `/api/onboarding/profile` | `MemberProfileInput` -> `MemberProfile` |
 
-Link di email membuka `/onboarding/profile?token=...`. Saat halaman terbuka dan ada `token`, frontend memanggil `POST /api/register/verify`; server memverifikasi email, membuat sesi, lalu membalas data form. Token bersifat acak, disimpan sebagai hash, berlaku terbatas, dan sekali pakai. Frontend langsung menghapus `token` dari URL setelah dibaca. Tanpa `token`, halaman memakai `GET /api/onboarding/profile` dengan sesi yang sudah ada. Token tidak valid, kedaluwarsa, atau sudah dipakai dibalas `422` dengan pesan Indonesia. Setelah `POST /api/onboarding/profile` berhasil (membuat member dan nomor `BFF-xxxxx`), frontend pindah ke `/onboarding/success`. Mock: token `expired` dan `used` menghasilkan error; token lain dianggap valid.
+Link di email membuka `/onboarding/profile?token=...`. Saat halaman terbuka dan ada `token`, frontend memanggil `POST /api/register/verify`; server memverifikasi email, membuat sesi, lalu membalas data form + JWT sub UUID user. Token acak disimpan sebagai hash SHA-256 di `user_tokens`, berlaku **24 jam**, dan sekali pakai secara transaksional. Frontend langsung menghapus `token` dari URL setelah dibaca. Tanpa `token`, halaman memakai `GET /api/onboarding/profile` dengan sesi yang sudah ada. Token salah, tepat/sesudah batas kedaluwarsa, atau sudah dipakai dibalas `422` dengan code token_invalid/token_expired/token_used. Tidak ada token ajaib yang diterima. Profil/nomor member kini persisten (langkah 6); verifikasi sendiri belum membuat member.
 
-Pendaftaran email membuat akun yang belum terverifikasi dan mengirim link verifikasi. Server menentukan `resendAvailableAt` (mock: 45 detik); UI hanya menampilkan hitung mundurnya. Email yang sudah terdaftar dibalas `422` pada field `email`, password kurang dari 8 karakter dibalas `422` pada field `password`.
+Pendaftaran email membuat user belum terverifikasi, password hash, dan queued email setelah transaksi commit. Jeda kirim ulang **60 detik** (keputusan pemilik 16 Oktober 2026), ditegakkan server berdasarkan token terakhir per user/jenis; percobaan terlalu cepat tidak menggeser waktu kirim sebenarnya. `resendAvailableAt` selalu 60 detik sejak request untuk bentuk respons yang sama pada email dikenal/tidak dikenal/terverifikasi/ter-throttle; request terlalu cepat tetap 200 tanpa mengirim email baru. Kirim ulang yang benar-benar diterbitkan membatalkan link sebelumnya yang sejenis (token_used), bukan token jenis lain. Email existing pada register dibalas `422 errors.email`, password kurang dari 8 karakter `422 errors.password`. Resend tidak membuat user baru dan tidak mengirim ke alamat terverifikasi/tidak dikenal. Identitas email dinormalisasi lowercase.
 
 `POST /api/auth/logout` mengakhiri sesi dan membalas `204` tanpa body.
+
+### Token Bearer
+
+| Method | URL | Payload/result |
+| --- | --- | --- |
+| `POST` | `/api/auth/refresh` | Header `Authorization: Bearer` (boleh sudah kedaluwarsa, sampai 14 hari sejak diterbitkan) -> sesi yang sama dengan `GET /api/auth/session` (member atau admin sesuai token) + `token` baru; token lama dicabut |
+| `POST` | `/api/auth/google/exchange` | `{ code }` -> `AuthSession` + `token`; code sekali pakai dan berlaku 60 detik, salah dibalas `422 { code: "token_invalid" }` |
+
+`AuthToken`: `{ accessToken: string, tokenType: "Bearer", expiresAt: string }` (ISO 8601 UTC). Isi JWT: `sub`, `typ` (`member` atau `admin`), `sid` (tetap sepanjang refresh), `jti` (unik per token), `ver` (epoch sesi user saat token diterbitkan; ganti atau reset password menaikkan epoch sehingga token member yang lebih lama dijawab `401`, kecuali sesi yang mengganti password; refresh dari token yang sudah tidak berlaku juga `401`), `oiat` (waktu token pertama sesi diterbitkan; refresh boleh sampai 14 hari sesudahnya), `iat`, `nbf`, `exp`. Rute admin menolak token `member` dan sebaliknya. `POST /api/auth/logout` dan `POST /api/admin/logout` dengan token mencabut `jti` dan membalas `204`; token yang sudah dicabut dijawab `401`. Request tanpa token ke rute publik (event publik, wilayah) tidak pernah dijawab `401`, bahkan bila header berisi token basi: token yang tidak valid diperlakukan sebagai anonim.
+
+Semua state (pendaftaran, status keluar, kegiatan admin, peserta) ada di MySQL. Token membawa `sid` hanya sebagai penanda sesi perangkat (denylist, epoch password); tidak ada state bisnis di sesi server. Undangan admin diterima lewat tautan sekali pakai dari tabel `admin_invitations`.
+
 
 `GET /api/auth/session` membalas salah satu dari: member lengkap (`member.status` `active`), akun migrasi (`member.status` `migrated` dan `requiresProfileCompletion: true`), pendaftar yang belum mengisi data diri (`member: null` dan `requiresProfileCompletion: true`), member terbatas (`exit_requested` atau `unsubscribed`), atau `401` bila belum masuk. Web app memakai respons ini untuk guard rute: tanpa sesi ke `/login`; `member: null` ke `/onboarding/profile`; akun migrasi ke `/onboarding/complete-profile`; member terbatas ke `/status`; selain itu area member terbuka. Layar masuk dan daftar mengarahkan orang yang sudah masuk ke tujuan yang sama. Respons `401` pada endpoint `/api/member/*` saat web app terbuka berarti sesi habis, dan web app kembali ke `/login`.
 
@@ -41,16 +57,18 @@ Pendaftaran email membuat akun yang belum terverifikasi dan mengirim link verifi
 
 ## Daftar dan masuk dengan Google
 
-Alur Google adalah redirect halaman penuh lewat API, bukan XHR. Rute-nya ada di grup web API (bukan `/api`) karena callback datang dari Google tanpa Origin/Referer web app dan harus memakai cookie sesi.
+Alur Google adalah redirect halaman penuh lewat API, bukan XHR. Rute-nya ada di grup web API (bukan `/api`) karena callback datang dari Google tanpa Origin/Referer web app. Setelah callback, API mengarahkan ke `/auth/google/callback?code=` di web app (code sekali pakai, berlaku 60 detik); web app membacanya sekali, langsung menghapusnya dari URL, lalu menukarnya lewat `POST /api/auth/google/exchange` dan berpindah sesuai sesi (`/home`, `/onboarding/profile`, atau `/status`).
 
 | Method | URL | Keterangan |
 | --- | --- | --- |
-| `GET` | `{VITE_API_ORIGIN}/auth/google/redirect?intent=register\|login` | Menyimpan `intent` di sesi lalu mengarahkan ke Google (fase dummy: langsung ke callback). |
+| `GET` | `{VITE_API_ORIGIN}/auth/google/redirect?intent=register\|login` | Menyimpan `intent` di sesi lalu mengarahkan ke Google (tanpa `GOOGLE_CLIENT_ID`, hanya di local/testing: Google palsu yang langsung ke callback). |
 | `GET` | `{VITE_API_ORIGIN}/auth/google/callback` | Menukar kode Google, membuat sesi, lalu mengarahkan ke web app. |
 
 Tujuan setelah callback: `intent=register` ke `/onboarding/profile` (nama dan email dari Google, email sudah terverifikasi; halaman memakai `GET /api/onboarding/profile`), `intent=login` ke `/home`. Bila Google dibatalkan, email Google belum terverifikasi, atau terjadi kegagalan, API mengarahkan kembali ke `/register` atau `/login` (sesuai `intent`) dengan `?error=<code>`: `google_cancelled`, `google_email_unverified`, atau `google_failed`. Frontend memetakan code ke pesan Indonesia dan tidak pernah menampilkan teks dari URL.
 
-Dummy: `?dummyError=cancelled|unverified|failed` pada `/auth/google/redirect` mensimulasikan kegagalan. Mode mock MSW tidak mencakup alur ini (butuh API sungguhan).
+Google palsu (hanya local/testing, saat `GOOGLE_CLIENT_ID` kosong): `?dummyError=cancelled|unverified|failed` pada `/auth/google/redirect` mensimulasikan kegagalan dan `?dummyEmail=` masuk sebagai akun Google lain (bawaan `google.dev@bbb.test`). Di production tanpa kredensial Google, redirect dan callback selalu kembali ke `/login` atau `/register` dengan `?error=google_failed`. Mode mock MSW tidak mencakup alur ini (butuh API sungguhan).
+
+Akun: callback mencari `social_accounts` (provider `google`, id Google); bila belum ada, mencari `users.email` (huruf kecil) dan menautkan akun Google ke user itu (email dianggap terverifikasi karena Google sudah memverifikasinya; password tetap berfungsi); bila tidak ada, membuat user baru tanpa password dan tanpa baris member (lanjut ke `/onboarding/profile`; `signup_method` member nanti `google`). Member `migrated` yang masuk lewat Google mengisi `first_login_at` seperti login password. Email Google yang belum terverifikasi ditolak (`google_email_unverified`); akun Google lain yang memakai email yang sudah tertaut ke Google berbeda ditolak (`google_failed`). `intent=login` untuk email yang belum dikenal diperlakukan seperti `register` (membuat user dan lanjut ke onboarding). Code satu kali di cache (`jwt.google_code_seconds`, 60 detik) berisi id user; `POST /api/auth/google/exchange` menukarnya menjadi `AuthSession` + `token`, sama seperti login password.
 
 ## Lupa dan atur ulang password
 
@@ -60,7 +78,11 @@ Dummy: `?dummyError=cancelled|unverified|failed` pada `/auth/google/redirect` me
 | `POST` | `/api/password/verify-token` | `{ token }` -> `{ email, requiresProfileCompletion }` |
 | `POST` | `/api/password/reset` | `{ token, password }` -> `AuthSession` |
 
-`forgot` selalu sukses dengan respons yang sama untuk email terdaftar maupun tidak (tidak membocorkan email); kirim ulang memakai endpoint yang sama dan UI menampilkan hitung mundur dari `resendAvailableAt`. Link di email membuka `/reset-password?token=...`; halaman memanggil `verify-token`, lalu menghapus `token` dari URL dan menyimpannya hanya di memori. `reset` mengganti password dan membuat sesi (Ibu langsung masuk). Bila `requiresProfileCompletion` bernilai `true` (akun migrasi), frontend lanjut ke `/onboarding/complete-profile`, selain itu ke beranda. Token tidak valid, kedaluwarsa, atau sudah dipakai dibalas `422` dengan pesan Indonesia; password kurang dari 8 karakter dibalas `422` pada field `password`. Mock/dummy: token `expired` dan `used` menghasilkan error, token `migrated` menandai akun migrasi, token lain dianggap valid.
+`forgot` selalu 200 dengan respons yang sama untuk email terdaftar maupun tidak; kirim ulang memakai endpoint yang sama, cooldown **60 detik** dan resendAvailableAt mengikuti aturan di atas. Email hanya diantrekan untuk user yang ada, termasuk akun migrated tanpa password. Link `/reset-password?token=...` memakai token hash persisten yang berlaku **60 menit** dan hanya untuk reset_password. `verify-token` membaca tanpa mengonsumsi; halaman menghapus token dari URL dan menyimpannya hanya di memori. `reset` mengganti password hash dan menandai used_at secara atomik, lalu menerbitkan AuthSession + JWT sub UUID (Ibu langsung masuk). Member migrated tetap migrated, nomor tetap, requiresProfileCompletion true; user tanpa profil juga true dan guard FE memilih onboarding yang sesuai. Tidak ada token ajaib. Salah/expired (termasuk tepat batas)/used memakai 422 + code; password pendek tetap 422 errors.password tanpa mengonsumsi token. Pencabutan JWT perangkat lain/session epoch tetap mengikuti kebijakan existing. Pengecualian verifikasi email khusus claim akun migrasi dijelaskan berikut.
+
+Keputusan owner 20 Oktober 2026: hanya untuk user password=null dan email_verified_at=null dengan member non-soft-deleted berstatus migrated, konsumsi link reset_password valid sekali pakai juga menandai email_verified_at dalam transaksi password/session epoch/used_at yang sama. Saat import tetap null; request forgot/inspect, password invalid, token invalid/expired/used tidak memverifikasi. Tidak berlaku untuk active/tanpa member/deleted atau akun yang sudah memiliki password. Member tetap migrated dan consent tetap null hingga Ibu melengkapi profil + persetujuan. AuthSession shape tetap; user.emailVerifiedAt berisi timestamp claim dan isEmailVerified pada draft menjadi true. Lihat masterlist-execution.md. Email delivery sungguhan tidak dibuktikan oleh Mail::fake.
+
+Email langkah 5 berupa queued transactional mail; link hanya di email/antrean, tidak dikembalikan dalam JSON. Provider/deliverability nyata menunggu konfigurasi Resend; Mail::fake/array dan antrean lokal bukan bukti email diterima. Hindari mailer log saat menguji link nyata karena body email memuat token rahasia.
 
 ## Lengkapi data akun migrasi
 
@@ -69,7 +91,7 @@ Dummy: `?dummyError=cancelled|unverified|failed` pada `/auth/google/redirect` me
 | `GET` | `/api/onboarding/migrated-profile` | `MigratedProfileData` |
 | `POST` | `/api/onboarding/migrated-profile` | `MemberProfileInput` -> `MemberProfile` |
 
-`MigratedProfileData` memuat `memberNumber` (nomor lama yang tetap), `isEmailVerified`, `draft` (data yang sudah diketahui; field yang masih kosong bernilai `null` atau string kosong), `hasAcceptedConsent`, pilihan preferensi, dan versi persetujuan/peraturan. Server yang menentukan isian apa yang perlu dilengkapi: frontend hanya menampilkan tahun lahir bila `draft.birthYear` bernilai `null` dan hanya menampilkan persetujuan bila `hasAcceptedConsent` bernilai `false`. Validasi sama dengan `POST /api/onboarding/profile`.
+`MigratedProfileData` memuat `memberNumber` (nomor lama yang tetap, atau `null` bila belum ada), `isEmailVerified`, `draft` (data yang sudah diketahui; field yang masih kosong bernilai `null` atau string kosong), `hasAcceptedConsent`, pilihan preferensi, dan versi persetujuan/peraturan. Server yang menentukan isian apa yang perlu dilengkapi: frontend hanya menampilkan tahun lahir bila `draft.birthYear` bernilai `null` dan hanya menampilkan persetujuan bila `hasAcceptedConsent` bernilai `false`. Validasi sama dengan `POST /api/onboarding/profile`. Tahun lahir yang sudah diketahui dipertahankan server (field tersembunyi bukan kesempatan menggantinya). Nomor lama, joinedAt, signupMethod, dan histori consent lengkap dipertahankan. Nomor yang belum ada baru dialokasikan saat completion berhasil. Bila bukti consent belum lengkap, kedua versi wajib sama dengan versi admin saat submit; bila sudah lengkap, versi/tanggal historis tidak ditimpa walaupun form mengirim versi terbaru.
 
 ## Beranda member
 
@@ -78,7 +100,25 @@ Dummy: `?dummyError=cancelled|unverified|failed` pada `/auth/google/redirect` me
 | `GET` | `/api/member/home` | `MemberHome` |
 | `POST` | `/api/member/whatsapp-joined` | -> `{ joinedAt }` |
 
-`MemberHome` memuat `memberNumber`, `name`, `status`, `joinedAt` untuk kartu anggota; `whatsappCard` (`isVisible` dari pengaturan aplikasi dan status gabung, `groupUrl` bernilai `null` sampai tautan grup diset); serta `upcomingEvents` (maksimal 6 `EventSummary` terdekat). Tombol gabung membuka `groupUrl` di tab baru lalu memanggil `whatsapp-joined`; bila `groupUrl` `null`, tombol nonaktif. Menutup kartu hanya disimpan di localStorage (`bbb-bff-whatsapp-card-dismissed`). Label format kegiatan dikirim apa adanya ("Offline" atau "Online").
+`MemberHome` memuat `memberNumber`, `name`, `status`, `joinedAt` untuk kartu anggota (dari data member yang masuk); `whatsappCard` (`isVisible` bernilai true bila kartu WhatsApp diaktifkan di pengaturan aplikasi **dan** Ibu belum pernah membuka tautan grup; `groupUrl` dari pengaturan `whatsapp_group_url`, `null` sampai tautan grup diset); serta `upcomingEvents` (maksimal 6 `EventSummary` terdekat). Tombol gabung membuka `groupUrl` di tab baru lalu memanggil `whatsapp-joined`; bila `groupUrl` `null`, tombol nonaktif. `POST /api/member/whatsapp-joined` menyimpan waktu pertama Ibu membuka tautan (`wa_joined_at`) dan idempoten: panggilan berikutnya mengembalikan waktu pertama itu, sehingga kartu tidak tampil lagi pada kunjungan berikutnya di perangkat mana pun. Menutup kartu hanya disimpan di localStorage (`bbb-bff-whatsapp-card-dismissed`). Label format kegiatan dikirim apa adanya ("Offline" atau "Online").
+
+`MemberHome.profilePhotoUrl` memuat URL absolut foto profil dari disk publik (`/images/profile-photos/...`), atau `null` bila Ibu belum memasang foto. Avatar beranda memakai URL ini dan menampilkan inisial bila `null`.
+
+## Notifikasi member
+
+| Method | URL | Result |
+| --- | --- | --- |
+| `GET` | `/api/member/notifications?page=...` | `MemberNotificationPage` |
+| `GET` | `/api/member/notifications/summary` | `{ unreadCount }` |
+| `POST` | `/api/member/notifications/{notificationId}/read` | `MemberNotification` |
+| `POST` | `/api/member/notifications/read-all` | `{ markedCount }` |
+| `PUT` | `/api/member/notifications/read-state` | `{ read: boolean }` -> `{ updatedCount }` |
+
+`MemberNotification` berbentuk `{ id, type, title, body, targetPath, unread, readAt, createdAt }`. `unread` adalah boolean dari server: `true` bila `readAt: null`, `false` setelah dibaca. `type` MVP hanya `event_registration_confirmed`, `event_cancelled`, `exit_request_approved`, `exit_request_rejected`, atau `profile_completion_required`. `targetPath` selalu path internal web app dari server; frontend menandai notifikasi dibaca sebelum menavigasi ke path tersebut. `readAt` bernilai `null` selama belum dibaca. Daftar terbaru lebih dulu, 20 per halaman, dan respons list berbentuk `{ items, meta, unreadCount }`. Tombol tandai semua hanya mengubah notifikasi milik Ibu yang belum dibaca; panggilan ulang mengembalikan `markedCount: 0`. Endpoint `read-state` berlaku untuk seluruh notifikasi milik Ibu, bukan hanya halaman yang sedang dimuat: `read: true` menandai yang belum dibaca dan mempertahankan waktu baca lama, sedangkan `read: false` mengosongkan `readAt` yang sudah dibaca. Panggilan ulang pada status yang sama mengembalikan `updatedCount: 0`. Field `read` wajib boolean; selain itu mendapat 422.
+
+Notifikasi adalah pelengkap email, bukan pengganti: pendaftaran berhasil, pembatalan kegiatan, serta keputusan permintaan keluar dibuat persisten dan idempoten per sumber transaksi. Pengingat H-1 hanya melalui email; blast kegiatan baru belum masuk MVP. Notifikasi profil perlu dilengkapi dicadangkan untuk flow akun yang memang dapat membuka area member; akun migrasi yang masih diguard ke onboarding tidak boleh diberi akses lewat notifikasi.
+
+Akses notifikasi memerlukan JWT member dan profil non-migrated. Member `exit_requested`/`unsubscribed` boleh membaca serta menandai inbox sendiri; endpoint kegiatan/profil lain tetap dibatasi. Keputusan disetujui mengarah ke `/status`; keputusan ditolak mengarah ke `/membership/exit-request`, alasan penolakan tersedia pada `body`. Pendaftaran sukses oleh Ibu atau admin mengarah ke `/events/{id}`; tamu publik tidak ditautkan otomatis ke member berdasarkan email. Satu notifikasi konfirmasi disimpan per UUID registrasi (termasuk daftar ulang pada UUID yang sama); satu pembatalan per event/member dan satu keputusan per exit request. Semua insert mengikuti transaksi bisnis dan ikut rollback. Retry read menjaga `readAt` pertama. Page tidak valid mendapat 422; ID asing/tidak dikenal mendapat 404 Indonesia yang sama. Tidak ada backfill notifikasi historis atau penghapusan otomatis pada tahap ini.
 
 ## Profil member
 
@@ -89,19 +129,29 @@ Dummy: `?dummyError=cancelled|unverified|failed` pada `/auth/google/redirect` me
 | `POST` | `/api/member/profile/photo` | multipart `photo` (JPG/PNG persegi, maksimal 5 MB) -> `{ profilePhotoUrl }` |
 | `PUT` | `/api/member/password` | `{ currentPassword, password }` -> `{ message }` |
 | `GET` | `/api/member/community-rules` | `CommunityRules` |
+| `GET` | `/api/public/community-rules` | `PublicCommunityRules` (tanpa login) |
+| `GET` | `/api/public/legal-content` | `{ faqHtml, privacyPolicyHtml, adminWhatsappUrl }` (tanpa login; HTML dari pengaturan admin, sudah dibersihkan; 60 permintaan per menit) |
+| `GET` | `/api/regions/countries` | `{ code, name }[]` (kode ISO 3166-1 alpha-2, nama Indonesia, tanpa Indonesia) |
 | `GET` | `/api/regions/provinces` | `RegionOption[]` |
 | `GET` | `/api/regions/regencies?provinceCode=...` | `RegionOption[]` |
 | `GET` | `/api/regions/districts?regencyCode=...` | `RegionOption[]` |
+| `GET` | `/api/regions/villages?districtCode=...` | `VillageOption[]` |
 
-Field wajib profil: nama, tahun lahir, WhatsApp ternormalisasi `628...`, preferensi partisipasi, provinsi, kabupaten/kota, kecamatan, kode pos, dan versi persetujuan/peraturan. Opsi preferensi berasal dari server; mock tidak menetapkan enum bisnis baru.
+`VillageOption` berbentuk `{ code, value, label, postalCode }`; `label` hanya nama wilayah dan frontend menampilkannya sebagai `Nama Kelurahan - Kodepos`. Field wajib profil: nama, tahun lahir, WhatsApp ternormalisasi `628...`, preferensi partisipasi, provinsi, kabupaten/kota, kecamatan, kelurahan, kode pos, dan versi persetujuan/peraturan. Payload memakai `villageCode`; respons `MemberProfile` memuat `village: VillageOption | null`, sedangkan draft migrasi memuat `villageCode` string (kosong untuk data lama). Domisili: `domicileType` `indonesia` (default) atau `overseas`. Untuk `overseas`, kirim `countryCode` (wajib, dari `/api/regions/countries`) dan `overseasCity` (opsional, maks 120); provinsi sampai kelurahan dan kode pos tidak dikirim dan disimpan kosong. Respons `MemberProfile` dan draft memuat `domicileType`, `country: { code, name } | null` (draft: `countryCode`) dan `overseasCity`. Opsi preferensi berasal dari server; mock tidak menetapkan enum bisnis baru.
 
-`MemberProfileData` juga memuat `statistics: { joinedEvents, attendedEvents }`. Angka dihitung API dari pendaftaran dummy per sesi (status registered/present/absent untuk ikut, present untuk hadir). Nama, nomor anggota, avatar, dan label status di layar profil berasal dari `profile`.
+Keputusan versi untuk implementasi persisten langkah 6 (16 Oktober 2026): `consentVersion` dan `rulesVersion` mengikuti `app_settings.rules_version` dari admin. Tipe payload tetap **string**, berisi angka versi seperti `"1"`/`"2"`, bukan tanggal; respons pengaturan admin tetap `rulesVersion: number`. FE membaca versi dari server dan mengirim kembali tanpa menetapkan angka/tanggal sendiri. Fixture tanggal lama masih ada sampai flow terkait dimigrasi; histori persetujuan lama tidak ditulis ulang sebagai persetujuan baru secara otomatis.
 
-Edit data diri memakai form yang sama dengan onboarding, dengan email read-only. Versi persetujuan/peraturan yang sudah diterima ikut payload; edit tidak meminta persetujuan baru. Profil get tetap statis selama fase dummy: simpan hanya menggemakan isian tervalidasi, dan reload mengembalikan fixture. Foto opsional dipotong persegi dari tengah oleh frontend sebelum dikirim; fase dummy memvalidasi file dan mengembalikan data URL tanpa menyimpan upload. Penyimpanan foto permanen menyusul.
+Onboarding email/migrasi memerlukan JWT member hidup dan User terverifikasi (401 tanpa identitas, 403 email belum terverifikasi/peran/status/flow salah). Semua field divalidasi ulang server: usia minimal 17 menurut tahun kalender, WhatsApp unik termasuk member soft-deleted (08/format pemisah dinormalisasi ke 628), preferensi online/offline/both, relasi wilayah Kemendagri 2/4/6/10 digit, kode pos 5 angka. Kode pos kelurahan adalah saran, bukan pembatas alamat Ibu, sehingga tetap dapat diedit. Endpoint wilayah membaca tabel DB, diurutkan menurut kode; induk tak dikenal memberi daftar kosong. `consentVersion`/`rulesVersion` wajib string versi admin terkini bagi consent baru; basi/missing mendapat 422 errors per field. Simpan profil + user.name + nomor BFF-xxxxx atomik memakai lock user dan sequence. Retry valid pada profil yang sudah active mengembalikan profil tersimpan tanpa mengedit/mengalokasikan nomor kedua. JWT/sid lama tetap valid, auth/session berikutnya melihat member DB lengkap.
 
-Ubah password: password lama wajib sesuai; password baru minimal 8 karakter dan berbeda dari password lama. Error field memakai `currentPassword` dan `password`. Fase dummy hanya mengonfirmasi hasil, credential login tetap `buibu123`; sesi perangkat lain dan email pemberitahuan belum berubah/dikirim. Endpoint nyata nanti mempertahankan sesi perangkat sekarang dan mengakhiri sesi perangkat lain.
+`MemberProfileData` juga memuat `statistics: { joinedEvents, attendedEvents }`. Untuk identitas DB, angka dihitung dari event_registrations milik member (status registered/present/absent untuk ikut, present untuk hadir). Nama, nomor anggota, avatar, dan label status di layar profil berasal dari `profile`.
 
-`CommunityRules` berbentuk `{ version, updatedByLabel, sections: [{ title, body }], whatsappGroupUrl }`. Body adalah plain text dengan baris baru (bukan HTML); frontend tidak merender HTML dari server. Isi dummy persis placeholder artboard 6m sampai admin/user memberikan copy final. `whatsappGroupUrl` dari konfigurasi yang sama dengan Beranda; kosong berarti tombol nonaktif. Kontak admin dan URL dokumen eksternal belum ditentukan.
+Edit data diri memakai form yang sama dengan onboarding, dengan email read-only. `PUT /api/member/profile` menyimpan perubahan ke database untuk member yang masuk (kepemilikan dari token, bukan dari payload) dan mengembalikan `MemberProfile` tersimpan. Validasi sama dengan onboarding (usia minimal 17 tahun, WhatsApp dinormalisasi ke `628...` dan unik termasuk member terhapus, preferensi online/offline/both, hierarki wilayah Kemendagri, kode pos 5 angka); WhatsApp milik Ibu sendiri boleh dikirim ulang. `consentVersion`/`rulesVersion` wajib ada di payload tetapi tidak dibandingkan dengan versi admin terkini dan tidak pernah menimpa persetujuan yang tercatat; nomor anggota, status, email, `joinedAt`, dan histori persetujuan tidak bisa diubah lewat edit biasa (field itu diabaikan bila dikirim). Hanya member `active` yang bisa menyimpan (member terbatas `403` `membership_restricted`, akun yang belum melengkapi data `403`). Foto opsional dipotong persegi dari tengah oleh frontend sebelum dikirim. `POST /api/member/profile/photo` memvalidasi JPG/PNG persegi maksimal 5 MB di server, menyimpannya di disk publik pada folder milik member (`profile-photos/{memberId}/{uuid}.{jpg|png}`), lalu mengembalikan `profilePhotoUrl` berupa URL absolut `/images/profile-photos/...` (bukan data URL); `MemberProfile.profilePhotoUrl` memakai URL yang sama. File lama dihapus hanya setelah file baru tersimpan di database dan hanya bila berada di folder member itu sendiri; kegagalan simpan menghapus file baru dan mempertahankan foto lama (`500 { message }` bila penyimpanan gagal). Server perlu `php artisan storage:link` agar URL terbuka.
+
+Ubah password: password lama wajib sesuai; password baru minimal 8 karakter dan berbeda dari password lama. Error field memakai `currentPassword` dan `password`; respons sukses tetap `{ message }` tanpa token baru. Untuk member di database, hash password diganti dan epoch sesi user naik: **sesi perangkat yang mengganti password tetap hidup** (token dan refresh-nya tetap berlaku), sedangkan token semua perangkat lain, termasuk refresh-nya, menjadi `401`; perangkat yang masuk setelahnya memakai epoch baru. Lupa password lewat tautan (`POST /api/password/reset`) mengakhiri **semua** sesi lama; hanya sesi baru dari reset yang hidup. Email pemberitahuan "password berubah" diantrekan setelah transaksi selesai (tanpa tautan atau rahasia; pengiriman nyata menunggu provider email).
+
+`CommunityRules` berbentuk `{ version, updatedByLabel, sections: [{ title, body, bodyHtml }], whatsappGroupUrl }`. `body` adalah teks biasa (untuk email dan klien yang hanya mengenal teks); `bodyHtml` adalah HTML dari editor teks pengaturan, sudah dibersihkan API (tag p, br, strong, em, u, s, ul, ol, li, h2, h3, blockquote, a) dan boleh dirender frontend. Sumbernya pengaturan admin: `version` adalah `rules_version` sebagai string angka ("1", "2"); bila `rules_summary` terisi, `sections` berisi **satu** section `{ title: "Aturan komunitas", body: <teks biasa>, bodyHtml: <HTML bersih> }`, dan selama kosong tetap placeholder artboard 6m sampai copy final tersedia; `updatedByLabel` "Diperbarui oleh {nama admin}" bila admin pengubah ringkasan diketahui, selain itu "Diperbarui oleh admin". `whatsappGroupUrl` dari pengaturan yang sama dengan Beranda; kosong berarti tombol nonaktif. Kontak admin dan URL dokumen eksternal belum ditentukan.
+
+`GET /api/public/community-rules` (tanpa token; token basi diabaikan; 60 permintaan per menit) mengembalikan `PublicCommunityRules` = `{ version: string, sections: [{ title, body }] }`, isi yang sama dengan `CommunityRules` tetapi **tanpa** `whatsappGroupUrl` (tautan grup khusus member) dan `updatedByLabel`. Dipakai formulir onboarding untuk menampilkan Aturan Komunitas dari persetujuan, sebab orang yang belum menyelesaikan onboarding belum menjadi member dan tidak bisa memakai endpoint member.
 
 
 ## Permintaan keluar dan status keanggotaan
@@ -119,7 +169,7 @@ Alasan dan cerita tambahan **opsional**, sesuai artboard. Pilihan dari API: `mov
 
 Pengajuan mengubah status menjadi `exit_requested` dan membatalkan pendaftaran kegiatan mendatang/berlangsung yang masih `registered`, tanpa mengubah riwayat kehadiran. Selama menunggu, endpoint member lain menolak dengan `403 { message, code: "membership_restricted" }`; hanya status dan pembatalan yang tersedia, bersama endpoint session/logout di luar grup member. Frontend mengarahkan respons tersebut ke `/status`. Pembatalan hanya jika `canCancel` dari API bernilai true (status masih `exit_requested`), lalu kembali aktif. Pembatalan permintaan tidak memulihkan pendaftaran kegiatan yang sudah dibatalkan. Status `unsubscribed` tidak bisa dibatalkan dari member.
 
-Endpoint keluar/status memerlukan sesi dummy member lengkap (401 untuk tamu); akun yang masih onboarding tidak boleh mengajukan. Fase dummy memakai file session untuk menyimpan status, alasan, waktu pengajuan, dan pembatalan kegiatan. Tidak ada database, review admin, atau email yang dijalankan. `BBB_ADMIN_WHATSAPP_URL` kosong berarti kontak admin nonaktif. Khusus lokal/testing, `BBB_DUMMY_MEMBER_STATUS=active|exit_requested|unsubscribed` memilih skenario saat login sesi baru; nilai default active. Logout menghapus state dummy sesi. Status yang sudah tersimpan tidak ditimpa saat request/re-login di sesi yang sama.
+Endpoint keluar/status memerlukan sesi member lengkap (`401` untuk tamu atau token admin; akun yang masih onboarding tidak boleh mengajukan, `403`). Untuk member di database permintaan disimpan permanen (`exit_requests`): `POST` hanya untuk member `active` dan dalam satu transaksi membuat permintaan `pending`, mengubah status member menjadi `exit_requested`, dan membatalkan pendaftaran `registered` pada kegiatan yang belum berakhir (`endsAt` di masa depan; riwayat hadir/tidak hadir tidak berubah, kursi kembali). Status selain `active` ditolak (`403 membership_restricted` oleh middleware, `422` bila lolos karena balapan). Hanya satu permintaan `pending` per member. `attempt` internal = jumlah permintaan yang sudah **ditolak** + 1; permintaan yang dibatalkan Ibu sendiri tidak dihitung. `explanation` maksimal 2000 karakter (`422` pada field `explanation`). `DELETE` hanya bila status member `exit_requested` (`canCancel`), menandai permintaan `cancelled` dan mengaktifkan member kembali; bila status diubah admin tanpa baris permintaan, status tetap yang menentukan. `exitRequest` pada `MembershipStatusData` hanya berisi permintaan yang sedang `pending` (`null` untuk member aktif atau `unsubscribed`). `adminWhatsappUrl` hanya dari pengaturan `admin_whatsapp` (`https://api.whatsapp.com/send/?phone={nomor}&text=`); saat nomor kosong, nilainya `null` (kontak admin nonaktif). Review admin dan email pemberitahuan belum berjalan.
 
 
 ## Kegiatan
@@ -129,9 +179,11 @@ Endpoint keluar/status memerlukan sesi dummy member lengkap (401 untuk tamu); ak
 | `GET` | `/api/member/events?scope=upcoming|registered|history&page=...` | `PaginatedCollection<EventSummary>` |
 | `GET` | `/api/member/events/{eventId}` | `EventDetail` |
 
-Tab daftar kegiatan: `upcoming` (kegiatan yang belum selesai), `registered` (kegiatan yang belum selesai dan diikuti member, berstatus `registered` atau `present`), dan `history` (kegiatan yang sudah selesai atau dibatalkan, termasuk status kehadiran member). Daftar dipaginasi 10 per halaman (`meta.lastPage`); web app menampilkan tombol "Muat lebih banyak". Badge status ("Terdaftar", "Hadir", "Kuota penuh") diturunkan dari `registration.status`, `lifecycle`, dan `remainingCapacity`. `EventDetail` memuat `registrationClosesAt`; aturan "ditutup N menit sebelum kegiatan" dihitung dari selisihnya dengan `startsAt`, bukan angka tetap di UI. Setelah mendaftar, membatalkan, atau mengirim kode, web app memuat ulang detail dari server (server yang menentukan `canRegister`, `canCancel`, dan kuota).
+Tab daftar kegiatan: `upcoming` (kegiatan yang belum selesai), `registered` (kegiatan yang belum selesai dan diikuti member, berstatus `registered` atau `present`), dan `history` (kegiatan yang sudah selesai atau dibatalkan **hanya jika registrasi milik member berstatus `present`/Hadir**; kegiatan tanpa kehadiran member tidak masuk, meskipun sudah selesai atau dibatalkan). Daftar dipaginasi 10 per halaman (`meta.lastPage`); web app menampilkan tombol "Muat lebih banyak". Badge status ("Terdaftar", "Hadir", "Kuota penuh") diturunkan dari `registration.status`, `lifecycle`, dan `remainingCapacity`. `EventDetail` memuat `calendarUrl` (draft Google Calendar tanpa link meeting atau data peserta) dan `registrationClosesAt`; aturan "ditutup N menit sebelum kegiatan" dihitung dari selisihnya dengan `startsAt`, bukan angka tetap di UI. Setelah mendaftar, membatalkan, atau mengirim kode, web app memuat ulang detail dari server (server yang menentukan `canRegister`, `canCancel`, dan kuota).
 
 Quota bersifat opsional. Saat `capacity` bernilai `null`, UI tidak menampilkan kapasitas atau sisa kursi. Server mengirim `canRegister`, `canCancel`, dan alasan Indonesia sebagai keputusan otoritatif.
+
+Langkah 7: sesi DB membaca events/event_registrations MySQL dengan UUID string; enum format online/offline, timezone IANA dan datetime UTC. Draft, soft-deleted, waktu tidak lengkap, dan id tak dikenal menghasilkan 404 Indonesia yang sama. Lifecycle completed juga berlaku bila endsAt telah lewat, walau admin belum menutup acara; absensi punya jendela terpisah sampai admin close. Mendatang/terdaftar diurutkan startsAt lalu id menaik, riwayat menurun; paginasi 10. Lokasi offline memisahkan Maps/alamat dan online memakai meetingUrl (tidak ada attendanceCode di payload member). meetingUrl hanya dikirim untuk registrasi milik member pemegang JWT berstatus registered/present dan kegiatan tidak cancelled; selain itu null, termasuk daftar/detail dan UpcomingEvents di Home. Membatalkan pendaftaran menyembunyikan link kembali. Endpoint publik tetap tidak mengirim link meeting. Daftar/detail hanya memuat registrasi pemilik JWT, bukan memberId dari input. UpcomingEvents di Home memakai UUID DB agar tautannya berfungsi.
 
 ## Pendaftaran kegiatan
 
@@ -140,7 +192,9 @@ Quota bersifat opsional. Saat `capacity` bernilai `null`, UI tidak menampilkan k
 | `POST` | `/api/member/events/{eventId}/registrations` | `EventRegistration` |
 | `DELETE` | `/api/member/registrations/{registrationId}` | `EventRegistration` |
 
-Frontend tidak menghitung cutoff atau kapasitas sendiri. Mock boleh mensimulasikan hasil, tetapi backend nantinya tetap memvalidasi transaksi.
+Frontend tidak menghitung cutoff atau kapasitas sendiri. Register/cancel DB transaksional memakai urutan lock user -> member -> event -> registration, recheck status dan kapasitas. Cutoff daftar dan batal masing-masing dari app_settings.registration_close_minutes dan cancellation_close_minutes; tepat pada cutoff (now >= cutoff) sudah ditolak 422. cancellationCutoffAt pada hasil mutasi memakai cutoff batal, bukan daftar. Detail hanya menyediakan registrationClosesAt, jadi FE tidak menebak angka cutoff batal dari field itu.
+
+Kuota menghitung semua registrasi member/tamu DB yang tidak cancelled; batal mengembalikan kursi, quota null tidak membatasi. Duplicate register masih 422 dengan pesan sudah terdaftar; setelah cancelled, daftar ulang memakai UUID/baris unik yang sama dengan registeredAt baru. Registrasi orang lain/tak dikenal tidak bisa dibatalkan (404); hadir/selesai/batal/cutoff ditolak sesuai capability. Bridge exit sementara membatalkan registrasi DB mendatang/berlangsung yang masih registered, tidak mengembalikan kursi saat exit dibatalkan, tidak mengubah present/history; exit request disimpan di `exit_requests`. Admin dan halaman publik menulis ke acara DB yang sama.
 
 ## Absensi
 
@@ -149,15 +203,89 @@ Frontend tidak menghitung cutoff atau kapasitas sendiri. Mock boleh mensimulasik
 | `GET` | `/api/member/events/{eventId}/attendance` | `AttendanceState` |
 | `POST` | `/api/member/events/{eventId}/attendance` | `{ code: string }` -> `AttendanceSubmissionResult` |
 
-State memuat waktu buka/tutup, `attendedAt` (waktu kehadiran tercatat, `null` sebelum hadir), jumlah percobaan tersisa, status pendaftaran, dan capability submit. Jendela default adalah 30 menit sebelum kegiatan sampai kegiatan ditutup, dengan maksimal 5 kode salah per 10 menit. Backend tetap menjadi sumber keputusan waktu dan rate limit.
+State memuat waktu buka/tutup, `attendedAt` (waktu kehadiran tercatat, `null` sebelum hadir), jumlah percobaan tersisa, status pendaftaran, dan capability submit. Jendela adalah tepat `attendanceOpenMinutes` menit sebelum mulai (pengaturan admin, bawaan 30, inklusif; pesan "belum dibuka" menyebut jumlah menitnya, atau "saat kegiatan dimulai" bila 0) sampai admin menutup/membatalkan kegiatan, bukan endsAt terjadwal. closesAt null selama belum ditutup, lalu closed_at/cancelled_at UTC bila ada. Sudah hadir selalu completed dan waktu bukti tidak ditimpa oleh retry, termasuk setelah close. Kode dinormalisasi huruf besar dan whitespace dihapus seperti FE. Hanya registrasi sendiri registered/present yang memiliki endpoint attendance; cancelled/absent/milik orang lain/unknown -> 404.
 
-Dummy: status pendaftaran dan absensi disimpan per sesi (cookie), jadi daftar, batal, dan hadir terlihat setelah reload; kode absensi yang benar adalah `BFF-2410` dan jendela waktu absensi diabaikan.
+Maksimal 5 kode salah per member per jendela 600 detik sejak percobaan salah pertama; budget lintas kegiatan/JWT, tidak reset saat login atau kode sukses pada acara lain. RateLimiter memakai cache database di runtime; row lock user menserialisasi submit paralel. Percobaan di luar jendela/validasi gagal/tidak memiliki registrasi tidak memakan budget. Setelah lima salah, canSubmit false/rate_limited sampai tepat retryAt; hit berikutnya tidak menggeser timer. Hasil submission tetap 200 dengan accepted false/state/message, bukan mengubah kontrak menjadi 429. Kode salah menurunkan attemptsRemaining; kode benar mencatat present/attendedAt atomik. Submit ulang yang sudah completed mengembalikan accepted false dengan state bukti lama. Backend tetap otoritatif.
 
-## Fase data dummy
+Kode dan jendela absensi selalu per acara dari DB.
 
-Saat ini API Laravel membalas data dummy tanpa database: isi profil tetap fixture statis, sedangkan daftar kegiatan dibuat oleh Faker dengan seed tetap (paginasi 10 per halaman). Pendaftaran/absensi dan status permintaan keluar disimpan per file session agar transisi dan guard dapat diuji setelah reload; simpan profil, foto, dan password hanya mengembalikan hasil tanpa persistence permanen. Tiga kegiatan skenario tetap: `event-001` (terbuka), `event-002` (sudah terdaftar, kode absensi `BFF-2410`), `event-003` (selesai).
+## Data dan akun pengembangan
 
-Kredensial login dummy: `buibu@gmail.com` / `buibu123`. Nilai ini hanya fixture development dan bukan credential production.
+Seluruh endpoint memakai MySQL; tidak ada lagi state dummy per sesi atau kelas dummy di API.
+
+Akun development dari seeder (hanya `local`/`testing`): member `buibu@gmail.com` / `buibu123`, admin `superadmin@bbb.test` / `superadmin123` dan `admin@bbb.test` / `admin123`. Nilai ini hanya fixture dan bukan credential production.
+
+## Halaman publik kegiatan
+
+Status: **di MySQL (langkah 19)**; dibaca dari `events`, `event_guests`, `event_registrations`. Halaman `/e/{slug}` terbuka tanpa login dan tidak pernah mengarah ke `/login`.
+
+| Method | URL | Payload/result |
+| --- | --- | --- |
+| `GET` | `/api/public/events/{slug}` | `PublicEventDetail` |
+| `POST` | `/api/public/events/{slug}/registrations` | `PublicRegistrationInput` -> `PublicRegistrationResult` (`201`) |
+
+Keduanya tanpa autentikasi dan tanpa token. Wilayah memakai endpoint terbuka `GET /api/regions/provinces` dan `GET /api/regions/regencies?provinceCode=`.
+
+`PublicEventDetail`:
+
+```ts
+{
+    slug: string;
+    title: string;
+    description: string;            // teks biasa, baris baru ditampilkan apa adanya
+    bannerUrl: string | null;
+    startsAt: string;               // ISO 8601 UTC
+    endsAt: string;
+    timezone: string;               // zona waktu acara (Asia/Jakarta, Asia/Makassar, Asia/Jayapura)
+    lifecycle: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+    format: { value: 'online' | 'offline'; label: string };
+    venueName: string | null;
+    address: string | null;
+    mapUrl: string | null;          // hanya link Maps untuk offline; null untuk online
+    surveyUrl: string | null;       // hanya di detail dan hanya untuk member yang hadir
+    documentationUrl: string | null;
+    usesQuota: boolean;
+    capacity: number | null;        // null bila usesQuota false
+    registeredCount: number | null; // null bila usesQuota false; UI tidak menampilkan info kuota
+    registrationStatus: 'open' | 'full' | 'closed';
+    registrationClosesAt: string;   // startsAt dikurangi registrationCloseMinutes
+    registrationCloseMinutes: number; // dari Pengaturan (registrationCloseMinutes), bukan angka tetap di UI
+    consentVersion: string;         // versi Kebijakan Data Pribadi yang dikirim kembali saat mendaftar
+    adminWhatsappUrl: string | null; // kontak admin untuk keadaan kuota penuh/ditutup; null = tombol nonaktif
+    captchaSiteKey: string | null;  // site key hCaptcha (publik); null = jangan tampilkan puzzle (hanya local/testing tanpa kunci)
+}
+```
+
+- `404 { message }` untuk slug yang tidak ada, kegiatan `draft`, dan kegiatan internal (`allowsNonMember: false`). API tidak membedakan ketiganya. Kegiatan `completed` atau `cancelled` dibalas `200` dengan `lifecycle` yang sesuai agar web app menampilkan layar khusus.
+- Respons tidak memuat data admin (kode kehadiran, daftar peserta, id internal). **Link meeting kegiatan online tidak pernah dikirim ke endpoint ini**; peserta hanya menerimanya lewat email konfirmasi.
+- Email konfirmasi member dan non-member memuat link draft Google Calendar dari judul, jadwal UTC, zona IANA, lokasi umum, dan tautan detail kegiatan. Link meeting privat tidak dimasukkan ke URL kalender. Peserta perlu menyimpan sendiri event di Google Calendar; perubahan jadwal/pembatalan tidak memperbarui salinannya secara otomatis. Pada web app, tombol Calendar hanya ada di detail kegiatan untuk member yang sudah terdaftar.
+- `registrationStatus`: `full` bila `usesQuota` dan kuota terisi, `closed` bila sudah melewati `registrationClosesAt` atau `lifecycle` bukan `upcoming`. Server yang memutuskan; web app tidak menghitung kuota atau cutoff sendiri.
+
+`PublicRegistrationInput` (semua wajib, nama field camelCase):
+
+```ts
+{
+    name: string;
+    email: string;
+    whatsapp: string;       // dinormalisasi 628... oleh web app, divalidasi ulang server
+    provinceCode: string;
+    regencyCode: string;
+    birthYear: number;      // usia minimal 17 tahun
+    consentVersion: string; // nilai dari PublicEventDetail.consentVersion
+    captchaToken?: string;  // hasil puzzle hCaptcha; wajib bila PublicEventDetail.captchaSiteKey tidak null
+    website?: string;       // honeypot: field tersembunyi yang HARUS kosong (tidak boleh diisi manusia; selalu kirim "")
+}
+```
+
+`PublicRegistrationResult`: `{ email: string }`. Server menyimpan tamu (`event_guests`, email huruf kecil, unik per kegiatan) dan satu pendaftaran `registered` (`source=self`) dalam satu transaksi, lalu seharusnya mengirim email konfirmasi (belum terkirim sampai langkah email/Resend). Web app menampilkan `email` tebal di layar berhasil.
+
+Penolakan bisnis memakai `422 { message, code, errors? }` dengan `code` yang bisa dibedakan: `captcha_failed` (puzzle hCaptcha ditolak, kedaluwarsa, atau sudah dipakai; token hCaptcha hanya berlaku sekali, jadi web app **mereset widget** dan meminta puzzle baru, lalu mengirim ulang), `event_full` (kuota penuh), `registration_closed` (pendaftaran ditutup), dan `email_already_registered` (dengan `errors.email` berisi "Email ini sudah dipakai mendaftar kegiatan ini."). Setelah `event_full` atau `registration_closed`, web app memuat ulang detail kegiatan dan menampilkan keadaan yang sesuai. Validasi field memakai `422 { errors }` biasa. Endpoint di-throttle per IP dan per email; kelebihan dibalas `429`.
+
+Admin dialog "Tambah peserta" hanya mengumpulkan nama, email, dan WhatsApp; provinsi, kabupaten/kota, dan tahun lahir wajib hanya untuk pendaftaran lewat halaman publik, sehingga peserta yang ditambah admin boleh tidak memilikinya (nullable di sisi API).
+
+Aturan server: kegiatan diambil dengan `slug` dari tabel `events` (draf, kegiatan khusus member, dan yang sudah dihapus = 404). `lifecycle`: `cancelled`/`completed` mengikuti status; kegiatan `published` yang belum mulai = `upcoming`, sedang berlangsung = `ongoing`, sudah lewat tapi belum ditutup admin = `completed`. `registeredCount` dan kuota menghitung member dan tamu yang bukan `cancelled`. Penutupan, kuota, dan email ganda diperiksa di bawah kunci baris kegiatan (dua pendaftar serentak tidak bisa sama-sama mengambil kursi terakhir atau memakai email yang sama). `consentVersion` = nomor versi aturan di Pengaturan (`rules_version`, sama dengan yang disetujui member), disimpan di tamu. Wilayah divalidasi ke tabel `provinces`/`regencies`. `adminWhatsappUrl` hanya dari Pengaturan (`adminWhatsapp`), dengan format `https://api.whatsapp.com/send/?phone={nomor}&text=`. Tamu tampil di daftar peserta admin (`source: self`). Anti-spam: puzzle hCaptcha diverifikasi server ke `https://api.hcaptcha.com/siteverify` sebelum apa pun disimpan atau dikirim (hCaptcha tak terjangkau = ditolak; production tanpa kunci = selalu `captcha_failed`); honeypot `website` yang terisi dijawab `201` palsu tanpa menyimpan atau mengirim email; 20 permintaan per menit per IP (`429`); dan satu email hanya boleh menerima **3 pendaftaran yang diterima per jam** (`429 { message, code: "too_many_attempts" }`; percobaan yang ditolak tidak dihitung). Permintaan yang gagal validasi tidak memanggil hCaptcha.
+
+Metadata per slug disajikan oleh Vercel Function pada setiap request langsung ke `/e/{slug}` (bukan hanya berdasarkan user-agent crawler). Fungsi mengambil `GET /api/public/events/{slug}` lalu menyuntikkan title, description, canonical, Open Graph, Twitter Card, dan Event JSON-LD ke HTML shell yang sama sebelum SPA berjalan. Event yang tidak terlihat oleh endpoint publik menghasilkan HTTP `404` dengan `noindex`; kegagalan upstream menghasilkan `5xx` dengan `noindex`. Browser tetap menjalankan SPA yang sama dan navigasi client-side memperbarui judul dokumen. Fungsi boleh memakai cache CDN singkat; data bisnis dan form tetap dimuat langsung dari API oleh SPA.
 
 ## Mock MSW (opsional, dev saja)
 

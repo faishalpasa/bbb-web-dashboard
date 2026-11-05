@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { EVENT_DEFAULT_CAPACITY, EVENT_DEFAULT_TIMEZONE } from '@/constants/event';
+import { useRegistrationFormBuilder } from '@/hooks/useRegistrationFormBuilder';
 import { postEventBanner, postRandomAttendanceCode } from '@/services/event';
 import type { EventDetail, EventFormat, EventInput, EventTimezone } from '@/types/event';
 import { fromLocalInput, toLocalInput } from '@/utils/date';
@@ -19,6 +21,8 @@ export type EventFieldName =
     | 'venueName'
     | 'address'
     | 'mapUrl'
+    | 'surveyUrl'
+    | 'documentationUrl'
     | 'capacity'
     | 'attendanceCode';
 
@@ -36,6 +40,8 @@ export interface EventFormFields {
     venueName: string;
     address: string;
     mapUrl: string;
+    surveyUrl: string;
+    documentationUrl: string;
     usesQuota: boolean;
     capacity: string;
     allowsNonMember: boolean;
@@ -54,6 +60,8 @@ const EMPTY_FIELDS: EventFormFields = {
     venueName: '',
     address: '',
     mapUrl: '',
+    surveyUrl: '',
+    documentationUrl: '',
     usesQuota: true,
     capacity: EVENT_DEFAULT_CAPACITY,
     allowsNonMember: true,
@@ -72,6 +80,8 @@ const SERVER_FIELD_NAMES: EventFieldName[] = [
     'venueName',
     'address',
     'mapUrl',
+    'surveyUrl',
+    'documentationUrl',
     'capacity',
     'attendanceCode',
 ];
@@ -88,6 +98,8 @@ const fieldsFromEvent = (event: EventDetail): EventFormFields => ({
     venueName: event.venueName ?? '',
     address: event.address ?? '',
     mapUrl: event.mapUrl ?? '',
+    surveyUrl: event.surveyUrl ?? '',
+    documentationUrl: event.documentationUrl ?? '',
     usesQuota: event.usesQuota,
     capacity: event.capacity === null ? EVENT_DEFAULT_CAPACITY : String(event.capacity),
     allowsNonMember: event.allowsNonMember,
@@ -96,6 +108,7 @@ const fieldsFromEvent = (event: EventDetail): EventFormFields => ({
 
 // Shared by the create and edit event screens: field state, the title -> link follow-along, banner upload and the random code.
 export const useEventForm = (event?: EventDetail) => {
+    const registration = useRegistrationFormBuilder(event?.registrationForm, Boolean(event));
     const [fields, setFields] = useState<EventFormFields>(() => (event ? fieldsFromEvent(event) : EMPTY_FIELDS));
     const [errors, setErrors] = useState<EventFormErrors>({});
     const [isSlugEdited, setIsSlugEdited] = useState(Boolean(event));
@@ -151,7 +164,9 @@ export const useEventForm = (event?: EventDetail) => {
             const response = await postEventBanner(file);
 
             setFields((current) => ({ ...current, bannerUrl: response.data.bannerUrl }));
+            toast.add({ type: 'success', title: 'Banner kegiatan berhasil diunggah.' });
         } catch (error) {
+            toast.add({ type: 'error', title: fieldErrorMessage(error, 'banner') ?? errorMessage(error) });
             setErrors((current) => ({ ...current, bannerUrl: fieldErrorMessage(error, 'banner') ?? errorMessage(error) }));
         } finally {
             setIsUploadingBanner(false);
@@ -160,11 +175,14 @@ export const useEventForm = (event?: EventDetail) => {
 
     // Only the title is required to keep a draft; the API enforces everything else when publishing.
     const buildInput = (publish: boolean): EventInput | null => {
+        const registrationForm = registration.buildInput();
         if (!fields.title.trim()) {
             setErrors({ title: 'Judul harus diisi.' });
 
             return null;
         }
+
+        if (registrationForm === null) return null;
 
         setErrors({});
 
@@ -181,11 +199,14 @@ export const useEventForm = (event?: EventDetail) => {
             venueName: fields.venueName.trim() || null,
             address: fields.address.trim() || null,
             mapUrl: fields.mapUrl.trim() || null,
+            surveyUrl: fields.surveyUrl.trim() || null,
+            documentationUrl: fields.documentationUrl.trim() || null,
             usesQuota: fields.usesQuota,
             capacity: fields.usesQuota ? Number(fields.capacity) || null : null,
             allowsNonMember: fields.allowsNonMember,
             attendanceCode: fields.attendanceCode.trim() || null,
             publish,
+            ...(registrationForm ? { registrationForm } : {}),
         };
     };
 
@@ -200,11 +221,13 @@ export const useEventForm = (event?: EventDetail) => {
 
         setErrors(nextErrors);
 
-        return Object.keys(nextErrors).length > 0;
+        const hasRegistrationErrors = registration.applyServerErrors(error);
+        return Object.keys(nextErrors).length > 0 || hasRegistrationErrors;
     };
 
     return {
         fields,
+        registration,
         errors,
         isUploadingBanner,
         isGeneratingCode,

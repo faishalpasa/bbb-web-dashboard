@@ -4,9 +4,11 @@ import type {
     EventInput,
     EventList,
     EventListQuery,
+    EventMemberOption,
     EventOptions,
     EventParticipant,
     EventParticipantList,
+    ParticipantDetail,
     ParticipantInput,
     ParticipantListQuery,
     ParticipantSummary,
@@ -17,11 +19,35 @@ import { toServiceError } from '@/utils/error';
 const compactParams = (query: object): Record<string, string | number> =>
     Object.fromEntries(Object.entries(query).filter(([, value]) => value !== '' && value !== undefined));
 
+export const getEventMemberOptions = async (eventId: string, search: string): Promise<ServiceResponse<{ items: EventMemberOption[] }>> => {
+    try {
+        const { data } = await axiosClient.get<ApiEnvelope<{ items: EventMemberOption[] }>>(
+            `/admin/events/${encodeURIComponent(eventId)}/member-options`,
+            { params: { search } },
+        );
+        return { data: data.data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
 export const getEvents = async (query: EventListQuery): Promise<ServiceResponse<EventList>> => {
     try {
         const { data } = await axiosClient.get<ApiEnvelope<EventList>>('/admin/events', { params: compactParams(query) });
 
         return { data: data.data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
+export const getEventsExport = async (query: EventListQuery): Promise<ServiceResponse<Blob>> => {
+    try {
+        // Every page of what the filters match, so the paging fields stay out of the request.
+        const params = compactParams({ ...query, page: undefined, perPage: undefined });
+        const { data } = await axiosClient.get<Blob>('/admin/events/export', { params, responseType: 'blob' });
+
+        return { data, status: true };
     } catch (error) {
         throw toServiceError(error);
     }
@@ -77,9 +103,13 @@ export const postDuplicateEvent = async (eventId: string): Promise<ServiceRespon
     }
 };
 
-export const postCancelEvent = async (eventId: string): Promise<ServiceResponse<EventDetail>> => {
+export const postCancelEvent = async (eventId: string, reason = ''): Promise<ServiceResponse<EventDetail>> => {
     try {
-        const { data } = await axiosClient.post<ApiEnvelope<EventDetail>>(`/admin/events/${eventId}/cancel`);
+        const note = reason.trim();
+        const { data } = await axiosClient.post<ApiEnvelope<EventDetail>>(
+            `/admin/events/${eventId}/cancel`,
+            note === '' ? undefined : { reason: note },
+        );
 
         return { data: data.data, status: true };
     } catch (error) {
@@ -127,6 +157,59 @@ export const getEventParticipants = async (eventId: string, query: ParticipantLi
             params: compactParams(query),
         });
 
+        return { data: data.data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
+// Every participant that matches the search, as the CSV the API builds (no pagination).
+export const getEventParticipantDetail = async (eventId: string, participantId: string): Promise<ServiceResponse<ParticipantDetail>> => {
+    try {
+        const { data } = await axiosClient.get<ApiEnvelope<ParticipantDetail>>(
+            `/admin/events/${encodeURIComponent(eventId)}/participants/${encodeURIComponent(participantId)}`,
+        );
+        return { data: data.data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
+export const getParticipantFile = async (eventId: string, participantId: string, fileId: string): Promise<ServiceResponse<Blob>> => {
+    try {
+        const { data } = await axiosClient.get<Blob>(
+            `/admin/events/${encodeURIComponent(eventId)}/participants/${encodeURIComponent(participantId)}/files/${encodeURIComponent(fileId)}`,
+            { responseType: 'blob' },
+        );
+
+        return { data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
+export const getEventParticipantsExport = async (eventId: string, search: string): Promise<ServiceResponse<Blob>> => {
+    try {
+        const { data } = await axiosClient.get<Blob>(`/admin/events/${eventId}/participants/export`, {
+            params: compactParams({ search }),
+            responseType: 'blob',
+        });
+
+        return { data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
+export const getParticipantRegistrationForm = async (
+    eventId: string,
+    memberId: string,
+): Promise<ServiceResponse<import('@/types/registration-form').RegistrationFormData>> => {
+    try {
+        const { data } = await axiosClient.get<ApiEnvelope<import('@/types/registration-form').RegistrationFormData>>(
+            `/admin/events/${eventId}/registration-form`,
+            { params: { memberId } },
+        );
         return { data: data.data, status: true };
     } catch (error) {
         throw toServiceError(error);

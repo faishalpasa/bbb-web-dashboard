@@ -1,7 +1,11 @@
 export const ROUTES = {
     dashboard: '/',
     login: '/login',
+    forbidden: '/forbidden',
+    noAccess: '/no-access',
     invitation: '/invitation',
+    forgotPassword: '/forgot-password',
+    resetPassword: '/reset-password',
     members: '/members',
     memberNew: '/members/new',
     memberDetail: '/members/$memberId',
@@ -12,6 +16,10 @@ export const ROUTES = {
     eventEdit: '/events/$eventId/edit',
     exitRequests: '/exit-requests',
     admins: '/admins',
+    adminNew: '/admins/new',
+    roles: '/roles',
+    roleNew: '/roles/new',
+    roleDetail: '/roles/$roleId',
     settings: '/settings',
     auditLogs: '/audit-logs',
 } as const;
@@ -19,5 +27,5 @@ export const ROUTES = {
 // Routes that need no path params, so they can be passed around as a plain `to`.
 export type StaticRoute = Exclude<
     (typeof ROUTES)[keyof typeof ROUTES],
-    typeof ROUTES.memberDetail | typeof ROUTES.memberEdit | typeof ROUTES.eventDetail | typeof ROUTES.eventEdit
+    typeof ROUTES.memberDetail | typeof ROUTES.memberEdit | typeof ROUTES.eventDetail | typeof ROUTES.eventEdit | typeof ROUTES.roleDetail
 >;

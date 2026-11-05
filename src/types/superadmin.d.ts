@@ -1,12 +1,16 @@
 import type { Identifier, PaginatedCollection, SelectOption } from '@/types/api';
+import type { AdminRoleSummary } from '@/types/auth';
 
 export interface AdminSettings {
     registrationCloseMinutes: number;
     cancellationCloseMinutes: number;
+    /** Minutes before an event starts at which members may begin entering the attendance code; at most `registrationCloseMinutes`. */
+    attendanceOpenMinutes: number;
     engagedWindowMonths: number;
     adminWhatsapp: string | null;
     whatsappGroupUrl: string | null;
-    shareRecommendationUrl: string | null;
+    faqContent: string; // HTML dari editor teks; API membersihkannya
+    privacyPolicyContent: string;
     rulesSummary: string;
     rulesVersion: number;
     updatedBy: string;
@@ -21,10 +25,11 @@ export interface AdminAccount {
     id: Identifier;
     name: string;
     email: string;
-    role: { value: 'superadmin' | 'admin'; label: string };
+    role: { value: string; label: string };
+    roleInfo: AdminRoleSummary;
     status: { value: AdminAccountStatus; label: string };
     isCurrentUser: boolean;
-    actions: { canDeactivate: boolean; canActivate: boolean };
+    actions: { canDeactivate: boolean; canActivate: boolean; canChangeRole: boolean };
 }
 
 export interface AdminInvitationResult extends AdminAccount {
@@ -34,9 +39,10 @@ export interface AdminInvitationResult extends AdminAccount {
 export interface AdminInviteInput {
     name: string;
     email: string;
+    roleId: string;
 }
 
-export type AuditLogType = 'export' | 'settings' | 'admins';
+export type AuditLogType = 'export' | 'settings' | 'admins' | 'members' | 'events';
 
 export interface AuditLogEntry {
     id: Identifier;
@@ -51,6 +57,7 @@ export interface AuditLogList extends PaginatedCollection<AuditLogEntry> {
 }
 
 export interface AuditLogQuery {
+    perPage?: number;
     type: string;
     page: number;
 }

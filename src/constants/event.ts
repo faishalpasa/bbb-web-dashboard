@@ -15,15 +15,6 @@ export const PARTICIPANT_STATUS_TONES: Record<ParticipantStatus, BadgeTone> = {
     absent: 'danger',
 };
 
-// The tab "Semua" sends no status filter.
-export const EVENT_TABS: { value: string; label: string }[] = [
-    { value: '', label: 'Semua' },
-    { value: 'draft', label: 'Draf' },
-    { value: 'published', label: 'Dipublikasikan' },
-    { value: 'completed', label: 'Selesai' },
-    { value: 'cancelled', label: 'Dibatalkan' },
-];
-
 export const EVENT_DRAFT_PLACEHOLDER_TITLE = '[Judul kegiatan draf]';
 export const EVENT_NO_SCHEDULE_LABEL = '[Belum ada jadwal]';
 export const EVENT_DEFAULT_TIMEZONE: EventTimezone = 'WIB';

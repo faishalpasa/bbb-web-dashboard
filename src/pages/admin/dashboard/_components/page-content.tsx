@@ -1,13 +1,14 @@
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatLongDate } from '@/utils/date';
 
 import { usePageContext } from '../_context';
 import { ActionList } from './action-list';
-import { AttendanceCard } from './attendance-card';
-import { ParticipationCard } from './participation-card';
-import { ProvinceCard } from './province-card';
+import { EventPerformanceCard } from './event-performance-card';
+import { MemberGrowthCard } from './member-growth-card';
+import { MemberStatusCard } from './member-status-card';
 import { StatCards } from './stat-cards';
 import { UpcomingEvents } from './upcoming-events';
 
@@ -18,14 +19,14 @@ const DashboardSkeleton = () => (
                 <Skeleton key={index} className="h-28 rounded-lg" />
             ))}
         </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_1fr]">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Skeleton className="h-64 rounded-lg" />
             <Skeleton className="h-64 rounded-lg" />
         </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2].map((index) => (
-                <Skeleton key={index} className="h-48 rounded-lg" />
-            ))}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Skeleton className="h-64 rounded-lg" />
+            <Skeleton className="h-64 rounded-lg" />
+            <Skeleton className="h-80 rounded-lg lg:col-span-2" />
         </div>
     </div>
 );
@@ -35,20 +36,22 @@ export const PageContent = () => {
 
     return (
         <div className="space-y-4">
-            <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <h1 className="text-2xl font-semibold">Dashboard</h1>
-                {dashboard && (
-                    <p className="text-muted-foreground text-sm" data-test-id="dashboard_text_as_of">
-                        Data per {formatLongDate(dashboard.asOf)}
-                    </p>
-                )}
-            </header>
+            <AdminPageHeader data-test-id="dashboard_header">
+                <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <h1 className="text-2xl font-semibold">Dashboard</h1>
+                    {dashboard && (
+                        <p className="text-muted-foreground text-sm" data-test-id="dashboard_text_as_of">
+                            Data per {formatLongDate(dashboard.asOf)}
+                        </p>
+                    )}
+                </header>
+            </AdminPageHeader>
 
             {isLoading && !dashboard && <DashboardSkeleton />}
 
             {failure && (
                 <div className="max-w-xl space-y-3">
-                    <AlertMessage data-test-id="dashboard_alert_error">{failure.message}</AlertMessage>
+                    <FeedbackToast data-test-id="dashboard_alert_error">{failure.message}</FeedbackToast>
                     <Button variant="outline" onClick={reload} data-test-id="dashboard_button_retry">
                         Coba lagi
                     </Button>
@@ -58,14 +61,16 @@ export const PageContent = () => {
             {dashboard && (
                 <>
                     <StatCards />
-                    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.15fr_1fr]">
+                    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
                         <ActionList />
                         <UpcomingEvents />
                     </div>
-                    <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        <ParticipationCard />
-                        <ProvinceCard />
-                        <AttendanceCard />
+                    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+                        <MemberGrowthCard />
+                        <MemberStatusCard />
+                        <div className="lg:col-span-2">
+                            <EventPerformanceCard />
+                        </div>
                     </div>
                 </>
             )}

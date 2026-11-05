@@ -1,15 +1,31 @@
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
+import { MEMBER_DEFAULT_PER_PAGE } from '@/constants/member';
 import { getMemberOptions, getMembers, getMembersExport } from '@/services/member';
 import type { LoadFailure } from '@/types/api';
-import type { MemberList, MemberListQuery, MemberOptions } from '@/types/member';
+import type { MemberList, MemberListQuery, MemberOptions, MemberSortBy, MemberSortDirection } from '@/types/member';
 import { errorMessage, toLoadFailure } from '@/utils/error';
 
 const SEARCH_DEBOUNCE_MS = 350;
 
-const INITIAL_QUERY: MemberListQuery = { search: '', status: '', provinceCode: '', preference: '', attendance: '', page: 1 };
+const INITIAL_QUERY: MemberListQuery = {
+    search: '',
+    status: '',
+    provinceCode: '',
+    preference: '',
+    attendance: '',
+    readingInterests: '',
+    sortBy: 'joinedAt',
+    sortDirection: 'desc',
+    page: 1,
+    perPage: MEMBER_DEFAULT_PER_PAGE,
+};
 
-type FilterName = 'status' | 'provinceCode' | 'preference' | 'attendance';
+type FilterName = 'status' | 'provinceCode' | 'preference' | 'attendance' | 'readingInterests';
+
+/** The filters set in the filter dialog; they are applied together. */
+export type MemberFilterValues = Pick<MemberListQuery, FilterName | 'sortBy' | 'sortDirection'>;
 
 interface PageContextValue {
     query: MemberListQuery;
@@ -24,7 +40,11 @@ interface PageContextValue {
     rangeEnd: number;
     setSearchText: (value: string) => void;
     setFilter: (name: FilterName, value: string) => void;
+    applyFilters: (values: MemberFilterValues) => void;
+    resetFilters: () => void;
+    setSort: (sortBy: MemberSortBy, direction?: MemberSortDirection) => void;
     goToPage: (page: number) => void;
+    setPerPage: (perPage: number) => void;
     reload: () => void;
     exportMembers: () => Promise<void>;
 }
@@ -89,6 +109,32 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         setQuery((current) => ({ ...current, [name]: value, page: 1 }));
     }, []);
 
+    const applyFilters = useCallback((values: MemberFilterValues) => setQuery((current) => ({ ...current, ...values, page: 1 })), []);
+
+    // Clears the dialog's filters and keeps the search text and the page size.
+    const resetFilters = useCallback(
+        () =>
+            setQuery((current) => ({
+                ...current,
+                status: '',
+                provinceCode: '',
+                preference: '',
+                attendance: '',
+                readingInterests: '',
+                page: 1,
+            })),
+        [],
+    );
+
+    const setSort = useCallback((sortBy: MemberSortBy, direction?: MemberSortDirection) => {
+        setQuery((current) => ({
+            ...current,
+            sortBy,
+            sortDirection: direction ?? (current.sortBy === sortBy && current.sortDirection === 'asc' ? 'desc' : 'asc'),
+            page: 1,
+        }));
+    }, []);
+
     const goToPage = useCallback((page: number) => setQuery((current) => ({ ...current, page })), []);
 
     const exportMembers = useCallback(async () => {
@@ -102,6 +148,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 provinceCode: query.provinceCode,
                 preference: query.preference,
                 attendance: query.attendance,
+                readingInterests: query.readingInterests,
+                sortBy: query.sortBy,
+                sortDirection: query.sortDirection,
             });
             const url = URL.createObjectURL(response.data);
             const link = document.createElement('a');
@@ -110,6 +159,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             link.download = 'member-bbb-bff.csv';
             link.click();
             URL.revokeObjectURL(url);
+            toast.add({ type: 'success', title: 'File expor member siap diunduh.' });
         } catch (error) {
             setExportError(errorMessage(error));
         } finally {
@@ -135,11 +185,30 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             rangeEnd,
             setSearchText: setSearchTextState,
             setFilter,
+            applyFilters,
+            resetFilters,
+            setSort,
             goToPage,
+            setPerPage: (perPage) => setQuery((current) => ({ ...current, perPage, page: 1 })),
             reload: () => setReloadToken((token) => token + 1),
             exportMembers,
         };
-    }, [query, searchText, options, list, failure, isLoading, isExporting, exportError, setFilter, goToPage, exportMembers]);
+    }, [
+        query,
+        searchText,
+        options,
+        list,
+        failure,
+        isLoading,
+        isExporting,
+        exportError,
+        setFilter,
+        applyFilters,
+        resetFilters,
+        setSort,
+        goToPage,
+        exportMembers,
+    ]);
 
     return <PageContext.Provider value={value}>{children}</PageContext.Provider>;
 };

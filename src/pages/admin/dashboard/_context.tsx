@@ -43,10 +43,10 @@ const buildStatCards = ({ stats }: AdminDashboard): StatCard[] => [
         hint: `${formatNumber(stats.members.newThisMonth)} member baru bulan ini`,
     },
     {
-        key: 'engaged',
-        label: 'Terlibat',
-        value: formatNumber(stats.engaged.total),
-        hint: `Hadir minimal ${stats.engaged.minAttendance} kegiatan dalam ${stats.engaged.windowMonths} bulan`,
+        key: 'active_members',
+        label: 'Member Aktif',
+        value: formatNumber(stats.activeMembers.total),
+        hint: `${formatNumber(stats.members.total)} total member`,
     },
     {
         key: 'exit_requests',

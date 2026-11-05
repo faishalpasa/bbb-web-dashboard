@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { createContext, type FormEventHandler, type PropsWithChildren, useContext, useEffect, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/constants/route';
 import { type MemberForm, useMemberForm } from '@/hooks/useMemberForm';
 import { getMemberOptions, postMember } from '@/services/member';
@@ -33,13 +34,17 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     useEffect(() => {
         const loadPreferences = async () => {
             try {
-                setPreferences((await getMemberOptions()).data.preferences);
+                const { data } = await getMemberOptions();
+                setPreferences(data.preferences);
+                form.reading.setOptions(data.readingProfileOptions);
             } catch {
                 setSubmitError('Pilihan preferensi gagal dimuat. Muat ulang halaman untuk mencoba lagi.');
             }
         };
 
         void loadPreferences();
+        // Options are loaded once, not whenever the form draft changes.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
@@ -48,7 +53,10 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         const input = form.validate({ requireEmail: true });
 
-        if (!input) return;
+        if (!input) {
+            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+            return;
+        }
 
         setIsSubmitting(true);
 
@@ -60,9 +68,11 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 consentAcknowledged,
             });
 
+            toast.add({ type: 'success', title: 'Member berhasil ditambahkan.' });
             void navigate({ to: ROUTES.memberDetail, params: { memberId: response.data.id } });
         } catch (error) {
-            if (!form.applyServerErrors(error)) setSubmitError(errorMessage(error));
+            if (form.applyServerErrors(error)) toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+            else setSubmitError(errorMessage(error));
         } finally {
             setIsSubmitting(false);
         }

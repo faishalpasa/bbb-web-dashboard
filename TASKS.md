@@ -1,8 +1,49 @@
 # BBB BFF admin implementation checklist
 
+## Feedback toast dashboard (26 Oktober 2026)
+
+- [x] Feedback hasil aksi/copy/response API lintas halaman dan dialog memakai global shadcn Base UI Toast, gelap bottom-center + safe area. Validasi field, informasi locked/read-only, konflik yang membutuhkan reload dan link undangan tetap tersedia dekat konteksnya. Provider di luar router menjaga feedback setelah navigasi; revisi notice mendukung copy berulang tanpa duplikasi saat rerender/StrictMode. Interaksi toast tidak menutup modal/bottom sheet. Delapan tes khusus toast lulus, typecheck/lint/format/build lulus. Preview komponen sintetis desktop/mobile memverifikasi warna/posisi/wrapping, copy berulang, transisi tampilan serta close toast tanpa menutup dialog. Bukan smoke seluruh operasi terhadap API nyata; tidak menulis DB atau mengirim email. Suite keseluruhan masih memiliki satu kegagalan assertion grafik existing (`75% hadir`), file grafik dan tesnya tidak diubah. Fixture, tab dan server preview sementara dibersihkan. Belum commit/push/deploy; API tidak diubah.
+
+## Aksi Member dan label ekspor (21 Oktober 2026)
+
+- [x] Tombol ikon Edit pada kolom aksi desktop/kartu mobile Member mengarah ke route edit existing; tampil hanya dengan member-view + member-update, tanpa batas status buatan atau request baru. Label ekspor Member dan peserta kegiatan menjadi “Expor” sesuai permintaan; CSV/payload/permission tetap. Checklist React mempertahankan shared actions dan menghitung permission di parent. 59 tes (termasuk render positif/negatif permission, kedua markup desktop/mobile, URL/status dan label), typecheck/lint/format/build + diff check lulus. Belum browser/layout/klik edit end-to-end; server lokal tetap mati. Belum commit/push/deploy.
+
+## Cleanup tooling masterlist (20 Oktober 2026)
+
+- [x] Atas konfirmasi pemilik bahwa import selesai: hapus CTA Preview Masterlist, route/page/context, service/type/constant dan permission khusus import. Tambah/edit/filter/ekspor Member, RBAC lain dan pagination tetap; 55 tes + typecheck/lint/format/build lulus. Kontrak arsip retirement identik lintas repo. Tidak browser smoke karena server lokal sudah dimatikan sesuai instruksi; belum commit/push/deploy. Ledger/audit/data member/profil dipertahankan; migration permission API baru diperlukan pada deploy.
+
+## Perbaikan responsif Member (20 Oktober 2026)
+
+- [x] Filter mobile satu kolom tanpa implicit track/overlap, aksi header dapat turun baris, dan pilihan preferensi pada komponen tambah/edit dapat wrap di dalam kartu. Checklist React menjaga perubahan CSS saja tanpa state, dependency, permission atau kontrak baru. 61 tes dashboard (termasuk 3 regression utility layout), typecheck/lint/format/build dan diff check lulus. Browser lokal dengan sesi admin/API nyata: daftar pada 360/390/768/1360 px, provinsi berlabel panjang pada 390 px, form tambah pada 360/390/1360 px; tidak ada overflow halaman dan pilihan tetap di dalam kartu. Tidak submit/ekspor/mengubah data, belum uji Safari/perangkat fisik atau deploy; edit memakai komponen yang sama, bukan klaim flow edit diuji penuh.
+
+## Track masterlist: profil dan minat bacaan (20 Oktober 2026)
+
+- [x] Kebijakan preview v3: warning berprovenance disetujui tampil Diterima dengan catatan (bukan Valid), summary/pesan profil manual tetap dry-run dan konflik tetap skip. Snapshot lama tetap berlabel Perlu review. 7 tes preview + typecheck/lint/format/build; browser data sintetis 58 accepted notes + 2 skip dan detail profil kosong. Kontrak identik tiga repo; bukan bukti import/hosted deployment. Panduan React menjaga label turunan tanpa state/request baru.
+
+- [x] Tahap 3 lokal: field tambahan opsional, katalog API multi-select + Other kondisional, prefill/edit/render plain text, error/disabled state pada form existing. Kontrak shared `member-reading-profile.md` dan salinan frontend-api identik di tiga repo; admin-members identik API/dashboard. API full Pest 680 / 5.098 + Pint, typecheck/lint/format/build kedua FE dan 10 tes reading-profile per FE lulus. Browser web-app 390px (edit/onboarding/migrasi) + dashboard 1360px (detail/tambah/edit) memakai MySQL nyata; data QA dibersihkan. Tanpa import/commit/push/deploy. Bukti/batas dan penerapan migration lokal di `../bbb-api/docs/plans/member-masterlist-import.md`.
+- [x] Tahap 4 lokal: preview dashboard owner-only, permission khusus, upload/mapping/summary/paging/detail raw/provenance, modal desktop/bottom sheet mobile dan reload; tanpa import aktif. Full API 694 Pest / 5.239 + Pint, dashboard 57 tes dan typecheck/lint/format/build lulus. CSV sintetis 60 baris diuji browser; workbook asli hanya dry-run privat. Batas dan temuan di `../bbb-api/docs/plans/masterlist-preview-verification.md`.
+- [x] Tahap 5a backend: writer melalui CLI sekali pakai, bukan CTA/HTTP import dashboard. Preview envelope/can_import=false tetap, integrity tersegel internal tidak diekspos. Kontrak execution + claim migrated lewat reset link disepakati, frontend-api identik tiga repo. API 747 Pest / 5.681 + Pint, dua FE typecheck/build dan 7 tes preview dashboard lulus. Runbook di `../bbb-api/docs/deployment-masterlist-import.md`.
+- [x] Tahap 5b lokal: backup penuh sebelum/sesudah ledger lolos restore disposable dan hash; 3.712 member imported + 2 skip, 0 pending/mismatch, 24.716 assignment minat cocok, data existing tetap dan retry completed no-op. Browser daftar Member menunjukkan 3.724 data, 149 halaman ukuran 25, halaman 2 menampilkan 26–50. Full API 747 Pest / 5.681 + Pint lulus ulang. Bukti/batas di plan API; tidak ada tombol import baru di FE.
+- [ ] Sisa 5b/5c: claim email/browser dengan identitas QA yang disetujui, rilis + preview/actor/backup/import Hostinger dan rekonsiliasi, baru cleanup permanen setelah kedua target disetujui. Commit/push tiga repo sudah disetujui owner; DB hosting belum disentuh, tooling dipertahankan. Panduan langkah per langkah: `../bbb-api/docs/deployment-masterlist-hostinger.md`.
+
+## Pagination dashboard (20 Oktober 2026)
+
+- [x] Semua tabel/list memakai shared footer shadcn-style: Tampilkan + ukuran 10/20/25/50/100 (default FE 25) + total kiri; prev + nomor/ellipsis + next kanan, tanpa first/last. Ukuran/filter reset halaman 1, loading/batas disabled, nomor mobile diringkas. Member/kegiatan/peserta/log memakai perPage API; admin/role/exit/history client-side atas data utuh. Tujuh tes pagination + typecheck/lint/format/build, browser Kegiatan ukuran 10 -> page 2 (2 dari 12) -> ukuran 25 reset page 1, layout mobile 390px tanpa overflow. Bukan klaim semua ukuran/halaman seluruh modul sudah diuji browser.
+
+## Track baru: Registration Form kegiatan (19 Oktober 2026)
+
+- [x] Tahap 1 — keputusan utama dan kontrak target didokumentasikan; kontrak shared di `docs/contracts/event-registration-form.md`, plan enam tahap di `../bbb-api/docs/plans/event-registration-form.md`. Salinan kontrak diverifikasi identik di tiga repo. Ini acceptance dokumentasi saja, bukan klaim fitur sudah aktif.
+- [x] Tahap 2 (backend lokal) — migration/model/factory, default/backfill, create/edit/duplicate konfigurasi, versi/lock, batas field yang disetujui dan guard sementara writer lama. Full Pest 574 / 4.400 assertions + Pint; dua FE typecheck/lint/format/build dan 16 tes RBAC dashboard lulus. MySQL lokal sudah dimigrasikan, hash baris domain lama tetap; bukan bukti deploy Hostinger/MariaDB atau UI form baru. Rincian di `../bbb-api/docs/plans/event-registration-form.md`.
+- [x] Tahap 3 (dashboard lokal) — builder empat tipe, drag-and-drop + keyboard/tombol urutan, required/opsi/preview, validasi, version conflict/reload dan locked state. 12 tes builder + 16 RBAC serta typecheck/lint/format/build lulus; browser create/edit/simpan/reload/duplikasi dan MySQL terverifikasi. Layout mobile diperiksa; gesture sentuh perangkat asli belum diuji. Tidak ada deployment.
+- [ ] Tahap 4–6 — pendaftaran member/publik/admin, detail jawaban modal/bottom sheet + warna warning/danger, verifikasi dan panduan cutover. Jangan mulai tahap lain tanpa instruksi pemilik.
+
+Catatan: handoff historis di bawah tidak menggantikan keputusan baru. Backend konfigurasi dan builder tersedia lokal; submit jawaban baru belum diimplementasikan. Jangan deploy custom form sebelum tahap 4 siap. Data historis dipertahankan, tanpa jawaban palsu.
+
 Launch target: 30 October 2026. Admin-only app; member/public work remains in web-app. Check items only after verification.
 
 ## Handoff (16 October 2026)
+
+RBAC dashboard (19 Oktober 2026): kontrak `docs/contracts/admin-rbac.md`, rencana `../bbb-api/docs/plans/admin-rbac.md`. A–B dan D–E selesai; C operasional terverifikasi, keputusan penyaringan statistik pending. Guard halaman/sidebar/aksi, landing 403/no-access dan revalidasi session memakai permissions. Label Admin di bawah logo dihapus desktop/mobile sesuai owner. API 493 Pest + Pint; 9 tes RBAC FE + typecheck/lint/format/build lulus; smoke lokal view-only, empty, URL 403 dan revoke peserta. F belum berjalan: pengelolaan role memakai tree switch parent/child sesuai arahan owner, tanpa permission creation UI. Katalog permission hanya lewat migration API. Deploy dev: `../bbb-api/docs/deployment-rbac-dev.md`.
 
 - Local path: `/Users/pasa/Projects/BBB/web-dashboard`; origin: `git@github.com:faishalpasa/bbb-web-dashboard.git`; working branch: `development`.
 - Git initialized on `development`, origin connected. User authorized the initial scaffold commit/push on 16 October 2026. Check `git status` and `git log` for current publication state; continue working on `development`.
@@ -24,7 +65,7 @@ Launch target: 30 October 2026. Admin-only app; member/public work remains in we
 - [ ] Agree admin session/auth/capabilities contract with the API, including 401/403, redirect destination and shared-cookie behavior. (Draft in docs/contracts/admin-auth.md, implemented as dummy `/api/admin/*`; awaiting approval.)
 - [x] Allow both 5173 and 5174 origins in API local CORS/Sanctum; do not break member redirects. (`.env.example` updated; FRONTEND_URL unchanged.)
 - [x] Login (email + password, adapted from member artboard 1a) and route guard; verified at 1360px against the real dummy API.
-- [x] Admin shell/sidebar (left drawer below 1024px) and capability-gated navigation (Superadmin group hidden for plain admins; Member/Kegiatan/Permintaan Keluar/Admin/Pengaturan/Log render PlaceholderPage until their flows land).
+- [x] Admin shell/sidebar (left drawer below 1024px) and capability-gated navigation (admin biasa hanya Dashboard dan Kegiatan; Member/Permintaan Keluar/Admin/Pengaturan/Log khusus superadmin).
 - [x] Dashboard (artboard 8) with dummy `GET /api/admin/dashboard` (docs/contracts/admin-dashboard.md) and Pest tests; checked at 1360px as superadmin and admin. Loading/error/401 states built; error/401 not yet exercised in a browser.
 
 ## 2. Admin flows
@@ -50,3 +91,8 @@ Launch target: 30 October 2026. Admin-only app; member/public work remains in we
 - Live Claude artboard access through signed-in Chrome; ask for exports if unavailable.
 
 Origin connection was explicitly requested. Commit/push/deploy still require a separate explicit request. No backend database/migrations until the user ends the dummy phase.
+
+## Bearer auth migration (`docs/plans/bearer-auth.md` in web-app and bbb-api)
+
+- [x] Phase 3 (web-dashboard): admin Bearer token (`bbb.admin.token`), refresh on 401, no CSRF handshake, logout revokes the token. Checked in the browser at the dev server against the local API: sign-in, reload, expired-token refresh, logout (token revoked), and a POST (add guest participant) with no `/sanctum/csrf-cookie` request.
+- [ ] Invitation accept link is still limited by the dummy phase: the invited account only exists in the inviting admin's session.

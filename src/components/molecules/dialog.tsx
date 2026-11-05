@@ -17,14 +17,22 @@ interface DialogProps extends PropsWithChildren {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     fullHeight?: boolean;
+    mobileUntil?: number;
 }
 
-const DialogContext = createContext<{ fullHeight: boolean }>({ fullHeight: false });
+const DialogContext = createContext({ fullHeight: false, mobileUntil: 768 });
+
+// Toasts and popovers (a calendar or a menu opened from inside the dialog) live in their own portals. Interacting with one
+// must not dismiss the form dialog.
+const keepDialogForToast = (event: Event) => {
+    if (event.target instanceof Element && event.target.closest('[data-slot="toast-viewport"], [data-radix-popper-content-wrapper]'))
+        event.preventDefault();
+};
 
 // Renders a centered dialog on desktop and a bottom sheet on mobile.
-export const Dialog = ({ open, onOpenChange, fullHeight = false, children }: DialogProps) => {
-    const { isDesktop } = useMediaQuery();
-    const value = useMemo(() => ({ fullHeight }), [fullHeight]);
+export const Dialog = ({ open, onOpenChange, fullHeight = false, mobileUntil = 768, children }: DialogProps) => {
+    const { isDesktop } = useMediaQuery(mobileUntil);
+    const value = useMemo(() => ({ fullHeight, mobileUntil }), [fullHeight, mobileUntil]);
 
     if (isDesktop) {
         return (
@@ -44,12 +52,17 @@ export const Dialog = ({ open, onOpenChange, fullHeight = false, children }: Dia
 };
 
 export const DialogContent = ({ children, className, ...props }: HTMLAttributes<HTMLDivElement>) => {
-    const { isDesktop } = useMediaQuery();
-    const { fullHeight } = useContext(DialogContext);
+    const { fullHeight, mobileUntil } = useContext(DialogContext);
+    const { isDesktop } = useMediaQuery(mobileUntil);
 
     if (isDesktop) {
         return (
-            <DialogContentUI className={className} onOpenAutoFocus={(event) => event.preventDefault()} {...props}>
+            <DialogContentUI
+                className={className}
+                onOpenAutoFocus={(event) => event.preventDefault()}
+                onInteractOutside={keepDialogForToast}
+                {...props}
+            >
                 {children}
             </DialogContentUI>
         );
@@ -59,6 +72,7 @@ export const DialogContent = ({ children, className, ...props }: HTMLAttributes<
         <DrawerContent
             className={cn('max-h-[90vh]', fullHeight && 'h-[90vh]', className)}
             onOpenAutoFocus={(event) => event.preventDefault()}
+            onInteractOutside={keepDialogForToast}
             {...props}
         >
             {children}
@@ -67,7 +81,8 @@ export const DialogContent = ({ children, className, ...props }: HTMLAttributes<
 };
 
 export const DialogHeader = ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => {
-    const { isDesktop } = useMediaQuery();
+    const { mobileUntil } = useContext(DialogContext);
+    const { isDesktop } = useMediaQuery(mobileUntil);
 
     if (isDesktop) {
         return <DialogHeaderUI {...props}>{children}</DialogHeaderUI>;
@@ -77,7 +92,8 @@ export const DialogHeader = ({ children, ...props }: HTMLAttributes<HTMLDivEleme
 };
 
 export const DialogTitle = ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
-    const { isDesktop } = useMediaQuery();
+    const { mobileUntil } = useContext(DialogContext);
+    const { isDesktop } = useMediaQuery(mobileUntil);
 
     if (isDesktop) {
         return <DialogTitleUI {...props}>{children}</DialogTitleUI>;
@@ -87,7 +103,8 @@ export const DialogTitle = ({ children, ...props }: HTMLAttributes<HTMLHeadingEl
 };
 
 export const DialogDescription = ({ children, ...props }: HTMLAttributes<HTMLParagraphElement>) => {
-    const { isDesktop } = useMediaQuery();
+    const { mobileUntil } = useContext(DialogContext);
+    const { isDesktop } = useMediaQuery(mobileUntil);
 
     if (isDesktop) {
         return <DialogDescriptionUI {...props}>{children}</DialogDescriptionUI>;
@@ -97,7 +114,8 @@ export const DialogDescription = ({ children, ...props }: HTMLAttributes<HTMLPar
 };
 
 export const DialogFooter = ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => {
-    const { isDesktop } = useMediaQuery();
+    const { mobileUntil } = useContext(DialogContext);
+    const { isDesktop } = useMediaQuery(mobileUntil);
 
     if (isDesktop) {
         return <DialogFooterUI {...props}>{children}</DialogFooterUI>;
@@ -107,7 +125,8 @@ export const DialogFooter = ({ children, ...props }: HTMLAttributes<HTMLDivEleme
 };
 
 export const DialogClose = ({ children, ...props }: HTMLAttributes<HTMLButtonElement>) => {
-    const { isDesktop } = useMediaQuery();
+    const { mobileUntil } = useContext(DialogContext);
+    const { isDesktop } = useMediaQuery(mobileUntil);
 
     if (isDesktop) {
         return <DialogCloseUI {...props}>{children}</DialogCloseUI>;

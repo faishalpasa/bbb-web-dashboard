@@ -58,5 +58,5 @@ src/pages/admin/members/
 ## Styling
 
 - Tailwind CSS for component styling; global CSS only for tokens, font faces, resets, and base styles.
-- Palette: `#002A32`, `#F6F4ED`, `#B7B38F`, danger `#A32222`. The app is light only.
-- DM Sans is primary; IBM Plex Mono is for member numbers, attendance codes, and numeric displays.
+- Palette (BBB brand): pink `#F6C2CE`, blush `#FFF2F2`, cream `#FFFCEF` (page background), white, black, teal accent `#019896` and soft teal `#90C7C4`; danger `#A32222`. The app is light only.
+- Mulish is the body font and Fraunces the title font (`h1`–`h3`); IBM Plex Mono is for member numbers, attendance codes, and numeric displays.

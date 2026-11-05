@@ -1,10 +1,13 @@
-import { useAppContext } from '@/app-context';
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { TablePagination } from '@/components/molecules/table-pagination';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PERMISSIONS as P } from '@/constants/permission';
+import { usePermissions } from '@/hooks/usePermissions';
 import { cn } from '@/lib/utils';
 import { formatLongDate } from '@/utils/date';
 
@@ -12,9 +15,10 @@ import { usePageContext } from '../_context';
 import { RejectForm } from './reject-form';
 
 export const PageContent = () => {
-    const { session } = useAppContext();
+    const { can } = usePermissions();
     const {
         list,
+        pagination,
         failure,
         isLoading,
         notice,
@@ -30,29 +34,30 @@ export const PageContent = () => {
         closeReject,
         reload,
     } = usePageContext();
-    const canReview = session?.can.reviewExitRequests ?? false;
     const items = list?.items ?? [];
 
     return (
         <div className="space-y-4">
-            <header>
-                <h1 className="text-2xl font-semibold">Permintaan Keluar</h1>
-                {list && (
-                    <p className="text-muted-foreground text-sm" data-test-id="exit_requests_text_summary">
-                        {list.summary.pendingTotal} permintaan menunggu keputusan
-                    </p>
-                )}
-            </header>
+            <AdminPageHeader data-test-id="exit_requests_header">
+                <header>
+                    <h1 className="text-2xl font-semibold">Permintaan Keluar</h1>
+                    {list && (
+                        <p className="text-muted-foreground text-sm" data-test-id="exit_requests_text_summary">
+                            {list.summary.pendingTotal} permintaan menunggu keputusan
+                        </p>
+                    )}
+                </header>
+            </AdminPageHeader>
 
             {notice && (
-                <AlertMessage tone="success" data-test-id="exit_requests_alert_notice">
+                <FeedbackToast tone="success" data-test-id="exit_requests_alert_notice">
                     {notice}
-                </AlertMessage>
+                </FeedbackToast>
             )}
 
             {failure ? (
                 <div className="max-w-xl space-y-3">
-                    <AlertMessage data-test-id="exit_requests_alert_error">{failure.message}</AlertMessage>
+                    <FeedbackToast data-test-id="exit_requests_alert_error">{failure.message}</FeedbackToast>
                     <Button variant="outline" onClick={reload} data-test-id="exit_requests_button_retry">
                         Coba lagi
                     </Button>
@@ -70,7 +75,7 @@ export const PageContent = () => {
                         </p>
                     )}
 
-                    {items.map((request) => (
+                    {pagination.items.map((request) => (
                         <article
                             key={request.id}
                             className={cn(
@@ -106,11 +111,13 @@ export const PageContent = () => {
                                 </p>
                             </div>
 
-                            {canReview && (
-                                <div className="flex gap-2">
+                            <div className="flex gap-2">
+                                {can(P.EXIT_REQUEST_APPROVE) && (
                                     <Button onClick={() => openApprove(request)} data-test-id={`exit_requests_button_approve_${request.id}`}>
                                         Setujui
                                     </Button>
+                                )}
+                                {can(P.EXIT_REQUEST_REJECT) && (
                                     <Button
                                         variant="outline"
                                         className="bg-card"
@@ -119,14 +126,24 @@ export const PageContent = () => {
                                     >
                                         Tolak
                                     </Button>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </article>
                     ))}
+                    <TablePagination
+                        total={list?.items.length ?? 0}
+                        perPage={pagination.perPage}
+                        onPerPageChange={pagination.setPerPage}
+                        currentPage={pagination.page}
+                        lastPage={pagination.lastPage}
+                        isLoading={isLoading}
+                        onPageChange={pagination.goToPage}
+                        data-test-id="exit_requests_pagination"
+                    />
                 </div>
             )}
 
-            <Dialog open={rejecting !== null} onOpenChange={(open) => !open && !isRejecting && closeReject()}>
+            <Dialog open={can(P.EXIT_REQUEST_REJECT) && rejecting !== null} onOpenChange={(open) => !open && !isRejecting && closeReject()}>
                 <DialogContent data-test-id="exit_requests_reject_dialog">
                     <DialogHeader>
                         <DialogTitle>Tolak permintaan {rejecting?.member.name}</DialogTitle>
@@ -138,7 +155,7 @@ export const PageContent = () => {
             </Dialog>
 
             <ConfirmationDialog
-                open={approving !== null}
+                open={can(P.EXIT_REQUEST_APPROVE) && approving !== null}
                 onClose={closeApprove}
                 onConfirm={() => void confirmApprove()}
                 title="Setujui permintaan keluar?"

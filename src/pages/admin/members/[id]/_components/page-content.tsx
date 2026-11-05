@@ -1,12 +1,17 @@
+import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
+import { Mail } from 'lucide-react';
 
-import { useAppContext } from '@/app-context';
-import { AlertMessage } from '@/components/molecules/alert-message';
+import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { WhatsappButton } from '@/components/molecules/whatsapp-button';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MEMBER_STATUS_TONES } from '@/constants/member';
+import { PERMISSIONS as P } from '@/constants/permission';
 import { ROUTES } from '@/constants/route';
+import { usePermissions } from '@/hooks/usePermissions';
+import { memberGreetingMessage, whatsappChatUrl } from '@/utils/string';
 
 import { usePageContext } from '../_context';
 import { InternalNote } from './internal-note';
@@ -16,14 +21,13 @@ import { MemberStats } from './member-stats';
 import { StatusDialogs } from './status-dialogs';
 
 export const PageContent = () => {
-    const { session } = useAppContext();
+    const { can } = usePermissions();
     const { member, failure, isLoading, resetMessage, isSendingReset, sendResetPassword, openStatusDialog, reload } = usePageContext();
-    const canManageMembers = session?.can.manageMembers ?? false;
 
     if (failure) {
         return (
             <div className="max-w-xl space-y-3">
-                <AlertMessage data-test-id="member_detail_alert_error">{failure.message}</AlertMessage>
+                <FeedbackToast data-test-id="member_detail_alert_error">{failure.message}</FeedbackToast>
                 <div className="flex gap-2">
                     {!failure.isServerError && (
                         <Button asChild variant="outline">
@@ -54,46 +58,68 @@ export const PageContent = () => {
 
     return (
         <div className="space-y-4">
-            <header className="space-y-2">
-                <nav aria-label="Breadcrumb" className="text-sm">
-                    <Link to={ROUTES.members} className="underline underline-offset-4" data-test-id="member_detail_link_breadcrumb_members">
-                        Member
-                    </Link>
-                    <span className="text-muted-foreground"> / {member.name}</span>
-                </nav>
+            <AdminPageHeader data-test-id="member_detail_header">
+                <header className="space-y-2">
+                    <nav aria-label="Breadcrumb" className="text-sm">
+                        <Link to={ROUTES.members} className="underline underline-offset-4" data-test-id="member_detail_link_breadcrumb_members">
+                            Member
+                        </Link>
+                        <span className="text-muted-foreground"> / {member.name}</span>
+                    </nav>
 
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <h1 className="text-2xl font-semibold">{member.name}</h1>
-                        {member.memberNumber && <span className="font-mono text-sm">{member.memberNumber}</span>}
-                        <StatusBadge
-                            tone={MEMBER_STATUS_TONES[member.status.value]}
-                            label={member.status.label}
-                            data-test-id="member_detail_badge_status"
-                        />
-                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h1 className="text-2xl font-semibold">{member.name}</h1>
+                            {member.memberNumber && <span className="font-mono text-sm">{member.memberNumber}</span>}
+                            <StatusBadge
+                                tone={MEMBER_STATUS_TONES[member.status.value]}
+                                label={member.status.label}
+                                data-test-id="member_detail_badge_status"
+                            />
+                        </div>
 
-                    {canManageMembers && (
                         <div className="flex flex-wrap gap-2">
-                            {member.actions.canEdit && (
+                            {member.email && (
+                                <Button asChild variant="outline" size="icon" className="bg-card size-11 md:size-10">
+                                    <a
+                                        href={`mailto:${encodeURIComponent(member.email)}`}
+                                        aria-label={`Hubungi ${member.name} lewat email`}
+                                        title="Hubungi lewat email"
+                                        data-test-id="member_detail_link_email"
+                                    >
+                                        <Mail aria-hidden="true" />
+                                    </a>
+                                </Button>
+                            )}
+                            {member.whatsapp && (
+                                <WhatsappButton
+                                    href={whatsappChatUrl(member.whatsapp, memberGreetingMessage(member.name))}
+                                    label={`Hubungi ${member.name} lewat WhatsApp`}
+                                    className="bg-card size-11 md:size-10"
+                                    iconClassName="size-4"
+                                    data-test-id="member_detail_link_chat"
+                                />
+                            )}
+                            {can(P.MEMBER_UPDATE) && member.actions.canEdit && (
                                 <Button asChild variant="outline" className="bg-card">
                                     <Link to={ROUTES.memberEdit} params={{ memberId: member.id }} data-test-id="member_detail_link_edit">
-                                        Edit Data
+                                        Edit
                                     </Link>
                                 </Button>
                             )}
-                            {member.actions.canResetPassword && (
+                            {can(P.MEMBER_RESET_PASSWORD) && member.actions.canResetPassword && (
                                 <Button
                                     variant="outline"
                                     className="bg-card"
                                     disabled={isSendingReset}
+                                    title="Kirim link reset password ke email member"
                                     onClick={() => void sendResetPassword()}
                                     data-test-id="member_detail_button_reset_password"
                                 >
-                                    {isSendingReset ? 'Mengirim…' : 'Kirim Link Reset Password'}
+                                    {isSendingReset ? 'Mengirim…' : 'Reset Password'}
                                 </Button>
                             )}
-                            {member.actions.canDeactivate && (
+                            {can(P.MEMBER_DEACTIVATE) && member.actions.canDeactivate && (
                                 <Button
                                     variant="outline"
                                     className="bg-card border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
@@ -103,26 +129,26 @@ export const PageContent = () => {
                                     Nonaktifkan
                                 </Button>
                             )}
-                            {member.actions.canActivate && (
+                            {can(P.MEMBER_ACTIVATE) && member.actions.canActivate && (
                                 <Button onClick={() => openStatusDialog('activate')} data-test-id="member_detail_button_activate">
                                     Aktifkan
                                 </Button>
                             )}
                         </div>
-                    )}
-                </div>
-            </header>
+                    </div>
+                </header>
+            </AdminPageHeader>
 
             {resetMessage && (
-                <AlertMessage tone={resetMessage.tone} data-test-id="member_detail_alert_reset">
+                <FeedbackToast revision={resetMessage} tone={resetMessage.tone} data-test-id="member_detail_alert_reset">
                     {resetMessage.text}
-                </AlertMessage>
+                </FeedbackToast>
             )}
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.4fr_1fr]">
                 <div className="space-y-4">
                     <MemberProfile />
-                    {canManageMembers && <InternalNote />}
+                    <InternalNote />
                 </div>
                 <div className="space-y-4">
                     <MemberStats />

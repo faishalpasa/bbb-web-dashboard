@@ -1,6 +1,8 @@
 # Admin auth contract (DRAFT, awaiting approval)
 
-Status: **dummy-data draft**, diimplementasi di `bbb-api` (`/api/admin/*`, terpisah dari endpoint member) dan dipakai `web-dashboard`. Salinan identik ada di kedua repo; ubah bersamaan.
+RBAC tahap C–E: otorisasi endpoint admin mengikuti matriks permission di `admin-rbac.md`, menggantikan pembatasan role admin/superadmin yang disebut pada bagian historis dokumen ini. Permission kurang menghasilkan 403 `{ message: "Anda tidak memiliki izin untuk melakukan tindakan ini.", code: "permission_denied" }`. Login/session/refresh/aktivasi undangan sudah mengembalikan role + permissions efektif dan can legacy konservatif. Guard halaman/sidebar/tombol dashboard memakai permission (E); UI/API kelola role masih tahap F. Statistik lintas modul dashboard tetap mengikuti perilaku existing sampai keputusan penyaringan dikonfirmasi.
+
+Status: **di MySQL**, diimplementasi di `bbb-api` (`/api/admin/*`, terpisah dari endpoint member) dan dipakai `web-dashboard`. Salinan identik ada di kedua repo; ubah bersamaan. Semua endpoint admin (login, sesi, undangan, dashboard, member, kegiatan, permintaan keluar, pengaturan, log) memakai MySQL.
 
 Keputusan produk yang sudah ada:
 
@@ -8,7 +10,7 @@ Keputusan produk yang sudah ada:
 - Akun admin dibuat lewat undangan (artboard 13a-13c); setelah aktif, admin masuk dengan email dan password yang dibuat saat aktivasi.
 - Sesi member bukan bukti akses admin.
 
-Transport, CSRF, envelope `{ data }` dan format error mengikuti `frontend-api.md`.
+Transport (token Bearer), envelope `{ data }` dan format error mengikuti `frontend-api.md`. Login admin dan penerimaan undangan menambahkan `token` (`typ: admin`, berlaku 30 menit) ke `AdminSession`; dashboard memakai `POST /api/auth/refresh` dan `Authorization: Bearer`.
 
 ## Endpoint
 
@@ -17,17 +19,21 @@ Transport, CSRF, envelope `{ data }` dan format error mengikuti `frontend-api.md
 | `POST` | `/api/admin/login` | `AdminLoginInput` -> `AdminSession` |
 | `GET` | `/api/admin/session` | `AdminSession` (`401` bila belum masuk sebagai admin) |
 | `POST` | `/api/admin/logout` | `204` tanpa body |
+| `POST` | `/api/admin/password/forgot` | `{ email }` -> `{ resendAvailableAt }` (selalu `200`, tanpa sesi) |
+| `POST` | `/api/admin/password/verify-token` | `{ token }` -> `{ email }` (tanpa sesi) |
+| `POST` | `/api/admin/password/reset` | `{ token, password }` -> `AdminSession` + `token` (tanpa sesi) |
 
 - Kredensial salah: `422 { message, errors: { email: ["Email atau password salah."] } }`. Pesan sama untuk email tidak terdaftar dan password salah.
 - Akun member biasa (bukan admin) yang mencoba masuk diperlakukan sama seperti kredensial salah; tidak ada pesan yang membocorkan bahwa email itu milik member.
 - Admin yang dinonaktifkan: `422` pada field `email` ('Akun admin ini sudah dinonaktifkan. Hubungi superadmin.'), setelah password terbukti benar. Admin yang undangannya belum diaktifkan belum punya password dan mendapat pesan kredensial salah.
-- `GET /api/admin/session` tanpa sesi admin: `401`. Sesi member pada cookie yang sama tetap `401` di endpoint admin.
+- `GET /api/admin/session` tanpa sesi admin: `401`. Token member di endpoint admin juga `401`.
 - Hak akses (`403`) dikembalikan API pada tiap endpoint admin; capability di bawah hanya mengatur tampilan.
 
 ## Types
 
 ```ts
-type AdminRole = 'admin' | 'superadmin';
+type AdminRole = string; // nama role stabil, termasuk role custom
+interface RoleSummary { id: string; name: string; label: string }
 
 interface AdminLoginInput {
     email: string;
@@ -36,21 +42,35 @@ interface AdminLoginInput {
 
 interface AdminSession {
     user: { id: string; name: string; email: string; role: AdminRole };
+    role: RoleSummary;
+    permissions: string[]; // dikenal resolver, dependency lengkap, unik dan urut alfabet
     can: {
-        manageMembers: boolean; // semua admin: tambah/edit/nonaktifkan member
-        manageEvents: boolean; // semua admin: kelola kegiatan dan peserta
-        reviewExitRequests: boolean; // semua admin: setujui atau tolak permintaan keluar
-        manageAdmins: boolean; // menu Admin (superadmin)
-        manageSettings: boolean; // menu Pengaturan (superadmin)
-        viewAuditLog: boolean; // menu Log (superadmin)
+        manageMembers: boolean; // seluruh permission member-*
+        manageEvents: boolean; // seluruh permission event-* termasuk event-participant-*
+        reviewExitRequests: boolean; // seluruh permission exit-request-*
+        manageAdmins: boolean; // seluruh permission admin-*
+        manageSettings: boolean; // seluruh permission setting-*
+        viewAuditLog: boolean; // audit-log-view
     };
-    badges: { pendingExitRequests: number }; // angka di menu Permintaan Keluar
+    badges: { pendingExitRequests: number }; // 0 tanpa exit-request-view
 }
 ```
 
+Session role dan permission dibaca dari assigned role DB pada setiap request, bukan enum legacy atau claim JWT. Bentuk sama di login, GET session, refresh admin dan accept invitation; endpoint penerbit token menambah token seperti sebelumnya. Akun active dengan permission kosong tetap dapat login/logout/session/refresh, tetapi endpoint operasional menolak 403. Permission yang tidak dikenal resolver atau dependency-nya belum terpenuhi tidak dikirim agar guard FE dan API konsisten. Label role dari server; tidak wajib berasal dari dua nama bawaan.
+
+can dipertahankan untuk dashboard lama dan tidak memberi akses dari view saja. Misalnya role dengan member-view + member-create tetap mendapat manageMembers=false sampai seluruh izin member-* tersedia. Dashboard baru memakai permissions per aksi pada tahap E. Jangan memberi role custom parsial pada dashboard produksi lama sebelum tahap E.
+
 ## Pertanyaan terbuka
 
-- Cookie sesi berbagi host `localhost` (cookie tidak membedakan port), jadi admin dan member memakai satu cookie sesi Laravel. Fase dummy memisahkannya lewat key sesi: login admin hanya menulis key admin, sesi member tidak pernah dianggap admin, dan logout admin hanya menghapus key admin. Logout member (`invalidate`) tetap mengakhiri seluruh sesi, termasuk admin. Pemisahan cookie per guard dibahas saat fase database.
+- Admin dan member memakai token terpisah (`typ` `admin` dan `member`); rute admin menolak token member dan sebaliknya. Klaim `sub` token admin adalah UUID admin. API **memuat admin beserta assigned role/grant dari database pada setiap request**: admin nonaktif/terhapus langsung `401` (termasuk refresh), perubahan role/permission berlaku dengan JWT hidup. Tidak ada state bisnis dummy. Logout admin hanya mencabut token admin.
 - Tujuan redirect setelah login: `/` (Dashboard). Redirect ke halaman asal sebelum 401 belum diputuskan.
-- Credential dummy (hanya fase dummy, `App\Support\Dummy\DummyAdmins`): `superadmin@bbb.test` / `superadmin123`, `admin@bbb.test` / `admin123`, dan `wahyuni.sari@bbb.org` / `admin123`. Tuti Handayani dan admin yang diundang dikelola lewat halaman Admin (`admin-superadmin.md`).
-- Remember me, lupa password admin, dan rate limit login belum ada desainnya; tidak dibuat.
+- Akun pengembangan (seeder `AdminSeeder`, hanya environment `local`/`testing`, bukan credential production): `superadmin@bbb.test` / `superadmin123`, `admin@bbb.test` / `admin123`, `wahyuni.sari@bbb.org` / `admin123`, dan `tuti.handayani@bbb.org` (nonaktif). Admin lain dibuat lewat undangan (`admin-superadmin.md`). Email dicocokkan tanpa memperhatikan huruf besar/kecil dan spasi di tepi.
+- `badges.pendingExitRequests` menghitung `exit_requests.pending` hanya jika aktor memiliki exit-request-view; selain itu `0`, termasuk enum legacy superadmin yang grant-nya sudah dicabut.
+- Remember me dan rate limit login belum ada desainnya; tidak dibuat.
+- Lupa password admin (tidak punya artboard sendiri; mengikuti alur lupa password member dan halaman undangan admin):
+  - `forgot` selalu menjawab `200` dengan `resendAvailableAt` (60 detik), baik untuk email admin aktif, email tidak dikenal, undangan yang belum aktif, maupun admin nonaktif, sehingga tidak membocorkan email admin. Email hanya dikirim ke admin aktif, paling banyak sekali per 60 detik, dan link baru membatalkan link lama. Tanpa `BBB_DASHBOARD_URL` tidak ada email yang dikirim.
+  - Link di email membuka `/reset-password?token=` di dashboard, berlaku 60 menit (`member_links.reset_minutes`) dan sekali pakai. Token hanya disimpan sebagai hash SHA-256 (`admin_password_resets`).
+  - `verify-token` dan `reset` yang gagal menjawab `422 { message, code, adminWhatsappUrl }` dengan `code` `token_invalid`, `token_used`, atau `token_expired`. Password baru minimal 8 karakter (`422` pada `password`, link tetap bisa dipakai).
+  - `reset` mengganti password, membatalkan semua link lain milik admin itu, menaikkan `session_epoch` admin (semua token yang diterbitkan sebelumnya ditolak, termasuk saat refresh), lalu langsung masuk dengan sesi baru seperti penerimaan undangan.
+  - Throttle: `forgot` 5/menit, `verify-token` 30/menit, `reset` 10/menit per IP.
+
