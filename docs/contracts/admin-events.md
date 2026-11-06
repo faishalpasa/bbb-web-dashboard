@@ -77,7 +77,7 @@ interface EventDetail extends EventListItem {
     venueName: string | null;
     address: string | null;
     mapUrl: string | null; // link Maps (offline) atau link meeting (online)
-    surveyUrl: string | null; // dikirim lewat email ke peserta yang hadir saat acara selesai; harus http(s)
+    surveyUrl: string | null; // dikirim lewat email ke semua pendaftaran yang tidak dibatalkan saat acara selesai; harus http(s)
     documentationUrl: string | null; // boleh diisi belakangan; tampil di halaman kegiatan member yang hadir
     bannerUrl: string | null;
     usesQuota: boolean;
