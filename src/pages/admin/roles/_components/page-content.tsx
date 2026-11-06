@@ -16,7 +16,7 @@ export const PageContent = () => {
     return (
         <div className="space-y-4">
             <AdminPageHeader data-test-id="roles_header">
-                <header className="flex flex-wrap items-center justify-between gap-3">
+                <header className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-semibold">Role dan Permission</h1>
                         <p className="text-muted-foreground text-sm">
