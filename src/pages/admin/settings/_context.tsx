@@ -4,6 +4,7 @@ import { toast } from '@/components/ui/toast';
 import { getSettings, putSettings } from '@/services/superadmin';
 import type { LoadFailure } from '@/types/api';
 import type { AdminSettings } from '@/types/superadmin';
+import { durationTextError, durationTextToMinutes, formatMinutesDuration, toDurationText } from '@/utils/date';
 import { errorMessage, fieldErrorMessage, toLoadFailure } from '@/utils/error';
 import { isValidWhatsapp, normalizeWhatsapp, toLocalWhatsapp } from '@/utils/string';
 
@@ -46,12 +47,15 @@ interface PageContextValue {
     reload: () => void;
 }
 
+// Typed as "jam:menit" in the form, sent as minutes.
+const DURATION_FIELDS = ['registrationCloseMinutes', 'cancellationCloseMinutes', 'attendanceOpenMinutes'] as const;
+
 const PageContext = createContext<PageContextValue | null>(null);
 
 const toFields = (settings: AdminSettings): SettingsFields => ({
-    registrationCloseMinutes: String(settings.registrationCloseMinutes),
-    cancellationCloseMinutes: String(settings.cancellationCloseMinutes),
-    attendanceOpenMinutes: String(settings.attendanceOpenMinutes),
+    registrationCloseMinutes: toDurationText(settings.registrationCloseMinutes),
+    cancellationCloseMinutes: toDurationText(settings.cancellationCloseMinutes),
+    attendanceOpenMinutes: toDurationText(settings.attendanceOpenMinutes),
     engagedWindowMonths: String(settings.engagedWindowMonths),
     adminWhatsapp: settings.adminWhatsapp ? toLocalWhatsapp(settings.adminWhatsapp) : '',
     whatsappGroupUrl: settings.whatsappGroupUrl ?? '',
@@ -110,12 +114,29 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             return;
         }
 
-        // The API checks this too; saying it here saves a round trip. Attendance may not open earlier than registration closes.
-        const registrationMinutes = Number(fields.registrationCloseMinutes);
+        const durationErrors: SettingsErrors = {};
 
-        if (Number(fields.attendanceOpenMinutes) > registrationMinutes) {
+        for (const name of DURATION_FIELDS) {
+            const message = durationTextError(fields[name], true);
+
+            if (message) durationErrors[name] = message;
+        }
+
+        if (Object.keys(durationErrors).length > 0) {
+            setErrors(durationErrors);
+            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+
+            return;
+        }
+
+        const registrationMinutes = durationTextToMinutes(fields.registrationCloseMinutes) ?? 0;
+        const cancellationMinutes = durationTextToMinutes(fields.cancellationCloseMinutes) ?? 0;
+        const attendanceMinutes = durationTextToMinutes(fields.attendanceOpenMinutes) ?? 0;
+
+        // The API checks this too; saying it here saves a round trip. Attendance may not open earlier than registration closes.
+        if (attendanceMinutes > registrationMinutes) {
             setErrors({
-                attendanceOpenMinutes: `Waktu buka absensi tidak boleh lebih besar dari batas member mendaftar (${registrationMinutes} menit).`,
+                attendanceOpenMinutes: `Waktu buka absensi tidak boleh lebih besar dari batas member mendaftar (${formatMinutesDuration(registrationMinutes)}).`,
             });
             toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
 
@@ -128,9 +149,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         try {
             const response = await putSettings({
-                registrationCloseMinutes: Number(fields.registrationCloseMinutes),
-                cancellationCloseMinutes: Number(fields.cancellationCloseMinutes),
-                attendanceOpenMinutes: Number(fields.attendanceOpenMinutes),
+                registrationCloseMinutes: registrationMinutes,
+                cancellationCloseMinutes: cancellationMinutes,
+                attendanceOpenMinutes: attendanceMinutes,
                 engagedWindowMonths: Number(fields.engagedWindowMonths),
                 adminWhatsapp: fields.adminWhatsapp.trim() ? whatsapp : null,
                 whatsappGroupUrl: fields.whatsappGroupUrl.trim() || null,
