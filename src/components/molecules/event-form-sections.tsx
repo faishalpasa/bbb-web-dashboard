@@ -184,6 +184,14 @@ export const EventFormSections = ({ form, formats, timezones, disabled = false, 
                     </FormField>
                 </div>
                 <p className="text-muted-foreground -mt-2 text-sm">Jam diisi sesuai zona waktu acara, dalam pilihan per 30 menit.</p>
+                <ToggleRow
+                    id="allowsRegistrationDuringEvent"
+                    label="Buka pendaftaran saat acara berlangsung"
+                    description="Member dan peserta umum tetap bisa mendaftar sampai acara selesai. Batas daftar di Pengaturan tidak berlaku untuk kegiatan ini."
+                    checked={fields.allowsRegistrationDuringEvent}
+                    onChange={(checked) => setField('allowsRegistrationDuringEvent', checked)}
+                    data-test-id={`${testId}_switch_registration_during_event`}
+                />
             </Section>
 
             <Section title="Lokasi" data-test-id={`${testId}_location`}>

@@ -46,7 +46,7 @@ Semua parameter opsional; nilai yang tidak dikenal (atau bukan teks biasa) diaba
 - Kegiatan `completed` dan `cancelled` tidak bisa diedit (`422`).
 - Pengingat H-1: `php artisan events:send-reminders` (dijadwalkan tiap lima menit) mengantrekan satu email per pendaftar `registered` pada kegiatan `published` yang berlangsung besok (mulai 09.00 zona waktu kegiatan), satu kali per kegiatan (`events.reminder_sent_at`, internal, tidak ada di payload). Mengubah `startsAt` mengosongkan penanda itu. Tidak ada endpoint atau permission baru.
 - `close`: peserta yang belum ditandai hadir menjadi `absent`. Tombol X pada peserta (`present: false`) mengembalikan ke `registered`, atau ke `absent` bila kegiatan sudah ditutup; tanda bisa dikoreksi setelah ditutup.
-- Pendaftaran member ditutup 60 menit sebelum mulai (`registration.closesAt`, dibaca dari `app_settings.registration_close_minutes`, bawaan 60). Admin masih bisa menambah peserta sampai akhir hari mulai di zona waktu acara (`registration.adminAddUntil`); kuota penuh dan kegiatan non-member tertutup menolak dengan `422`.
+- Pendaftaran member ditutup 60 menit sebelum mulai (`registration.closesAt`, dibaca dari `app_settings.registration_close_minutes`, bawaan 60). Bila kegiatan mengaktifkan `allowsRegistrationDuringEvent`, `registration.closesAt` sama dengan `endsAt` dan batas dari Pengaturan tidak berlaku untuk pendaftaran (batas pembatalan tetap). Admin masih bisa menambah peserta sampai akhir hari mulai di zona waktu acara (`registration.adminAddUntil`); kuota penuh dan kegiatan non-member tertutup menolak dengan `422`.
 - `registered` menghitung semua pendaftaran yang bukan `cancelled`, member dan tamu (kuota juga). `attended` = jumlah `present`, `null` sampai ditutup. Peserta dan kehadiran dibaca/ditulis di `event_registrations`; daftar peserta berurutan `registered_at, id`, pencarian nama/nomor member/nama tamu. `cancel` tidak mengubah pendaftaran. Mengubah kapasitas di bawah jumlah terdaftar ditolak.
 - Banner lama dihapus dari disk bila tidak ada kegiatan lain (termasuk salinan/terhapus) yang masih memakainya; `duplicate` memakai file yang sama.
 - `slug` (link `/e/{slug}`) dibuat dari judul bila kosong dan harus unik; `attendanceCode` dibuat acak bila kosong, disimpan huruf besar.
@@ -81,6 +81,7 @@ interface EventDetail extends EventListItem {
     documentationUrl: string | null; // boleh diisi belakangan; tampil di halaman kegiatan member yang hadir
     bannerUrl: string | null;
     usesQuota: boolean;
+    allowsRegistrationDuringEvent: boolean; // true = member dan tamu bisa mendaftar sampai endsAt
     attendanceCode: string;
     publicPath: string; // "/e/{slug}"
     present: number;
@@ -94,6 +95,7 @@ interface EventInput {
     venueName: string | null; address: string | null; mapUrl: string | null;
     surveyUrl: string | null; documentationUrl: string | null;
     usesQuota: boolean; capacity: number | null; allowsNonMember: boolean;
+    allowsRegistrationDuringEvent?: boolean; // opsional; bila tidak dikirim, nilai tersimpan dipertahankan (bawaan false)
     attendanceCode: string | null; publish: boolean;
 }
 

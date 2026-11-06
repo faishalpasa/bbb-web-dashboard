@@ -181,7 +181,7 @@ Endpoint keluar/status memerlukan sesi member lengkap (`401` untuk tamu atau tok
 | `GET` | `/api/member/events?scope=upcoming|registered|history&page=...` | `PaginatedCollection<EventSummary>` |
 | `GET` | `/api/member/events/{eventId}` | `EventDetail` |
 
-Tab daftar kegiatan: `upcoming` (kegiatan yang belum selesai), `registered` (kegiatan yang belum selesai dan diikuti member, berstatus `registered` atau `present`), dan `history` (kegiatan yang sudah selesai atau dibatalkan **hanya jika registrasi milik member berstatus `present`/Hadir**; kegiatan tanpa kehadiran member tidak masuk, meskipun sudah selesai atau dibatalkan). Daftar dipaginasi 10 per halaman (`meta.lastPage`); web app menampilkan tombol "Muat lebih banyak". Badge status ("Terdaftar", "Hadir", "Kuota penuh") diturunkan dari `registration.status`, `lifecycle`, dan `remainingCapacity`. `EventDetail` memuat `calendarUrl` (draft Google Calendar tanpa link meeting atau data peserta) dan `registrationClosesAt`; aturan "ditutup N menit sebelum kegiatan" dihitung dari selisihnya dengan `startsAt`, bukan angka tetap di UI. Setelah mendaftar, membatalkan, atau mengirim kode, web app memuat ulang detail dari server (server yang menentukan `canRegister`, `canCancel`, dan kuota).
+Tab daftar kegiatan: `upcoming` (kegiatan yang belum selesai), `registered` (kegiatan yang belum selesai dan diikuti member, berstatus `registered` atau `present`), dan `history` (kegiatan yang sudah selesai atau dibatalkan **hanya jika registrasi milik member berstatus `present`/Hadir**; kegiatan tanpa kehadiran member tidak masuk, meskipun sudah selesai atau dibatalkan). Daftar dipaginasi 10 per halaman (`meta.lastPage`); web app menampilkan tombol "Muat lebih banyak". Badge status ("Terdaftar", "Hadir", "Kuota penuh") diturunkan dari `registration.status`, `lifecycle`, dan `remainingCapacity`. `EventDetail` memuat `calendarUrl` (draft Google Calendar tanpa link meeting atau data peserta) dan `registrationClosesAt`; aturan "ditutup N menit sebelum kegiatan" dihitung dari selisihnya dengan `startsAt`, bukan angka tetap di UI. Bila `allowsRegistrationDuringEvent` bernilai `true`, `registrationClosesAt` sama dengan `endsAt`: member tetap bisa mendaftar saat kegiatan berlangsung (`lifecycle: ongoing`) dan UI menulis "Pendaftaran tetap dibuka sampai kegiatan selesai". Setelah mendaftar, membatalkan, atau mengirim kode, web app memuat ulang detail dari server (server yang menentukan `canRegister`, `canCancel`, dan kuota).
 
 Quota bersifat opsional. Saat `capacity` bernilai `null`, UI tidak menampilkan kapasitas atau sisa kursi. Server mengirim `canRegister`, `canCancel`, dan alasan Indonesia sebagai keputusan otoritatif.
 
@@ -194,7 +194,7 @@ Langkah 7: sesi DB membaca events/event_registrations MySQL dengan UUID string; 
 | `POST` | `/api/member/events/{eventId}/registrations` | `EventRegistration` |
 | `DELETE` | `/api/member/registrations/{registrationId}` | `EventRegistration` |
 
-Frontend tidak menghitung cutoff atau kapasitas sendiri. Register/cancel DB transaksional memakai urutan lock user -> member -> event -> registration, recheck status dan kapasitas. Cutoff daftar dan batal masing-masing dari app_settings.registration_close_minutes dan cancellation_close_minutes; tepat pada cutoff (now >= cutoff) sudah ditolak 422. cancellationCutoffAt pada hasil mutasi memakai cutoff batal, bukan daftar. Detail hanya menyediakan registrationClosesAt, jadi FE tidak menebak angka cutoff batal dari field itu.
+Frontend tidak menghitung cutoff atau kapasitas sendiri. Register/cancel DB transaksional memakai urutan lock user -> member -> event -> registration, recheck status dan kapasitas. Cutoff daftar dan batal masing-masing dari app_settings.registration_close_minutes dan cancellation_close_minutes (cutoff daftar menjadi `ends_at` untuk kegiatan dengan `allows_registration_during_event`; cutoff batal tidak berubah); tepat pada cutoff (now >= cutoff) sudah ditolak 422. cancellationCutoffAt pada hasil mutasi memakai cutoff batal, bukan daftar. Detail hanya menyediakan registrationClosesAt, jadi FE tidak menebak angka cutoff batal dari field itu.
 
 Kuota menghitung semua registrasi member/tamu DB yang tidak cancelled; batal mengembalikan kursi, quota null tidak membatasi. Duplicate register masih 422 dengan pesan sudah terdaftar; setelah cancelled, daftar ulang memakai UUID/baris unik yang sama dengan registeredAt baru. Registrasi orang lain/tak dikenal tidak bisa dibatalkan (404); hadir/selesai/batal/cutoff ditolak sesuai capability. Bridge exit sementara membatalkan registrasi DB mendatang/berlangsung yang masih registered, tidak mengembalikan kursi saat exit dibatalkan, tidak mengubah present/history; exit request disimpan di `exit_requests`. Admin dan halaman publik menulis ke acara DB yang sama.
 
@@ -250,8 +250,9 @@ Keduanya tanpa autentikasi dan tanpa token. Wilayah memakai endpoint terbuka `GE
     capacity: number | null;        // null bila usesQuota false
     registeredCount: number | null; // null bila usesQuota false; UI tidak menampilkan info kuota
     registrationStatus: 'open' | 'full' | 'closed';
-    registrationClosesAt: string;   // startsAt dikurangi registrationCloseMinutes
+    registrationClosesAt: string;   // startsAt dikurangi registrationCloseMinutes, atau endsAt bila allowsRegistrationDuringEvent
     registrationCloseMinutes: number; // dari Pengaturan (registrationCloseMinutes), bukan angka tetap di UI
+    allowsRegistrationDuringEvent: boolean; // true = pendaftaran dibuka sampai kegiatan selesai
     consentVersion: string;         // versi Kebijakan Data Pribadi yang dikirim kembali saat mendaftar
     adminWhatsappUrl: string | null; // kontak admin untuk keadaan kuota penuh/ditutup; null = tombol nonaktif
     captchaSiteKey: string | null;  // site key hCaptcha (publik); null = jangan tampilkan puzzle (hanya local/testing tanpa kunci)
@@ -261,7 +262,7 @@ Keduanya tanpa autentikasi dan tanpa token. Wilayah memakai endpoint terbuka `GE
 - `404 { message }` untuk slug yang tidak ada, kegiatan `draft`, dan kegiatan internal (`allowsNonMember: false`). API tidak membedakan ketiganya. Kegiatan `completed` atau `cancelled` dibalas `200` dengan `lifecycle` yang sesuai agar web app menampilkan layar khusus.
 - Respons tidak memuat data admin (kode kehadiran, daftar peserta, id internal). **Link meeting kegiatan online tidak pernah dikirim ke endpoint ini**; peserta hanya menerimanya lewat email konfirmasi.
 - Email konfirmasi member dan non-member memuat link draft Google Calendar dari judul, jadwal UTC, zona IANA, lokasi umum, dan tautan detail kegiatan. Link meeting privat tidak dimasukkan ke URL kalender. Peserta perlu menyimpan sendiri event di Google Calendar; perubahan jadwal/pembatalan tidak memperbarui salinannya secara otomatis. Pada web app, tombol Calendar hanya ada di detail kegiatan untuk member yang sudah terdaftar.
-- `registrationStatus`: `full` bila `usesQuota` dan kuota terisi, `closed` bila sudah melewati `registrationClosesAt` atau `lifecycle` bukan `upcoming`. Server yang memutuskan; web app tidak menghitung kuota atau cutoff sendiri.
+- `registrationStatus`: `full` bila `usesQuota` dan kuota terisi, `closed` bila sudah melewati `registrationClosesAt` atau `lifecycle` bukan `upcoming` (`ongoing` tetap `open` bila `allowsRegistrationDuringEvent`). Server yang memutuskan; web app tidak menghitung kuota atau cutoff sendiri.
 
 `PublicRegistrationInput` (semua wajib, nama field camelCase):
 
