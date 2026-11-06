@@ -13,11 +13,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PERMISSIONS as P } from '@/constants/permission';
 import { SETTINGS_DEMO_WEEKDAYS } from '@/constants/superadmin';
 import { usePermissions } from '@/hooks/usePermissions';
-import { formatLongDate } from '@/utils/date';
+import { durationTextToMinutes, formatLongDate } from '@/utils/date';
 import { clockMinusMinutes } from '@/utils/string';
 
-import { NUMBER_INPUT_PROPS } from '@/utils/number-input';
 import { type SettingsFieldName, usePageContext } from '../_context';
+import { DurationField } from './duration-field';
 
 interface CardProps {
     title: string;
@@ -38,12 +38,12 @@ const Card = ({ title, description, children, 'data-test-id': testId }: CardProp
 
 // "Contoh" line under the event rules: a Friday 19.00 event and what the two limits mean for it.
 const exampleText = (registration: string, cancellation: string, attendance: string): string => {
-    const toNumber = (value: string): number | null => (value.trim() !== '' && Number.isFinite(Number(value)) ? Number(value) : null);
-    const registerMinutes = toNumber(registration);
-    const cancelMinutes = toNumber(cancellation);
-    const attendanceMinutes = toNumber(attendance);
+    const registerMinutes = durationTextToMinutes(registration);
+    const cancelMinutes = durationTextToMinutes(cancellation);
+    const attendanceMinutes = durationTextToMinutes(attendance);
 
-    if (registerMinutes === null || cancelMinutes === null || attendanceMinutes === null) return 'Isi semua batas untuk melihat contohnya.';
+    if (registerMinutes === null || cancelMinutes === null || attendanceMinutes === null)
+        return 'Isi semua batas dengan benar untuk melihat contohnya.';
 
     const registerUntil = clockMinusMinutes(SETTINGS_DEMO_WEEKDAYS, 5, 19, registerMinutes);
     const cancelUntil = clockMinusMinutes(SETTINGS_DEMO_WEEKDAYS, 5, 19, cancelMinutes);
@@ -61,19 +61,16 @@ export const PageContent = () => {
     const { can } = usePermissions();
     const { settings, fields, errors, failure, isLoading, isSaving, notice, setField, handleSubmit, reload } = usePageContext();
 
-    const numberField = (name: SettingsFieldName, id: string, label: string, hint?: string) =>
+    const durationField = (name: SettingsFieldName, label: string, hint?: string) =>
         fields && (
-            <FormField id={id} label={label} hint={hint} error={errors[name]} data-test-id={`settings_${id}`}>
-                <Input
-                    id={id}
-                    {...NUMBER_INPUT_PROPS}
-                    value={fields[name]}
-                    aria-required="true"
-                    onChange={(event) => setField(name, event.target.value.replace(/\D/g, ''))}
-                    className="bg-card h-11 font-mono"
-                    data-test-id={`settings_input_${id}`}
-                />
-            </FormField>
+            <DurationField
+                id={name}
+                label={label}
+                hint={hint}
+                error={errors[name]}
+                value={fields[name]}
+                onChange={(value) => setField(name, value)}
+            />
         );
 
     if (failure) {
@@ -139,12 +136,11 @@ export const PageContent = () => {
                         data-test-id="settings_card_events"
                     >
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                            {numberField('registrationCloseMinutes', 'registrationCloseMinutes', 'Batas member mendaftar (menit sebelum acara)')}
-                            {numberField('cancellationCloseMinutes', 'cancellationCloseMinutes', 'Batas member membatalkan (menit sebelum acara)')}
-                            {numberField(
+                            {durationField('registrationCloseMinutes', 'Batas member mendaftar (sebelum acara)')}
+                            {durationField('cancellationCloseMinutes', 'Batas member membatalkan (sebelum acara)')}
+                            {durationField(
                                 'attendanceOpenMinutes',
-                                'attendanceOpenMinutes',
-                                'Absensi dibuka (menit sebelum acara)',
+                                'Absensi dibuka (sebelum acara)',
                                 'Tidak boleh lebih besar dari batas member mendaftar.',
                             )}
                         </div>

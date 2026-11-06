@@ -73,3 +73,44 @@ export const fromLocalInput = (value: string, timezone: EventTimezone): string |
 // 5 Okt 2026, 14.20 (WIB), for the audit log.
 export const formatLogTime = (iso: string): string =>
     `${formatTableDate(iso).replace(/^0/, '')}, ${format(iso, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}`;
+
+/** A minute count as people say it: 150 → "2 jam 30 menit", 1440 → "24 jam", 0 → "0 menit". */
+export const formatMinutesDuration = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    const parts = [hours > 0 ? `${hours} jam` : '', rest > 0 ? `${rest} menit` : ''].filter(Boolean);
+
+    return parts.length > 0 ? parts.join(' ') : '0 menit';
+};
+
+// Settings limits are typed as hours and minutes but saved as one minute count. In the form they live as "jam:menit"
+// text so a wrong minute value (for example 75) stays visible with its error instead of turning into hours.
+const MAX_DURATION_HOURS = 168; // the API caps every limit at 10080 minutes (7 days)
+
+export const toDurationText = (minutes: number): string => `${Math.floor(minutes / 60)}:${minutes % 60}`;
+
+export const splitDurationText = (text: string): { hours: string; minutes: string } => {
+    const [hours = '', minutes = ''] = text.split(':');
+
+    return { hours, minutes };
+};
+
+/** Range problem in a "jam:menit" value; `requireValue` also refuses two empty boxes (used on submit). */
+export const durationTextError = (text: string, requireValue = false): string | undefined => {
+    const { hours, minutes } = splitDurationText(text);
+
+    if (hours === '' && minutes === '') return requireValue ? 'Isi jam dan menit.' : undefined;
+    if (Number(minutes || 0) > 59) return 'Menit hanya boleh 0 sampai 59.';
+    if (Number(hours || 0) > MAX_DURATION_HOURS) return `Jam maksimal ${MAX_DURATION_HOURS} (7 hari).`;
+
+    return undefined;
+};
+
+/** Minutes for a valid "jam:menit" value, or null when it is empty or out of range. */
+export const durationTextToMinutes = (text: string): number | null => {
+    if (durationTextError(text, true)) return null;
+
+    const { hours, minutes } = splitDurationText(text);
+
+    return Number(hours || 0) * 60 + Number(minutes || 0);
+};
