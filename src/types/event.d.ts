@@ -40,6 +40,8 @@ export interface EventDetail extends EventListItem {
     documentationUrl: string | null;
     bannerUrl: string | null;
     usesQuota: boolean;
+    /** Members and guests may keep registering until the event ends instead of the global cutoff before it starts. */
+    allowsRegistrationDuringEvent: boolean;
     attendanceCode: string;
     publicPath: string;
     present: number;
@@ -72,6 +74,7 @@ export interface EventInput {
     usesQuota: boolean;
     capacity: number | null;
     allowsNonMember: boolean;
+    allowsRegistrationDuringEvent: boolean;
     attendanceCode: string | null;
     publish: boolean;
     registrationForm?: RegistrationFormDefinition;

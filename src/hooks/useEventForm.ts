@@ -45,6 +45,7 @@ export interface EventFormFields {
     usesQuota: boolean;
     capacity: string;
     allowsNonMember: boolean;
+    allowsRegistrationDuringEvent: boolean;
     attendanceCode: string;
 }
 
@@ -65,6 +66,7 @@ const EMPTY_FIELDS: EventFormFields = {
     usesQuota: true,
     capacity: EVENT_DEFAULT_CAPACITY,
     allowsNonMember: true,
+    allowsRegistrationDuringEvent: false,
     attendanceCode: '',
 };
 
@@ -103,6 +105,7 @@ const fieldsFromEvent = (event: EventDetail): EventFormFields => ({
     usesQuota: event.usesQuota,
     capacity: event.capacity === null ? EVENT_DEFAULT_CAPACITY : String(event.capacity),
     allowsNonMember: event.allowsNonMember,
+    allowsRegistrationDuringEvent: event.allowsRegistrationDuringEvent,
     attendanceCode: event.attendanceCode,
 });
 
@@ -204,6 +207,7 @@ export const useEventForm = (event?: EventDetail) => {
             usesQuota: fields.usesQuota,
             capacity: fields.usesQuota ? Number(fields.capacity) || null : null,
             allowsNonMember: fields.allowsNonMember,
+            allowsRegistrationDuringEvent: fields.allowsRegistrationDuringEvent,
             attendanceCode: fields.attendanceCode.trim() || null,
             publish,
             ...(registrationForm ? { registrationForm } : {}),
