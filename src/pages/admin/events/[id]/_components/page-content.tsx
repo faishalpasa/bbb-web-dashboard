@@ -255,14 +255,15 @@ export const PageContent = () => {
                         className="border-border bg-card flex items-center justify-between gap-3 rounded-lg border p-4"
                         data-test-id={`event_detail_${key}`}
                     >
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                             <h2 className="text-sm">{label}</h2>
                             {url ? (
                                 <a
                                     href={url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="wrap-anywhere font-mono text-sm underline"
+                                    className="block truncate font-mono text-sm underline"
+                                    title={url}
                                     data-test-id={`event_detail_link_${key}`}
                                 >
                                     {url}
@@ -275,6 +276,7 @@ export const PageContent = () => {
                             <Button
                                 variant="outline"
                                 size="sm"
+                                className="shrink-0"
                                 onClick={() => void copyText(url, label)}
                                 data-test-id={`event_detail_button_copy_${key}`}
                             >
