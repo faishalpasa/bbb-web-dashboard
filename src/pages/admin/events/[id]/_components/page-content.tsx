@@ -197,7 +197,7 @@ export const PageContent = () => {
                 />
             </section>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.6fr]">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <section
                     className="border-border bg-card flex items-center justify-between gap-3 rounded-lg border p-4"
                     data-test-id="event_detail_code"
@@ -219,10 +219,10 @@ export const PageContent = () => {
                     className="border-border bg-card flex items-center justify-between gap-3 rounded-lg border p-4"
                     data-test-id="event_detail_public_link"
                 >
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <h2 className="text-sm">Link pendaftaran publik (member dan non-member)</h2>
                         {event.allowsNonMember ? (
-                            <p className="wrap-anywhere font-mono text-sm underline" title={publicUrl}>
+                            <p className="truncate font-mono text-sm underline" title={publicUrl}>
                                 {publicUrl}
                             </p>
                         ) : (
@@ -235,6 +235,7 @@ export const PageContent = () => {
                         <Button
                             variant="outline"
                             size="sm"
+                            className="shrink-0"
                             onClick={() => void copyText(publicUrl, 'Link')}
                             data-test-id="event_detail_button_copy_link"
                         >
