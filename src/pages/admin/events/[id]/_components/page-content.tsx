@@ -221,13 +221,26 @@ export const PageContent = () => {
                 >
                     <div className="min-w-0">
                         <h2 className="text-sm">Link pendaftaran publik (member dan non-member)</h2>
-                        <p className="wrap-anywhere font-mono text-sm underline" title={publicUrl}>
-                            {publicUrl}
-                        </p>
+                        {event.allowsNonMember ? (
+                            <p className="wrap-anywhere font-mono text-sm underline" title={publicUrl}>
+                                {publicUrl}
+                            </p>
+                        ) : (
+                            <p className="text-muted-foreground text-sm" data-test-id="event_detail_text_public_link_unavailable">
+                                Link pendaftaran publik tersedia untuk kegiatan yang terbuka bagi non-member.
+                            </p>
+                        )}
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => void copyText(publicUrl, 'Link')} data-test-id="event_detail_button_copy_link">
-                        Salin
-                    </Button>
+                    {event.allowsNonMember && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void copyText(publicUrl, 'Link')}
+                            data-test-id="event_detail_button_copy_link"
+                        >
+                            Salin
+                        </Button>
+                    )}
                 </section>
             </div>
 
