@@ -179,7 +179,7 @@ Endpoint keluar/status memerlukan sesi member lengkap (`401` untuk tamu atau tok
 | Method | URL | Payload/result |
 | --- | --- | --- |
 | `GET` | `/api/member/events?scope=upcoming|registered|history&page=...` | `PaginatedCollection<EventSummary>` |
-| `GET` | `/api/member/events/{eventId}` | `EventDetail` |
+| `GET` | `/api/member/events/{eventId}` | `EventDetail`; `{eventId}` boleh berupa slug publik, dipakai `/e/{slug}` untuk mengarahkan member yang sudah masuk ke `/events/{id}` |
 
 Tab daftar kegiatan: `upcoming` (kegiatan yang belum selesai), `registered` (kegiatan yang belum selesai dan diikuti member, berstatus `registered` atau `present`), dan `history` (kegiatan yang sudah selesai atau dibatalkan **hanya jika registrasi milik member berstatus `present`/Hadir**; kegiatan tanpa kehadiran member tidak masuk, meskipun sudah selesai atau dibatalkan). Daftar dipaginasi 10 per halaman (`meta.lastPage`); web app menampilkan tombol "Muat lebih banyak". Badge status ("Terdaftar", "Hadir", "Kuota penuh") diturunkan dari `registration.status`, `lifecycle`, dan `remainingCapacity`. `EventDetail` memuat `calendarUrl` (draft Google Calendar tanpa link meeting atau data peserta) dan `registrationClosesAt`; aturan "ditutup N menit sebelum kegiatan" dihitung dari selisihnya dengan `startsAt`, bukan angka tetap di UI. Bila `allowsRegistrationDuringEvent` bernilai `true`, `registrationClosesAt` sama dengan `endsAt`: member tetap bisa mendaftar saat kegiatan berlangsung (`lifecycle: ongoing`) dan UI menulis "Pendaftaran tetap dibuka sampai kegiatan selesai". Setelah mendaftar, membatalkan, atau mengirim kode, web app memuat ulang detail dari server (server yang menentukan `canRegister`, `canCancel`, dan kuota).
 

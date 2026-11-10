@@ -16,6 +16,7 @@ Semua endpoint di bawah, kecuali undangan, butuh sesi **superadmin**: tanpa sesi
 | `POST` | `/api/admin/admins` | `{ name, email }` -> `AdminAccount & { invitationPath }` (`201`) |
 | `POST` | `/api/admin/admins/{id}/deactivate` | -> `AdminAccount`; `422` bila diri sendiri atau bukan aktif |
 | `POST` | `/api/admin/admins/{id}/activate` | -> `AdminAccount`; `422` bila bukan nonaktif |
+| `POST` | `/api/admin/admins/{id}/resend-invitation` | -> `AdminAccount & { invitationPath }`; `422` bila bukan `invited` |
 | `GET` | `/api/admin/audit-logs?type&page&perPage` | `{ items: AuditLogEntry[], meta, types }` |
 | `GET` | `/api/admin/invitations/{token}` | `{ name, email, role, invitedBy }` (tanpa sesi) |
 | `POST` | `/api/admin/invitations/{token}/accept` | `{ password }` -> `AdminSession` dan sesi admin dimulai (tanpa sesi sebelumnya) |
@@ -52,11 +53,11 @@ interface AdminAccount {
     role: { value: 'superadmin' | 'admin'; label: string };
     status: { value: 'active' | 'inactive' | 'invited'; label: string };
     isCurrentUser: boolean;
-    actions: { canDeactivate: boolean; canActivate: boolean };
+    actions: { canDeactivate: boolean; canActivate: boolean; canResendInvitation: boolean; canChangeRole: boolean };
 }
 ```
 
-- Undangan selalu membuat peran `admin`. Email harus unik di antara admin (`422` "Email sudah terdaftar sebagai admin."). Undangan berlaku 7 hari dan sekali pakai.
+- Undangan selalu membuat peran `admin`. Email harus unik di antara admin (`422` "Email sudah terdaftar sebagai admin."). Undangan berlaku 7 hari dan sekali pakai. Admin yang masih `invited` bisa dikirimi ulang undangan (keputusan owner 10 Nov 2026): link baru 7 hari diterbitkan dan diemailkan, audit log mencatatnya, link lama tidak dibatalkan (biasanya sudah kedaluwarsa); izin yang dipakai `admin-invite`.
 - Admin yang keluar dinonaktifkan, bukan dihapus. Superadmin tidak bisa menonaktifkan dirinya sendiri. Admin nonaktif tidak bisa masuk (`422` pada `email`) dan sesinya berhenti.
 - Email undangan **belum dikirim** (provider email belum ada), jadi respons pembuatan memuat `invitationPath` (`/invitation?token=...`) agar link bisa dibuka manual; hapus bagian ini saat email nyata aktif. Email admin dicek unik tanpa memperhatikan huruf besar/kecil dan disimpan huruf kecil; nama tanpa spasi tepi. Akun admin tidak pernah dihapus, hanya dinonaktifkan: nonaktif berlaku di request berikutnya admin itu. Hanya admin `active` yang bisa dinonaktifkan, hanya `inactive` yang bisa diaktifkan kembali (admin `invited` belum bisa keduanya).
 

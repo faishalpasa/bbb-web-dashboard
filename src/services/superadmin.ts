@@ -73,6 +73,16 @@ export const postActivateAdmin = async (adminId: string): Promise<ServiceRespons
     }
 };
 
+export const postResendAdminInvitation = async (adminId: string): Promise<ServiceResponse<AdminInvitationResult>> => {
+    try {
+        const { data } = await axiosClient.post<ApiEnvelope<AdminInvitationResult>>(`/admin/admins/${adminId}/resend-invitation`);
+
+        return { data: data.data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
 export const getAuditLogs = async (query: AuditLogQuery): Promise<ServiceResponse<AuditLogList>> => {
     try {
         const { data } = await axiosClient.get<ApiEnvelope<AuditLogList>>('/admin/audit-logs', {
