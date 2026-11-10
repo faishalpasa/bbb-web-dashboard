@@ -34,7 +34,7 @@ export const MemberEditFormProvider = ({ member, options, children }: MemberEdit
         event.preventDefault();
         setSubmitError(null);
 
-        const input = form.validate({ requireEmail: false });
+        const input = form.validate({ requireEmail: true });
 
         if (!input) {
             toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
@@ -44,7 +44,7 @@ export const MemberEditFormProvider = ({ member, options, children }: MemberEdit
         setIsSubmitting(true);
 
         try {
-            await putMember(member.id, input);
+            await putMember(member.id, { ...input, email: form.fields.email.trim() });
             toast.add({ type: 'success', title: 'Perubahan member disimpan.' });
             void navigate({ to: ROUTES.memberDetail, params: { memberId: member.id } });
         } catch (error) {

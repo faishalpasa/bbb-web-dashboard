@@ -88,6 +88,8 @@ export interface MemberDetail extends ReadingProfile {
 
 export interface MemberEditInput extends ReadingProfileInput {
     name: string;
+    /** On edit, a different address changes the sign-in email; left out, the current one stays. */
+    email?: string;
     birthYear: number;
     whatsapp: string;
     participationPreference: string | null;

@@ -4,18 +4,18 @@ import { SearchableSelect } from '@/components/molecules/searchable-select';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import type { MemberForm } from '@/hooks/useMemberForm';
-import { cn } from '@/lib/utils';
 import type { SelectOption } from '@/types/api';
 
 interface MemberFormSectionsProps {
     disabled?: boolean;
     form: MemberForm;
     preferences: SelectOption[];
-    isEmailEditable: boolean;
+    /** Shown under the email field; creating and editing explain different consequences. */
+    emailHint: string;
     'data-test-id': string;
 }
 
-export const MemberFormSections = ({ form, preferences, isEmailEditable, disabled, 'data-test-id': testId }: MemberFormSectionsProps) => {
+export const MemberFormSections = ({ form, preferences, emailHint, disabled, 'data-test-id': testId }: MemberFormSectionsProps) => {
     const {
         fields,
         errors,
@@ -75,23 +75,16 @@ export const MemberFormSections = ({ form, preferences, isEmailEditable, disable
                         </NativeSelect>
                     </FormField>
 
-                    <FormField
-                        id="email"
-                        label="Email"
-                        hint={isEmailEditable ? 'Dipakai untuk masuk. Harus unik.' : 'Email tidak bisa diubah di sini.'}
-                        error={errors.email}
-                        data-test-id={`${testId}_email`}
-                    >
+                    <FormField id="email" label="Email" hint={emailHint} error={errors.email} data-test-id={`${testId}_email`}>
                         <Input
                             id="email"
                             type="email"
                             value={fields.email}
-                            readOnly={!isEmailEditable}
                             aria-required="true"
                             autoComplete="off"
                             onChange={(event) => setField('email', event.target.value)}
                             placeholder="nama@email.com"
-                            className={cn('bg-card h-11', !isEmailEditable && 'bg-secondary text-foreground/80')}
+                            className="bg-card h-11"
                             data-test-id={`${testId}_input_email`}
                         />
                     </FormField>
