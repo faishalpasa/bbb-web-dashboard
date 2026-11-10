@@ -94,7 +94,7 @@ const EditForm = ({ memberId, preferences }: EditFormProps) => {
                 <MemberFormSections
                     form={form}
                     preferences={preferences}
-                    isEmailEditable={false}
+                    emailHint="Dipakai untuk masuk. Bila diganti, member masuk pakai email baru dan pemberitahuan dikirim ke email lama dan baru."
                     disabled={isSubmitting}
                     data-test-id="member_edit"
                 />
