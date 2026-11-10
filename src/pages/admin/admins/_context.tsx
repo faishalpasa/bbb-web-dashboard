@@ -5,7 +5,7 @@ import { PERMISSIONS as P } from '@/constants/permission';
 import { useClientPagination, type ClientPagination } from '@/hooks/useClientPagination';
 import { usePermissions } from '@/hooks/usePermissions';
 import { getAdminRoleOptions, putAdminRole } from '@/services/role';
-import { getAdmins, postActivateAdmin, postDeactivateAdmin } from '@/services/superadmin';
+import { getAdmins, postActivateAdmin, postDeactivateAdmin, postResendAdminInvitation } from '@/services/superadmin';
 import type { LoadFailure } from '@/types/api';
 import type { AdminRoleSummary } from '@/types/auth';
 import type { AdminAccount } from '@/types/superadmin';
@@ -21,6 +21,7 @@ interface PageContextValue {
     deactivateError: string | null;
     isDeactivating: boolean;
     pendingActivationId: string | null;
+    pendingResendId: string | null;
     roleOptions: AdminRoleSummary[];
     roleOptionsError: string | null;
     isLoadingRoles: boolean;
@@ -36,6 +37,7 @@ interface PageContextValue {
     closeDeactivate: () => void;
     confirmDeactivate: () => Promise<void>;
     activate: (admin: AdminAccount) => Promise<void>;
+    resendInvitation: (admin: AdminAccount) => Promise<void>;
     reload: () => void;
 }
 
@@ -62,6 +64,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [deactivateError, setDeactivateError] = useState<string | null>(null);
     const [isDeactivating, setIsDeactivating] = useState(false);
     const [pendingActivationId, setPendingActivationId] = useState<string | null>(null);
+    const [pendingResendId, setPendingResendId] = useState<string | null>(null);
     const [reloadToken, setReloadToken] = useState(0);
 
     useEffect(() => {
@@ -141,6 +144,21 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         }
     }, []);
 
+    const resendInvitation = useCallback(async (admin: AdminAccount) => {
+        setPendingResendId(admin.id);
+        setNotice(null);
+
+        try {
+            await postResendAdminInvitation(admin.id);
+            setNotice({ tone: 'success', text: `Undangan baru dikirim ke ${admin.email}. Link berlaku 7 hari.` });
+        } catch (error) {
+            setNotice({ tone: 'error', text: errorMessage(error) });
+            setReloadToken((token) => token + 1);
+        } finally {
+            setPendingResendId(null);
+        }
+    }, []);
+
     const confirmRoleChange = useCallback(async () => {
         if (!changingRole || !nextRoleId || isChangingRole || isLoadingRoles || !roleOptions.some((role) => role.id === nextRoleId)) return;
         setIsChangingRole(true);
@@ -192,6 +210,8 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             closeDeactivate: () => setDeactivating(null),
             confirmDeactivate,
             activate,
+            pendingResendId,
+            resendInvitation,
             reload: () => setReloadToken((token) => token + 1),
         }),
         [
@@ -214,6 +234,8 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             pendingActivationId,
             confirmDeactivate,
             activate,
+            pendingResendId,
+            resendInvitation,
         ],
     );
 

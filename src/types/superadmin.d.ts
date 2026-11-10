@@ -29,7 +29,7 @@ export interface AdminAccount {
     roleInfo: AdminRoleSummary;
     status: { value: AdminAccountStatus; label: string };
     isCurrentUser: boolean;
-    actions: { canDeactivate: boolean; canActivate: boolean; canChangeRole: boolean };
+    actions: { canDeactivate: boolean; canActivate: boolean; canResendInvitation: boolean; canChangeRole: boolean };
 }
 
 export interface AdminInvitationResult extends AdminAccount {

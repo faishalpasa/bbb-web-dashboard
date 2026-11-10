@@ -49,7 +49,7 @@ Semua route di bawah berawalan `/api/admin`. Aksi memerlukan view modul terkait 
 | setting-view | GET /settings |
 | setting-update | PUT /settings |
 | admin-view | GET /admins |
-| admin-invite | POST /admins |
+| admin-invite | POST /admins, POST /admins/{id}/resend-invitation |
 | admin-activate | POST /admins/{id}/activate |
 | admin-deactivate | POST /admins/{id}/deactivate |
 | admin-role-update | PUT /admins/{id}/role |

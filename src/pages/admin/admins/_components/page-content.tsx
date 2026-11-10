@@ -223,10 +223,23 @@ export const PageContent = () => {
 
 const RowActions = ({ admin }: { admin: ReturnType<typeof usePageContext>['admins'][number] }) => {
     const { can } = usePermissions();
-    const { openRoleChange } = usePageContext();
+    const { openRoleChange, pendingResendId, resendInvitation } = usePageContext();
     return (
         <div className="flex flex-wrap items-center gap-2 md:justify-end">
             <RowAction admin={admin} />
+            {can(P.ADMIN_INVITE) && admin.actions.canResendInvitation && (
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="bg-card"
+                    disabled={pendingResendId === admin.id}
+                    onClick={() => void resendInvitation(admin)}
+                    data-test-id={`admins_button_resend_${admin.id}`}
+                >
+                    {pendingResendId === admin.id ? 'Mengirim…' : 'Kirim Ulang Undangan'}
+                </Button>
+            )}
             {can(P.ADMIN_ROLE_UPDATE) && admin.actions.canChangeRole && (
                 <Button
                     type="button"
