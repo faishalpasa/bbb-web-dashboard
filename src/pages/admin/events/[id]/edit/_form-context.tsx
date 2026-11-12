@@ -13,6 +13,10 @@ interface FormContextValue {
     isSubmitting: boolean;
     submitError: string | null;
     save: (publish: boolean) => Promise<void>;
+    pendingPublish: boolean | null;
+    requestSave: (publish: boolean) => void;
+    cancelSave: () => void;
+    confirmSave: () => Promise<void>;
 }
 
 const FormContext = createContext<FormContextValue | null>(null);
@@ -27,6 +31,21 @@ export const EventEditFormProvider = ({ event, children }: EventEditFormProvider
     const form = useEventForm(event);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
+    // The kind of save waiting for the user's yes: true publishes, false keeps it as saved.
+    const [pendingPublish, setPendingPublish] = useState<boolean | null>(null);
+
+    // Checks the form first, so the confirmation only appears for something that can be saved.
+    const requestSave = (publish: boolean) => {
+        if (isSubmitting) return;
+        setSubmitError(null);
+
+        if (!form.buildInput(publish)) {
+            setSubmitError('Periksa isian formulir yang ditandai di bawah.');
+            return;
+        }
+
+        setPendingPublish(publish);
+    };
 
     const save = async (publish: boolean) => {
         if (isSubmitting) return;
@@ -52,7 +71,19 @@ export const EventEditFormProvider = ({ event, children }: EventEditFormProvider
         }
     };
 
-    return <FormContext.Provider value={{ form, isSubmitting, submitError, save }}>{children}</FormContext.Provider>;
+    const confirmSave = async () => {
+        if (pendingPublish === null) return;
+        await save(pendingPublish);
+        setPendingPublish(null);
+    };
+
+    return (
+        <FormContext.Provider
+            value={{ form, isSubmitting, submitError, save, pendingPublish, requestSave, cancelSave: () => setPendingPublish(null), confirmSave }}
+        >
+            {children}
+        </FormContext.Provider>
+    );
 };
 
 export const useFormContext = (): FormContextValue => {

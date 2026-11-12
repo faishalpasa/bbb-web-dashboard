@@ -13,6 +13,17 @@ export const getExitRequests = async (): Promise<ServiceResponse<ExitRequestList
     }
 };
 
+// Approved and rejected requests, newest decision first.
+export const getExitRequestHistory = async (): Promise<ServiceResponse<ExitRequestList>> => {
+    try {
+        const { data } = await axiosClient.get<ApiEnvelope<ExitRequestList>>('/admin/exit-requests', { params: { status: 'decided' } });
+
+        return { data: data.data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
 export const postApproveExitRequest = async (exitRequestId: string): Promise<ServiceResponse<ExitRequest>> => {
     try {
         const { data } = await axiosClient.post<ApiEnvelope<ExitRequest>>(`/admin/exit-requests/${exitRequestId}/approve`);

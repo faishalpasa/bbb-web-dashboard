@@ -5,6 +5,7 @@ import { LoaderCircle } from 'lucide-react';
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { FormField } from '@/components/molecules/form-field';
 import { RequiredNote } from '@/components/molecules/required-mark';
+import { SubmitConfirmationDialog } from '@/components/molecules/submit-confirmation-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -13,8 +14,22 @@ import { ROUTES } from '@/constants/route';
 import { usePageContext } from '../_context';
 
 export const PageContent = () => {
-    const { fields, errors, roleOptions, roleOptionsError, isLoadingRoles, isSubmitting, submitError, invitation, setField, handleSubmit } =
-        usePageContext();
+    const {
+        fields,
+        errors,
+        roleOptions,
+        roleOptionsError,
+        isLoadingRoles,
+        isSubmitting,
+        submitError,
+        invitation,
+        isConfirmOpen,
+        confirmDescription,
+        setField,
+        handleSubmit,
+        confirmSubmit,
+        closeConfirm,
+    } = usePageContext();
 
     return (
         <div className="space-y-4">
@@ -132,6 +147,17 @@ export const PageContent = () => {
                     </Button>
                 </div>
             </form>
+
+            <SubmitConfirmationDialog
+                open={isConfirmOpen}
+                onClose={closeConfirm}
+                onConfirm={() => void confirmSubmit()}
+                title="Kirim undangan admin?"
+                description={confirmDescription}
+                confirmLabel="Ya, kirim undangan"
+                isSubmitting={isSubmitting}
+                data-test-id="admin_new_dialog_confirm"
+            />
         </div>
     );
 };

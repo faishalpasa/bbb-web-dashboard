@@ -15,9 +15,13 @@ interface PageContextValue {
     consentAcknowledged: boolean;
     isSubmitting: boolean;
     submitError: string | null;
+    isConfirmOpen: boolean;
+    confirmDescription: string;
     setSendInvitation: (value: boolean) => void;
     setConsentAcknowledged: (value: boolean) => void;
     handleSubmit: FormEventHandler<HTMLFormElement>;
+    confirmSubmit: () => Promise<void>;
+    closeConfirm: () => void;
 }
 
 const PageContext = createContext<PageContextValue | null>(null);
@@ -30,6 +34,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [consentAcknowledged, setConsentAcknowledged] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
+    const [isConfirmOpen, setConfirmOpen] = useState(false);
 
     useEffect(() => {
         const loadPreferences = async () => {
@@ -47,14 +52,26 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
+    // Checks the form first, so the confirmation only appears for something that can be saved.
+    const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
         event.preventDefault();
+        if (isSubmitting) return;
         setSubmitError(null);
 
+        if (!form.validate({ requireEmail: true })) {
+            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+            return;
+        }
+
+        setConfirmOpen(true);
+    };
+
+    const confirmSubmit = async () => {
+        if (isSubmitting) return;
         const input = form.validate({ requireEmail: true });
 
         if (!input) {
-            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+            setConfirmOpen(false);
             return;
         }
 
@@ -75,8 +92,13 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             else setSubmitError(errorMessage(error));
         } finally {
             setIsSubmitting(false);
+            setConfirmOpen(false);
         }
     };
+
+    const confirmDescription = sendInvitation
+        ? `Member ditambahkan dan email undangan dikirim ke ${form.fields.email.trim()} supaya mereka bisa membuat password sendiri.`
+        : 'Member ditambahkan tanpa email undangan. Akunnya tersambung otomatis saat mereka mendaftar atau masuk dengan email yang sama.';
 
     const value: PageContextValue = {
         form,
@@ -85,9 +107,13 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         consentAcknowledged,
         isSubmitting,
         submitError,
+        isConfirmOpen,
+        confirmDescription,
         setSendInvitation,
         setConsentAcknowledged,
         handleSubmit,
+        confirmSubmit,
+        closeConfirm: () => setConfirmOpen(false),
     };
 
     return <PageContext.Provider value={value}>{children}</PageContext.Provider>;

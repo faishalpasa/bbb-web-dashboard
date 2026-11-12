@@ -12,6 +12,7 @@ import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { PermissionGate } from '@/components/molecules/permission-gate';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { SubmitConfirmationDialog } from '@/components/molecules/submit-confirmation-dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EVENT_STATUS_TONES } from '@/constants/event';
@@ -76,7 +77,7 @@ const EditForm = () => {
         copyAnnouncement,
         cancelEvent,
     } = usePageContext();
-    const { form, isSubmitting, submitError, save } = useFormContext();
+    const { form, isSubmitting, submitError, pendingPublish, requestSave, cancelSave, confirmSave } = useFormContext();
 
     if (!event || !eventId) return null;
 
@@ -100,7 +101,7 @@ const EditForm = () => {
             className="space-y-4"
             onSubmit={(submitEvent) => {
                 submitEvent.preventDefault();
-                void save(false);
+                requestSave(false);
             }}
             noValidate
             data-test-id="event_edit_form"
@@ -161,7 +162,7 @@ const EditForm = () => {
                                             type="button"
                                             className="h-11 min-w-0 flex-1 px-3 font-semibold"
                                             disabled={isSubmitting || form.registration.requiresReload}
-                                            onClick={() => void save(true)}
+                                            onClick={() => requestSave(true)}
                                             data-test-id="event_edit_button_publish"
                                         >
                                             {isSubmitting && <LoaderCircle className="animate-spin" />}
@@ -222,6 +223,22 @@ const EditForm = () => {
                 </div>
             </div>
 
+            <SubmitConfirmationDialog
+                open={pendingPublish !== null}
+                onClose={cancelSave}
+                onConfirm={() => void confirmSave()}
+                title={pendingPublish ? 'Publikasikan kegiatan?' : isDraft ? 'Simpan draf kegiatan?' : 'Simpan perubahan kegiatan?'}
+                description={
+                    pendingPublish
+                        ? 'Kegiatan langsung terlihat oleh member dan bisa didaftar sesuai jadwal pendaftarannya.'
+                        : isDraft
+                          ? 'Draf belum terlihat oleh member. Kegiatan bisa dipublikasikan nanti.'
+                          : 'Perubahan langsung terlihat oleh member.'
+                }
+                confirmLabel={pendingPublish ? 'Ya, publikasikan' : isDraft ? 'Ya, simpan draf' : 'Ya, simpan perubahan'}
+                isSubmitting={isSubmitting}
+                data-test-id="event_edit_dialog_confirm"
+            />
             <ConfirmationDialog
                 open={can(P.EVENT_CANCEL) && isCancelDialogOpen}
                 onClose={() => setCancelDialogOpen(false)}

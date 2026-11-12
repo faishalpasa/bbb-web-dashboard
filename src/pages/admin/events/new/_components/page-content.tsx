@@ -8,6 +8,7 @@ import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { PermissionGate } from '@/components/molecules/permission-gate';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { SubmitConfirmationDialog } from '@/components/molecules/submit-confirmation-dialog';
 import { Button } from '@/components/ui/button';
 import { EVENT_STATUS_TONES } from '@/constants/event';
 import { PERMISSIONS as P } from '@/constants/permission';
@@ -16,14 +17,14 @@ import { ROUTES } from '@/constants/route';
 import { usePageContext } from '../_context';
 
 export const PageContent = () => {
-    const { form, options, isSubmitting, submitError, save } = usePageContext();
+    const { form, options, isSubmitting, submitError, pendingPublish, requestSave, cancelSave, confirmSave } = usePageContext();
 
     return (
         <form
             className="space-y-4"
             onSubmit={(event) => {
                 event.preventDefault();
-                void save(false);
+                requestSave(false);
             }}
             noValidate
             data-test-id="event_new_form"
@@ -63,7 +64,7 @@ export const PageContent = () => {
                                     type="button"
                                     className="h-11 w-full font-semibold"
                                     disabled={isSubmitting || form.registration.requiresReload}
-                                    onClick={() => void save(true)}
+                                    onClick={() => requestSave(true)}
                                     data-test-id="event_new_button_publish"
                                 >
                                     {isSubmitting && <LoaderCircle className="animate-spin" />}
@@ -90,6 +91,20 @@ export const PageContent = () => {
                     </section>
                 </div>
             </div>
+            <SubmitConfirmationDialog
+                open={pendingPublish !== null}
+                onClose={cancelSave}
+                onConfirm={() => void confirmSave()}
+                title={pendingPublish ? 'Publikasikan kegiatan?' : 'Simpan draf kegiatan?'}
+                description={
+                    pendingPublish
+                        ? 'Kegiatan langsung terlihat oleh member dan bisa didaftar sesuai jadwal pendaftarannya.'
+                        : 'Draf belum terlihat oleh member. Kegiatan bisa dipublikasikan nanti dari halaman edit.'
+                }
+                confirmLabel={pendingPublish ? 'Ya, publikasikan' : 'Ya, simpan draf'}
+                isSubmitting={isSubmitting}
+                data-test-id="event_new_dialog_confirm"
+            />
         </form>
     );
 };

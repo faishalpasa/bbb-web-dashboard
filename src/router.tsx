@@ -124,6 +124,13 @@ const exitRequestsRoute = createRoute({
     component: lazyRouteComponent(() => import('@/pages/admin/exit-requests'), 'PageExitRequests'),
 });
 
+const exitRequestHistoryRoute = createRoute({
+    getParentRoute: () => adminLayoutRoute,
+    path: ROUTES.exitRequestHistory,
+    beforeLoad: requirePermission(P.EXIT_REQUEST_VIEW),
+    component: lazyRouteComponent(() => import('@/pages/admin/exit-requests/history'), 'PageExitRequestHistory'),
+});
+
 const settingsRoute = createRoute({
     getParentRoute: () => adminLayoutRoute,
     path: ROUTES.settings,
@@ -233,6 +240,7 @@ export const router = createRouter({
             eventDetailRoute,
             eventEditRoute,
             exitRequestsRoute,
+            exitRequestHistoryRoute,
             settingsRoute,
             adminsRoute,
             adminNewRoute,

@@ -34,6 +34,7 @@ export const useRoleEditor = (roleId?: string) => {
     const [notice, setNotice] = useState<string | null>(null);
     const [errors, setErrors] = useState<RoleErrors>({});
     const [isSaving, setIsSaving] = useState(false);
+    const [isSaveConfirmOpen, setSaveConfirmOpen] = useState(false);
     const [isDeleteOpen, setDeleteOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -78,7 +79,8 @@ export const useRoleEditor = (roleId?: string) => {
     const readOnlyReason = protectedReason ?? (!actionAllowed ? 'Anda hanya dapat membaca role ini.' : null);
     const canDelete = isReady && role !== null && !role.isSystem && role.adminCount === 0 && protectedReason === null && can(P.ROLE_DELETE);
 
-    const handleSave: FormEventHandler<HTMLFormElement> = async (event) => {
+    // Checks the form first, so the confirmation only appears for something that can be saved.
+    const handleSave: FormEventHandler<HTMLFormElement> = (event) => {
         event.preventDefault();
         if (!canSave || isSaving) return;
         const next: RoleErrors = {};
@@ -89,6 +91,11 @@ export const useRoleEditor = (roleId?: string) => {
             toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
             return;
         }
+        setSaveConfirmOpen(true);
+    };
+
+    const confirmSave = async () => {
+        if (!canSave || isSaving) return;
         setIsSaving(true);
         setSaveError(null);
         setNotice(null);
@@ -113,6 +120,7 @@ export const useRoleEditor = (roleId?: string) => {
             setSaveError(errorMessage(error));
         } finally {
             setIsSaving(false);
+            setSaveConfirmOpen(false);
         }
     };
 
@@ -158,6 +166,9 @@ export const useRoleEditor = (roleId?: string) => {
                 setFields((current) => ({ ...current, permissionIds: togglePermissionGroup(catalog, current.permissionIds, group, enabled) }));
         },
         handleSave,
+        isSaveConfirmOpen,
+        confirmSave,
+        closeSaveConfirm: () => setSaveConfirmOpen(false),
         setDeleteOpen: (open: boolean) => {
             setDeleteError(null);
             setDeleteOpen(open);

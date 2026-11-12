@@ -5,6 +5,7 @@ import { LoaderCircle } from 'lucide-react';
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { MemberFormSections } from '@/components/molecules/member-form-sections';
 import { RequiredNote } from '@/components/molecules/required-mark';
+import { SubmitConfirmationDialog } from '@/components/molecules/submit-confirmation-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ROUTES } from '@/constants/route';
@@ -19,9 +20,13 @@ export const PageContent = () => {
         consentAcknowledged,
         isSubmitting,
         submitError,
+        isConfirmOpen,
+        confirmDescription,
         setSendInvitation,
         setConsentAcknowledged,
         handleSubmit,
+        confirmSubmit,
+        closeConfirm,
     } = usePageContext();
 
     return (
@@ -97,6 +102,17 @@ export const PageContent = () => {
                     </section>
                 </div>
             </div>
+
+            <SubmitConfirmationDialog
+                open={isConfirmOpen}
+                onClose={closeConfirm}
+                onConfirm={() => void confirmSubmit()}
+                title="Simpan member baru?"
+                description={confirmDescription}
+                confirmLabel="Ya, simpan member"
+                isSubmitting={isSubmitting}
+                data-test-id="member_new_dialog_confirm"
+            />
         </form>
     );
 };

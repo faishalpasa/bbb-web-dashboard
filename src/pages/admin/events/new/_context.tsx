@@ -14,6 +14,10 @@ interface PageContextValue {
     isSubmitting: boolean;
     submitError: string | null;
     save: (publish: boolean) => Promise<void>;
+    pendingPublish: boolean | null;
+    requestSave: (publish: boolean) => void;
+    cancelSave: () => void;
+    confirmSave: () => Promise<void>;
 }
 
 const PageContext = createContext<PageContextValue | null>(null);
@@ -24,6 +28,8 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [options, setOptions] = useState<EventOptions | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
+    // The kind of save waiting for the user's yes: true publishes, false keeps it as saved.
+    const [pendingPublish, setPendingPublish] = useState<boolean | null>(null);
 
     useEffect(() => {
         const loadOptions = async () => {
@@ -36,6 +42,19 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         void loadOptions();
     }, []);
+
+    // Checks the form first, so the confirmation only appears for something that can be saved.
+    const requestSave = (publish: boolean) => {
+        if (isSubmitting) return;
+        setSubmitError(null);
+
+        if (!form.buildInput(publish)) {
+            setSubmitError('Periksa isian formulir yang ditandai di bawah.');
+            return;
+        }
+
+        setPendingPublish(publish);
+    };
 
     const save = async (publish: boolean) => {
         if (isSubmitting) return;
@@ -62,7 +81,29 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         }
     };
 
-    return <PageContext.Provider value={{ form, options, isSubmitting, submitError, save }}>{children}</PageContext.Provider>;
+    const confirmSave = async () => {
+        if (pendingPublish === null) return;
+        await save(pendingPublish);
+        setPendingPublish(null);
+    };
+
+    return (
+        <PageContext.Provider
+            value={{
+                form,
+                options,
+                isSubmitting,
+                submitError,
+                save,
+                pendingPublish,
+                requestSave,
+                cancelSave: () => setPendingPublish(null),
+                confirmSave,
+            }}
+        >
+            {children}
+        </PageContext.Provider>
+    );
 };
 
 export const usePageContext = (): PageContextValue => {

@@ -44,6 +44,9 @@ interface PageContextValue {
     notice: { tone: 'success' | 'error'; text: string } | null;
     setField: (name: SettingsFieldName, value: string) => void;
     handleSubmit: FormEventHandler<HTMLFormElement>;
+    isConfirmOpen: boolean;
+    confirmSubmit: () => Promise<void>;
+    closeConfirm: () => void;
     reload: () => void;
 }
 
@@ -71,6 +74,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [failure, setFailure] = useState<LoadFailure | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [isConfirmOpen, setConfirmOpen] = useState(false);
     const [notice, setNotice] = useState<PageContextValue['notice']>(null);
     const [reloadToken, setReloadToken] = useState(0);
 
@@ -100,10 +104,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         setNotice(null);
     };
 
-    const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
-        event.preventDefault();
-
-        if (!fields) return;
+    // Runs the form's own checks and returns what would be sent, or null with the errors shown.
+    const buildInput = () => {
+        if (!fields) return null;
 
         const whatsapp = normalizeWhatsapp(fields.adminWhatsapp);
 
@@ -111,7 +114,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             setErrors({ adminWhatsapp: 'Nomor WhatsApp tidak valid.' });
             toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
 
-            return;
+            return null;
         }
 
         const durationErrors: SettingsErrors = {};
@@ -126,7 +129,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             setErrors(durationErrors);
             toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
 
-            return;
+            return null;
         }
 
         const registrationMinutes = durationTextToMinutes(fields.registrationCloseMinutes) ?? 0;
@@ -140,6 +143,34 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             });
             toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
 
+            return null;
+        }
+
+        return {
+            registrationCloseMinutes: registrationMinutes,
+            cancellationCloseMinutes: cancellationMinutes,
+            attendanceOpenMinutes: attendanceMinutes,
+            engagedWindowMonths: Number(fields.engagedWindowMonths),
+            adminWhatsapp: fields.adminWhatsapp.trim() ? whatsapp : null,
+            whatsappGroupUrl: fields.whatsappGroupUrl.trim() || null,
+            faqContent: fields.faqContent,
+            privacyPolicyContent: fields.privacyPolicyContent,
+            rulesSummary: fields.rulesSummary,
+        };
+    };
+
+    const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
+        event.preventDefault();
+        if (isSaving) return;
+        if (buildInput()) setConfirmOpen(true);
+    };
+
+    const confirmSubmit = async () => {
+        if (isSaving) return;
+        const input = buildInput();
+
+        if (!input) {
+            setConfirmOpen(false);
             return;
         }
 
@@ -148,17 +179,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         setNotice(null);
 
         try {
-            const response = await putSettings({
-                registrationCloseMinutes: registrationMinutes,
-                cancellationCloseMinutes: cancellationMinutes,
-                attendanceOpenMinutes: attendanceMinutes,
-                engagedWindowMonths: Number(fields.engagedWindowMonths),
-                adminWhatsapp: fields.adminWhatsapp.trim() ? whatsapp : null,
-                whatsappGroupUrl: fields.whatsappGroupUrl.trim() || null,
-                faqContent: fields.faqContent,
-                privacyPolicyContent: fields.privacyPolicyContent,
-                rulesSummary: fields.rulesSummary,
-            });
+            const response = await putSettings(input);
 
             setSettings(response.data);
             setFields(toFields(response.data));
@@ -178,6 +199,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             else toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
         } finally {
             setIsSaving(false);
+            setConfirmOpen(false);
         }
     };
 
@@ -193,6 +215,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 notice,
                 setField,
                 handleSubmit,
+                isConfirmOpen,
+                confirmSubmit,
+                closeConfirm: () => setConfirmOpen(false),
                 reload: () => setReloadToken((token) => token + 1),
             }}
         >

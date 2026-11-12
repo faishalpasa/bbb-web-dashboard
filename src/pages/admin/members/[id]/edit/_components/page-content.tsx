@@ -6,6 +6,7 @@ import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { MemberFormSections } from '@/components/molecules/member-form-sections';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { SubmitConfirmationDialog } from '@/components/molecules/submit-confirmation-dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MEMBER_STATUS_TONES } from '@/constants/member';
@@ -58,7 +59,7 @@ interface EditFormProps {
 
 const EditForm = ({ memberId, preferences }: EditFormProps) => {
     const { member } = usePageContext();
-    const { form, isSubmitting, submitError, handleSubmit } = useFormContext();
+    const { form, isSubmitting, submitError, isConfirmOpen, confirmDescription, handleSubmit, confirmSubmit, closeConfirm } = useFormContext();
 
     if (!member) return null;
 
@@ -152,6 +153,17 @@ const EditForm = ({ memberId, preferences }: EditFormProps) => {
                     </section>
                 </div>
             </div>
+
+            <SubmitConfirmationDialog
+                open={isConfirmOpen}
+                onClose={closeConfirm}
+                onConfirm={() => void confirmSubmit()}
+                title="Simpan perubahan member?"
+                description={confirmDescription}
+                confirmLabel="Ya, simpan perubahan"
+                isSubmitting={isSubmitting}
+                data-test-id="member_edit_dialog_confirm"
+            />
         </form>
     );
 };

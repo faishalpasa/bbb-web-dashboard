@@ -12,6 +12,7 @@ export interface ExitRequest {
     waiting: { days: number; isOverdue: boolean };
     status: { value: ExitRequestStatus; label: string };
     decidedAt: string | null;
+    decidedBy: string | null;
     rejectionReason: string | null;
 }
 
