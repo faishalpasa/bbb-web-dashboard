@@ -34,16 +34,6 @@ export const memberGreetingMessage = (name: string): string => `Halo ${name},\nS
 
 // "Kabupaten Bogor" -> "Kab. Bogor"; city names stay as they are.
 export const abbreviateRegency = (label: string): string => label.replace(/^Kabupaten /, 'Kab. ');
-
-// "Diskusi Buku Bulanan!" -> "diskusi-buku-bulanan", the same shape the API accepts for an event link.
-export const slugify = (value: string): string =>
-    value
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-
 // "Jumat 19.00 WIB" minus N minutes -> "Jumat 18.00 WIB", rolling back over midnight into the previous weekday.
 export const clockMinusMinutes = (weekdays: string[], weekdayIndex: number, hour: number, minutes: number): string => {
     const total = hour * 60 - minutes;

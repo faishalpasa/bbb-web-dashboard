@@ -7,7 +7,6 @@ import { postEventBanner, postRandomAttendanceCode } from '@/services/event';
 import type { EventDetail, EventFormat, EventInput, EventTimezone } from '@/types/event';
 import { fromLocalInput, toLocalInput } from '@/utils/date';
 import { errorMessage, fieldErrorMessage } from '@/utils/error';
-import { slugify } from '@/utils/string';
 
 export type EventFieldName =
     | 'title'
@@ -126,8 +125,8 @@ export const useEventForm = (event?: EventDetail) => {
     }, []);
 
     const setTitle = (title: string) => {
-        setFields((current) => ({ ...current, title, slug: isSlugEdited ? current.slug : slugify(title) }));
-        setErrors((current) => ({ ...current, title: undefined, slug: undefined }));
+        setFields((current) => ({ ...current, title }));
+        setErrors((current) => ({ ...current, title: undefined }));
     };
 
     const setSlug = (slug: string) => {
@@ -191,7 +190,7 @@ export const useEventForm = (event?: EventDetail) => {
 
         return {
             title: fields.title.trim(),
-            // An untouched link is left to the API, which makes it unique.
+            // An untouched link is left to the API, which gives a new event a short random one and keeps an existing one.
             slug: isSlugEdited ? fields.slug || null : null,
             description: fields.description.trim() || null,
             bannerUrl: fields.bannerUrl || null,
