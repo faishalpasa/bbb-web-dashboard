@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ROUTES } from '@/constants/route';
 import type { ExitRequest } from '@/types/exit-request';
-import { formatLongDate } from '@/utils/date';
+import { formatLongDate, formatTableDate } from '@/utils/date';
 
 import { usePageContext } from '../_context';
 
@@ -61,22 +61,24 @@ export const PageContent = () => {
                                 <table className="w-full text-sm">
                                     <thead className="bg-secondary/60 text-left">
                                         <tr>
-                                            <th className="py-3 pr-3 pl-4 font-semibold">Member</th>
-                                            <th className="px-3 py-3 font-semibold">Tanggal permintaan keluar</th>
-                                            <th className="px-3 py-3 font-semibold">Keputusan</th>
-                                            <th className="py-3 pr-4 pl-3 font-semibold">Diputuskan oleh</th>
+                                            <th className="py-3 pr-3 pl-4 font-semibold whitespace-nowrap">No</th>
+                                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Nama</th>
+                                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Tanggal Permintaan</th>
+                                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Status</th>
+                                            <th className="px-3 py-3 font-semibold whitespace-nowrap">Approval Oleh</th>
+                                            <th className="py-3 pr-4 pl-3 font-semibold whitespace-nowrap">Tanggal Approval</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {pagination.items.map((request) => (
                                             <tr key={request.id} className="border-border border-t" data-test-id={`exit_history_row_${request.id}`}>
-                                                <td className="py-3 pr-3 pl-4">
-                                                    <span className="font-medium">{request.member.name}</span>
-                                                    {request.member.memberNumber && (
-                                                        <span className="ml-2 font-mono text-xs">{request.member.memberNumber}</span>
-                                                    )}
+                                                <td className="py-3 pr-3 pl-4 font-mono text-xs whitespace-nowrap">
+                                                    {request.member.memberNumber ?? '-'}
                                                 </td>
-                                                <td className="px-3 py-3">{formatLongDate(request.submittedAt)}</td>
+                                                <td className="px-3 py-3 font-medium" data-test-id={`exit_history_cell_name_${request.id}`}>
+                                                    {request.member.name}
+                                                </td>
+                                                <td className="px-3 py-3 whitespace-nowrap">{formatTableDate(request.submittedAt)}</td>
                                                 <td className="px-3 py-3">
                                                     <StatusBadge
                                                         tone={request.status.value === 'approved' ? 'success' : 'danger'}
@@ -84,13 +86,9 @@ export const PageContent = () => {
                                                         data-test-id={`exit_history_badge_status_${request.id}`}
                                                     />
                                                 </td>
-                                                <td className="py-3 pr-4 pl-3">
-                                                    {request.decidedBy ?? <span className="text-muted-foreground">-</span>}
-                                                    {request.decidedAt && (
-                                                        <span className="text-muted-foreground block text-xs">
-                                                            {formatLongDate(request.decidedAt)}
-                                                        </span>
-                                                    )}
+                                                <td className="px-3 py-3">{request.decidedBy ?? '-'}</td>
+                                                <td className="py-3 pr-4 pl-3 whitespace-nowrap">
+                                                    {request.decidedAt ? formatTableDate(request.decidedAt) : '-'}
                                                 </td>
                                             </tr>
                                         ))}
