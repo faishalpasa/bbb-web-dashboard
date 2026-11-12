@@ -199,7 +199,7 @@ const EditForm = () => {
                         </div>
                     </section>
 
-                    <EventTypeCard form={form} isSlugLocked data-test-id="event_edit_type" />
+                    <EventTypeCard form={form} isSlugLocked={!isDraft} data-test-id="event_edit_type" />
 
                     <section className="border-border bg-card space-y-2 rounded-lg border p-5" data-test-id="event_edit_registration">
                         <h2 className="font-semibold">Jadwal pendaftaran member</h2>

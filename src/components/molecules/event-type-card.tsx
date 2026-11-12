@@ -9,7 +9,7 @@ import { copyToClipboard } from '@/utils/clipboard';
 
 interface EventTypeCardProps {
     form: EventForm;
-    // An existing event keeps its link, because it may already have been shared.
+    // A published event keeps its link, because it may already have been shared.
     isSlugLocked: boolean;
     'data-test-id': string;
 }
@@ -68,8 +68,8 @@ export const EventTypeCard = ({ form, isSlugLocked, 'data-test-id': testId }: Ev
                     isOptional
                     hint={
                         isSlugLocked
-                            ? 'Link tidak bisa diubah setelah kegiatan dibuat.'
-                            : 'Dibuat otomatis dari judul. Klik Edit untuk mengubah; hanya huruf kecil, angka, dan tanda hubung.'
+                            ? 'Link tidak bisa diubah setelah kegiatan diterbitkan.'
+                            : 'Bila kosong, dibuat 8 karakter acak saat disimpan. Bisa diubah lewat Edit selama masih draf; hanya huruf kecil, angka, dan tanda hubung.'
                     }
                     error={errors.slug}
                     data-test-id={`${testId}_slug`}
@@ -87,7 +87,7 @@ export const EventTypeCard = ({ form, isSlugLocked, 'data-test-id': testId }: Ev
                                 id="slug"
                                 value={fields.slug}
                                 readOnly={!isEditingSlug}
-                                placeholder="[slug]"
+                                placeholder="[otomatis]"
                                 onChange={(event) => setSlug(event.target.value)}
                                 className="min-w-24 flex-1 bg-transparent py-2 outline-hidden read-only:cursor-default"
                                 data-test-id={`${testId}_input_slug`}
