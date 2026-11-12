@@ -23,8 +23,12 @@ interface PageContextValue {
     isSubmitting: boolean;
     submitError: string | null;
     invitation: AdminInvitationResult | null;
+    isConfirmOpen: boolean;
+    confirmDescription: string;
     setField: (name: 'name' | 'email' | 'roleId', value: string) => void;
     handleSubmit: FormEventHandler<HTMLFormElement>;
+    confirmSubmit: () => Promise<void>;
+    closeConfirm: () => void;
 }
 
 const PageContext = createContext<PageContextValue | null>(null);
@@ -40,6 +44,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [invitation, setInvitation] = useState<AdminInvitationResult | null>(null);
+    const [isConfirmOpen, setConfirmOpen] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -65,9 +70,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         };
     }, [grantSignature]);
 
-    const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
-        event.preventDefault();
-
+    const validate = (): boolean => {
         const nextErrors: InviteErrors = {};
 
         if (!fields.name.trim()) nextErrors.name = 'Nama harus diisi.';
@@ -78,9 +81,21 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
 
         if (Object.keys(nextErrors).length > 0) {
             toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
-            return;
+            return false;
         }
 
+        return true;
+    };
+
+    // Checks the form first, so the confirmation only appears for something that can be sent.
+    const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
+        event.preventDefault();
+        if (isSubmitting || !validate()) return;
+        setConfirmOpen(true);
+    };
+
+    const confirmSubmit = async () => {
+        if (isSubmitting) return;
         setIsSubmitting(true);
         setSubmitError(null);
         setInvitation(null);
@@ -104,8 +119,12 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             else toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
         } finally {
             setIsSubmitting(false);
+            setConfirmOpen(false);
         }
     };
+
+    const roleLabel = roleOptions.find((role) => role.id === fields.roleId)?.label ?? 'admin';
+    const confirmDescription = `Email undangan dikirim ke ${fields.email.trim()} supaya ${fields.name.trim()} bisa membuat password sendiri. Role: ${roleLabel}.`;
 
     const value = useMemo<PageContextValue>(
         () => ({
@@ -117,15 +136,19 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             isSubmitting,
             submitError,
             invitation,
+            isConfirmOpen,
+            confirmDescription,
             setField: (name, valueText) => {
                 setFields((current) => ({ ...current, [name]: valueText }));
                 setErrors((current) => ({ ...current, [name]: undefined }));
             },
             handleSubmit,
+            confirmSubmit,
+            closeConfirm: () => setConfirmOpen(false),
         }),
         // handleSubmit closes over the current form fields.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [fields, errors, roleOptions, roleOptionsError, isLoadingRoles, isSubmitting, submitError, invitation],
+        [fields, errors, roleOptions, roleOptionsError, isLoadingRoles, isSubmitting, submitError, invitation, isConfirmOpen],
     );
 
     return <PageContext.Provider value={value}>{children}</PageContext.Provider>;

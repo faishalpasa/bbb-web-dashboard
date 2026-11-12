@@ -3,13 +3,16 @@ import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/molecules/dialog';
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
+import { SubmitConfirmationDialog } from '@/components/molecules/submit-confirmation-dialog';
 import { TablePagination } from '@/components/molecules/table-pagination';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PERMISSIONS as P } from '@/constants/permission';
+import { ROUTES } from '@/constants/route';
 import { usePermissions } from '@/hooks/usePermissions';
 import { cn } from '@/lib/utils';
 import { formatLongDate } from '@/utils/date';
+import { Link } from '@tanstack/react-router';
 
 import { usePageContext } from '../_context';
 import { RejectForm } from './reject-form';
@@ -27,6 +30,9 @@ export const PageContent = () => {
         isApproving,
         rejecting,
         isRejecting,
+        isRejectConfirmOpen,
+        closeRejectConfirm,
+        submitReject,
         openApprove,
         closeApprove,
         confirmApprove,
@@ -39,13 +45,20 @@ export const PageContent = () => {
     return (
         <div className="space-y-4">
             <AdminPageHeader data-test-id="exit_requests_header">
-                <header>
-                    <h1 className="text-2xl font-semibold">Permintaan Keluar</h1>
-                    {list && (
-                        <p className="text-muted-foreground text-sm" data-test-id="exit_requests_text_summary">
-                            {list.summary.pendingTotal} permintaan menunggu keputusan
-                        </p>
-                    )}
+                <header className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h1 className="text-2xl font-semibold">Permintaan Keluar</h1>
+                        {list && (
+                            <p className="text-muted-foreground text-sm" data-test-id="exit_requests_text_summary">
+                                {list.summary.pendingTotal} permintaan menunggu keputusan
+                            </p>
+                        )}
+                    </div>
+                    <Button asChild variant="outline" className="bg-card">
+                        <Link to={ROUTES.exitRequestHistory} data-test-id="exit_requests_link_history">
+                            Riwayat
+                        </Link>
+                    </Button>
                 </header>
             </AdminPageHeader>
 
@@ -153,6 +166,21 @@ export const PageContent = () => {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <SubmitConfirmationDialog
+                open={can(P.EXIT_REQUEST_REJECT) && rejecting !== null && isRejectConfirmOpen}
+                onClose={closeRejectConfirm}
+                onConfirm={() => void submitReject()}
+                title="Tolak permintaan keluar?"
+                description={
+                    rejecting
+                        ? `${rejecting.member.name} tetap menjadi member aktif. Alasan penolakan dikirim ke member lewat email dan tampil di Beranda mereka.`
+                        : ''
+                }
+                confirmLabel="Ya, tolak permintaan"
+                isSubmitting={isRejecting}
+                data-test-id="exit_requests_dialog_reject_confirm"
+            />
 
             <ConfirmationDialog
                 open={can(P.EXIT_REQUEST_APPROVE) && approving !== null}

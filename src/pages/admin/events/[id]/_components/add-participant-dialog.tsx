@@ -2,12 +2,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { FormField } from '@/components/molecules/form-field';
 import { RegistrationAnswerFields } from '@/components/molecules/registration-answer-fields';
+import { SubmitConfirmationDialog } from '@/components/molecules/submit-confirmation-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { useRegistrationAnswers } from '@/hooks/useRegistrationAnswers';
 import { getParticipantRegistrationForm } from '@/services/event';
-import type { RegistrationFormData } from '@/types/registration-form';
+import type { ParticipantInput } from '@/types/event';
+import type { RegistrationFormData, RegistrationSubmissionInput } from '@/types/registration-form';
 import { errorMessage } from '@/utils/error';
 import { useRef, useState } from 'react';
 import { usePageContext } from '../_context';
@@ -22,6 +24,8 @@ const ParticipantForm = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [consent, setConsent] = useState(false);
+    // What waits for the admin's yes, kept with the answers it was built from so server errors can point at their fields.
+    const [pending, setPending] = useState<{ input: ParticipantInput; submission: RegistrationSubmissionInput } | null>(null);
     const latest = useRef(0);
     const definition = addTab === 'member' ? data?.registrationForm : event?.registrationForm;
     const answers = useRegistrationAnswers(definition);
@@ -52,6 +56,15 @@ const ParticipantForm = () => {
         setConsent(false);
         setAddTab(tab);
     };
+    const confirmParticipant = async () => {
+        if (!pending || isAdding) return;
+        const failure = await submitParticipant(pending.input);
+        if (failure) {
+            answers.applyErrors(failure, pending.submission);
+            setError(errorMessage(failure));
+        }
+        setPending(null);
+    };
     return (
         <form
             className="space-y-4 px-4 pb-4 sm:px-0"
@@ -71,11 +84,7 @@ const ParticipantForm = () => {
                     addTab === 'member' && memberId
                         ? { ...submission, memberId }
                         : { ...submission, name: name.trim(), email: email.trim(), consentAcknowledged: consent };
-                const failure = await submitParticipant(input);
-                if (failure) {
-                    answers.applyErrors(failure, submission);
-                    setError(errorMessage(failure));
-                }
+                setPending({ input, submission });
             }}
             data-test-id="event_participant_registration_form"
         >
@@ -222,6 +231,21 @@ const ParticipantForm = () => {
             >
                 {isAdding ? 'Menambahkan…' : 'Tambah peserta'}
             </Button>
+
+            <SubmitConfirmationDialog
+                open={pending !== null}
+                onClose={() => setPending(null)}
+                onConfirm={() => void confirmParticipant()}
+                title="Tambah peserta?"
+                description={
+                    addTab === 'member'
+                        ? `Member terpilih didaftarkan ke kegiatan ${event.title}.`
+                        : `${name.trim()} (${email.trim()}) didaftarkan ke kegiatan ${event.title} sebagai peserta non-member.`
+                }
+                confirmLabel="Ya, tambah peserta"
+                isSubmitting={isAdding}
+                data-test-id="event_participant_dialog_confirm"
+            />
         </form>
     );
 };

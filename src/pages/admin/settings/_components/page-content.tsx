@@ -7,6 +7,7 @@ import { FormField } from '@/components/molecules/form-field';
 import { PermissionGate } from '@/components/molecules/permission-gate';
 import { RequiredNote } from '@/components/molecules/required-mark';
 import { RichTextEditor } from '@/components/molecules/rich-text-editor';
+import { SubmitConfirmationDialog } from '@/components/molecules/submit-confirmation-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -59,7 +60,21 @@ const exampleText = (registration: string, cancellation: string, attendance: str
 
 export const PageContent = () => {
     const { can } = usePermissions();
-    const { settings, fields, errors, failure, isLoading, isSaving, notice, setField, handleSubmit, reload } = usePageContext();
+    const {
+        settings,
+        fields,
+        errors,
+        failure,
+        isLoading,
+        isSaving,
+        notice,
+        isConfirmOpen,
+        setField,
+        handleSubmit,
+        confirmSubmit,
+        closeConfirm,
+        reload,
+    } = usePageContext();
 
     const durationField = (name: SettingsFieldName, label: string, hint?: string) =>
         fields && (
@@ -254,6 +269,17 @@ export const PageContent = () => {
                     </p>
                 </div>
             </fieldset>
+
+            <SubmitConfirmationDialog
+                open={can(P.SETTING_UPDATE) && isConfirmOpen}
+                onClose={closeConfirm}
+                onConfirm={() => void confirmSubmit()}
+                title="Simpan pengaturan?"
+                description="Perubahan langsung berlaku untuk semua member, termasuk batas pendaftaran, batas pembatalan, dan jam buka absensi."
+                confirmLabel="Ya, simpan pengaturan"
+                isSubmitting={isSaving}
+                data-test-id="settings_dialog_confirm"
+            />
         </form>
     );
 };

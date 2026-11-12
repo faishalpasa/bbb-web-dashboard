@@ -13,7 +13,7 @@ interface RejectFormProps {
 
 // The form itself; the page shows it as a side panel on large screens and inside a dialog on small ones.
 export const RejectForm = ({ 'data-test-id': testId }: RejectFormProps) => {
-    const { reason, reasonError, rejectError, isRejecting, setReason, closeReject, submitReject } = usePageContext();
+    const { reason, reasonError, rejectError, isRejecting, setReason, closeReject, requestReject } = usePageContext();
 
     return (
         <form
@@ -21,7 +21,7 @@ export const RejectForm = ({ 'data-test-id': testId }: RejectFormProps) => {
             noValidate
             onSubmit={(event) => {
                 event.preventDefault();
-                void submitReject();
+                requestReject();
             }}
             data-test-id={testId}
         >

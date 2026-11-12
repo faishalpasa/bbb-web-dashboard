@@ -7,6 +7,7 @@ import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { FormField } from '@/components/molecules/form-field';
 import { PermissionTree } from '@/components/molecules/permission-tree';
 import { RequiredNote } from '@/components/molecules/required-mark';
+import { SubmitConfirmationDialog } from '@/components/molecules/submit-confirmation-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -140,6 +141,20 @@ export const RoleForm = ({ editor }: RoleFormProps) => {
                     </form>
                 )
             )}
+            <SubmitConfirmationDialog
+                open={canSave && editor.isSaveConfirmOpen}
+                onClose={editor.closeSaveConfirm}
+                onConfirm={() => void editor.confirmSave()}
+                title={isCreating ? 'Buat role baru?' : 'Simpan perubahan role?'}
+                description={
+                    isCreating
+                        ? 'Role dibuat dengan permission yang dipilih dan bisa langsung diberikan ke admin.'
+                        : 'Perubahan permission berlaku pada request berikutnya untuk semua admin dengan role ini, tanpa login ulang.'
+                }
+                confirmLabel={isCreating ? 'Ya, buat role' : 'Ya, simpan perubahan'}
+                isSubmitting={isSaving}
+                data-test-id="roles_dialog_confirm"
+            />
             <ConfirmationDialog
                 open={canDelete && editor.isDeleteOpen}
                 onClose={() => editor.setDeleteOpen(false)}

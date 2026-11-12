@@ -15,6 +15,7 @@ export const ROUTES = {
     eventDetail: '/events/$eventId',
     eventEdit: '/events/$eventId/edit',
     exitRequests: '/exit-requests',
+    exitRequestHistory: '/exit-requests/history',
     admins: '/admins',
     adminNew: '/admins/new',
     roles: '/roles',

@@ -27,6 +27,9 @@ interface PageContextValue {
     openReject: (request: ExitRequest) => void;
     closeReject: () => void;
     setReason: (value: string) => void;
+    isRejectConfirmOpen: boolean;
+    requestReject: () => void;
+    closeRejectConfirm: () => void;
     submitReject: () => Promise<void>;
     reload: () => void;
 }
@@ -48,6 +51,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [reasonError, setReasonError] = useState<string | null>(null);
     const [rejectError, setRejectError] = useState<string | null>(null);
     const [isRejecting, setIsRejecting] = useState(false);
+    const [isRejectConfirmOpen, setRejectConfirmOpen] = useState(false);
     const [reloadToken, setReloadToken] = useState(0);
 
     useEffect(() => {
@@ -94,6 +98,19 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         }
     }, [approving, afterDecision]);
 
+    // The reason is checked first, so the confirmation only appears for something that can be sent.
+    const requestReject = useCallback(() => {
+        if (!rejecting || isRejecting) return;
+
+        if (!reason.trim()) {
+            setReasonError('Alasan penolakan harus diisi.');
+
+            return;
+        }
+
+        setRejectConfirmOpen(true);
+    }, [rejecting, isRejecting, reason]);
+
     const submitReject = useCallback(async () => {
         if (!rejecting) return;
 
@@ -118,6 +135,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             else setRejectError(errorMessage(error));
         } finally {
             setIsRejecting(false);
+            setRejectConfirmOpen(false);
         }
     }, [rejecting, reason, afterDecision]);
 
@@ -155,6 +173,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 setReasonState(valueText);
                 setReasonError(null);
             },
+            isRejectConfirmOpen,
+            requestReject,
+            closeRejectConfirm: () => setRejectConfirmOpen(false),
             submitReject,
             reload: () => setReloadToken((token) => token + 1),
         }),
@@ -174,6 +195,8 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             isRejecting,
             confirmApprove,
             submitReject,
+            isRejectConfirmOpen,
+            requestReject,
         ],
     );
 

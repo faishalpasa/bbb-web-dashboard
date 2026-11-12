@@ -13,7 +13,11 @@ interface FormContextValue {
     form: MemberForm;
     isSubmitting: boolean;
     submitError: string | null;
+    isConfirmOpen: boolean;
+    confirmDescription: string;
     handleSubmit: FormEventHandler<HTMLFormElement>;
+    confirmSubmit: () => Promise<void>;
+    closeConfirm: () => void;
 }
 
 const FormContext = createContext<FormContextValue | null>(null);
@@ -29,15 +33,28 @@ export const MemberEditFormProvider = ({ member, options, children }: MemberEdit
     const form = useMemberForm(member, options);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
+    const [isConfirmOpen, setConfirmOpen] = useState(false);
 
-    const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
+    // Checks the form first, so the confirmation only appears for something that can be saved.
+    const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
         event.preventDefault();
+        if (isSubmitting) return;
         setSubmitError(null);
 
+        if (!form.validate({ requireEmail: true })) {
+            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+            return;
+        }
+
+        setConfirmOpen(true);
+    };
+
+    const confirmSubmit = async () => {
+        if (isSubmitting) return;
         const input = form.validate({ requireEmail: true });
 
         if (!input) {
-            toast.add({ type: 'error', title: 'Periksa isian formulir yang ditandai.' });
+            setConfirmOpen(false);
             return;
         }
 
@@ -52,10 +69,32 @@ export const MemberEditFormProvider = ({ member, options, children }: MemberEdit
             else setSubmitError(errorMessage(error));
         } finally {
             setIsSubmitting(false);
+            setConfirmOpen(false);
         }
     };
 
-    return <FormContext.Provider value={{ form, isSubmitting, submitError, handleSubmit }}>{children}</FormContext.Provider>;
+    const newEmail = form.fields.email.trim();
+    const emailChanged = newEmail.toLowerCase() !== member.email.toLowerCase();
+    const confirmDescription = emailChanged
+        ? `Perubahan langsung terlihat oleh member. Email masuk berubah dari ${member.email} ke ${newEmail}, dan pemberitahuan dikirim ke kedua alamat.`
+        : 'Perubahan langsung terlihat oleh member.';
+
+    return (
+        <FormContext.Provider
+            value={{
+                form,
+                isSubmitting,
+                submitError,
+                isConfirmOpen,
+                confirmDescription,
+                handleSubmit,
+                confirmSubmit,
+                closeConfirm: () => setConfirmOpen(false),
+            }}
+        >
+            {children}
+        </FormContext.Provider>
+    );
 };
 
 export const useFormContext = (): FormContextValue => {
