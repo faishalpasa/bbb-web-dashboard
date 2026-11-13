@@ -220,28 +220,28 @@ export const PageContent = () => {
                     data-test-id="event_detail_public_link"
                 >
                     <div className="min-w-0 flex-1">
-                        <h2 className="text-sm">Link pendaftaran publik (member dan non-member)</h2>
-                        {event.allowsNonMember ? (
-                            <p className="truncate font-mono text-sm underline" title={publicUrl}>
-                                {publicUrl}
-                            </p>
-                        ) : (
-                            <p className="text-muted-foreground text-sm" data-test-id="event_detail_text_public_link_unavailable">
-                                Link pendaftaran publik tersedia untuk kegiatan yang terbuka bagi non-member.
-                            </p>
+                        <h2 className="text-sm">
+                            {event.allowsNonMember ? 'Link pendaftaran (member dan non-member)' : 'Link pendaftaran (khusus member)'}
+                        </h2>
+                        <p className="truncate font-mono text-sm underline" title={publicUrl}>
+                            {publicUrl}
+                        </p>
+                        {event.status.value === 'draft' && (
+                            <p className="text-muted-foreground text-xs">Link dapat dibuka setelah kegiatan diterbitkan.</p>
+                        )}
+                        {!event.allowsNonMember && event.status.value !== 'draft' && (
+                            <p className="text-muted-foreground text-xs">Hanya member yang dapat membuka kegiatan ini setelah masuk.</p>
                         )}
                     </div>
-                    {event.allowsNonMember && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="shrink-0"
-                            onClick={() => void copyText(publicUrl, 'Link')}
-                            data-test-id="event_detail_button_copy_link"
-                        >
-                            Salin
-                        </Button>
-                    )}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0"
+                        onClick={() => void copyText(publicUrl, 'Link')}
+                        data-test-id="event_detail_button_copy_link"
+                    >
+                        Salin
+                    </Button>
                 </section>
             </div>
 

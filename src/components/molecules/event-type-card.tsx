@@ -61,77 +61,75 @@ export const EventTypeCard = ({ form, isSlugLocked, 'data-test-id': testId }: Ev
                 ))}
             </fieldset>
 
-            {fields.allowsNonMember && (
-                <FormField
-                    id="slug"
-                    label="Link pendaftaran publik"
-                    isOptional
-                    hint={
-                        isSlugLocked
-                            ? 'Link tidak bisa diubah setelah kegiatan diterbitkan.'
-                            : 'Bila kosong, dibuat 8 karakter acak saat disimpan. Bisa diubah lewat Edit selama masih draf; hanya huruf kecil, angka, dan tanda hubung.'
-                    }
-                    error={errors.slug}
-                    data-test-id={`${testId}_slug`}
-                >
-                    <div className="space-y-2">
-                        <div
-                            className={cn(
-                                'border-input flex min-h-11 flex-wrap items-center rounded-md border px-3 font-mono text-xs',
-                                isEditingSlug ? 'bg-card' : 'bg-secondary/60',
-                            )}
-                        >
-                            <span className="text-muted-foreground shrink-0">{baseUrl}</span>
-                            <input
-                                ref={slugInput}
-                                id="slug"
-                                value={fields.slug}
-                                readOnly={!isEditingSlug}
-                                placeholder="[otomatis]"
-                                onChange={(event) => setSlug(event.target.value)}
-                                className="min-w-24 flex-1 bg-transparent py-2 outline-hidden read-only:cursor-default"
-                                data-test-id={`${testId}_input_slug`}
-                            />
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {!isSlugLocked && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="bg-card"
-                                    onClick={toggleSlugEditing}
-                                    data-test-id={`${testId}_button_edit_slug`}
-                                >
-                                    {isEditingSlug ? 'Selesai' : 'Edit'}
-                                </Button>
-                            )}
+            <FormField
+                id="slug"
+                label={fields.allowsNonMember ? 'Link pendaftaran (member dan non-member)' : 'Link pendaftaran (khusus member)'}
+                isOptional
+                hint={
+                    isSlugLocked
+                        ? 'Link tidak bisa diubah setelah kegiatan diterbitkan.'
+                        : 'Bila kosong, link dibuat saat disimpan. Selama draf, link bisa diedit dengan huruf kecil, angka, dan tanda hubung. Link dapat dibuka setelah kegiatan diterbitkan.'
+                }
+                error={errors.slug}
+                data-test-id={`${testId}_slug`}
+            >
+                <div className="space-y-2">
+                    <div
+                        className={cn(
+                            'border-input flex min-h-11 flex-wrap items-center rounded-md border px-3 font-mono text-xs',
+                            isEditingSlug ? 'bg-card' : 'bg-secondary/60',
+                        )}
+                    >
+                        <span className="text-muted-foreground shrink-0">{baseUrl}</span>
+                        <input
+                            ref={slugInput}
+                            id="slug"
+                            value={fields.slug}
+                            readOnly={!isEditingSlug}
+                            placeholder="[otomatis]"
+                            onChange={(event) => setSlug(event.target.value)}
+                            className="min-w-24 flex-1 bg-transparent py-2 outline-hidden read-only:cursor-default"
+                            data-test-id={`${testId}_input_slug`}
+                        />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {!isSlugLocked && (
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
                                 className="bg-card"
-                                disabled={!fields.slug}
-                                onClick={() => void copyToClipboard(`${baseUrl}${fields.slug}`)}
-                                data-test-id={`${testId}_button_copy_link`}
+                                onClick={toggleSlugEditing}
+                                data-test-id={`${testId}_button_edit_slug`}
                             >
-                                Salin link
+                                {isEditingSlug ? 'Selesai' : 'Edit'}
                             </Button>
-                            <Button asChild variant="outline" size="sm" className="bg-card">
-                                <a
-                                    href={PUBLIC_WEB_URL ? `${baseUrl}${fields.slug}` : undefined}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    aria-disabled={!PUBLIC_WEB_URL || !fields.slug}
-                                    data-test-id={`${testId}_link_public_page`}
-                                >
-                                    Lihat halaman
-                                </a>
-                            </Button>
-                        </div>
+                        )}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="bg-card"
+                            disabled={!fields.slug}
+                            onClick={() => void copyToClipboard(`${baseUrl}${fields.slug}`)}
+                            data-test-id={`${testId}_button_copy_link`}
+                        >
+                            Salin link
+                        </Button>
+                        <Button asChild variant="outline" size="sm" className="bg-card">
+                            <a
+                                href={PUBLIC_WEB_URL ? `${baseUrl}${fields.slug}` : undefined}
+                                target="_blank"
+                                rel="noreferrer"
+                                aria-disabled={!PUBLIC_WEB_URL || !fields.slug}
+                                data-test-id={`${testId}_link_public_page`}
+                            >
+                                Lihat halaman
+                            </a>
+                        </Button>
                     </div>
-                </FormField>
-            )}
+                </div>
+            </FormField>
         </section>
     );
 };
