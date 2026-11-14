@@ -69,6 +69,17 @@ export const putMember = async (memberId: string, input: MemberEditInput): Promi
     }
 };
 
+// Removes the member, their account and every registration for good; the email and WhatsApp number become free again.
+export const deleteMember = async (memberId: string): Promise<ServiceResponse<null>> => {
+    try {
+        await axiosClient.delete(`/admin/members/${memberId}`);
+
+        return { data: null, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
 export const postDeactivateMember = async (memberId: string): Promise<ServiceResponse<MemberDetail>> => {
     try {
         const { data } = await axiosClient.post<ApiEnvelope<MemberDetail>>(`/admin/members/${memberId}/deactivate`);

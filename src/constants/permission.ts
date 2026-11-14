@@ -9,6 +9,7 @@ export const PERMISSIONS = {
     MEMBER_DEACTIVATE: 'member-deactivate',
     MEMBER_RESET_PASSWORD: 'member-reset-password',
     MEMBER_NOTE_UPDATE: 'member-note-update',
+    MEMBER_DELETE: 'member-delete',
     EVENT_VIEW: 'event-view',
     EVENT_CREATE: 'event-create',
     EVENT_EXPORT: 'event-export',

@@ -1,9 +1,10 @@
-import { useParams } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 
 import { toast } from '@/components/ui/toast';
+import { ROUTES } from '@/constants/route';
 import { useClientPagination, type ClientPagination } from '@/hooks/useClientPagination';
-import { getMember, postActivateMember, postDeactivateMember, postMemberResetPassword, putMemberNote } from '@/services/member';
+import { deleteMember, getMember, postActivateMember, postDeactivateMember, postMemberResetPassword, putMemberNote } from '@/services/member';
 import type { LoadFailure } from '@/types/api';
 import type { MemberDetail, MemberHistoryItem } from '@/types/member';
 import { errorMessage, toLoadFailure } from '@/utils/error';
@@ -23,12 +24,18 @@ interface PageContextValue {
     statusDialog: StatusDialog;
     statusError: string | null;
     isChangingStatus: boolean;
+    isDeleteOpen: boolean;
+    deleteError: string | null;
+    isDeleting: boolean;
     setNote: (value: string) => void;
     saveNote: () => Promise<void>;
     sendResetPassword: () => Promise<void>;
     openStatusDialog: (dialog: Exclude<StatusDialog, null>) => void;
     closeStatusDialog: () => void;
     confirmStatusChange: () => Promise<void>;
+    openDelete: () => void;
+    closeDelete: () => void;
+    confirmDelete: () => Promise<void>;
     reload: () => void;
 }
 
@@ -36,6 +43,7 @@ const PageContext = createContext<PageContextValue | null>(null);
 
 export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const { memberId } = useParams({ strict: false });
+    const navigate = useNavigate();
     const [member, setMember] = useState<MemberDetail | null>(null);
     const historyPagination = useClientPagination(member?.history ?? [], memberId);
     const [failure, setFailure] = useState<LoadFailure | null>(null);
@@ -48,6 +56,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [statusDialog, setStatusDialog] = useState<StatusDialog>(null);
     const [statusError, setStatusError] = useState<string | null>(null);
     const [isChangingStatus, setIsChangingStatus] = useState(false);
+    const [isDeleteOpen, setDeleteOpen] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [reloadToken, setReloadToken] = useState(0);
 
     useEffect(() => {
@@ -126,6 +137,23 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         }
     }, [memberId, statusDialog]);
 
+    const confirmDelete = useCallback(async () => {
+        if (!memberId || isDeleting) return;
+
+        setIsDeleting(true);
+        setDeleteError(null);
+
+        try {
+            await deleteMember(memberId);
+            toast.add({ type: 'success', title: 'Member dihapus permanen. Email dan nomor WhatsApp-nya bisa dipakai lagi.' });
+            void navigate({ to: ROUTES.members });
+        } catch (error) {
+            setDeleteError(errorMessage(error));
+        } finally {
+            setIsDeleting(false);
+        }
+    }, [memberId, isDeleting, navigate]);
+
     const value = useMemo<PageContextValue>(
         () => ({
             member,
@@ -140,6 +168,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             statusDialog,
             statusError,
             isChangingStatus,
+            isDeleteOpen,
+            deleteError,
+            isDeleting,
             setNote,
             saveNote,
             sendResetPassword,
@@ -149,6 +180,12 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             },
             closeStatusDialog: () => setStatusDialog(null),
             confirmStatusChange,
+            openDelete: () => {
+                setDeleteError(null);
+                setDeleteOpen(true);
+            },
+            closeDelete: () => setDeleteOpen(false),
+            confirmDelete,
             reload: () => setReloadToken((token) => token + 1),
         }),
         [
@@ -164,9 +201,13 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             statusDialog,
             statusError,
             isChangingStatus,
+            isDeleteOpen,
+            deleteError,
+            isDeleting,
             saveNote,
             sendResetPassword,
             confirmStatusChange,
+            confirmDelete,
         ],
     );
 
