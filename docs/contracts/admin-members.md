@@ -1,5 +1,7 @@
 # Admin member management contract (DRAFT)
 
+Audit edit profil (14 November 2026): penyimpanan profil yang mengubah data menulis satu entri tipe `members` di transaksi yang sama, memuat aktor, identitas member, dan nama field yang berubah (termasuk profil bacaan serta pilihan minat). Perubahan email digabung di entri yang sama dan tetap memuat alamat lama serta baru. Simpan tanpa perubahan, validasi gagal, atau transaksi rollback tidak meninggalkan entri. Catatan internal memakai endpoint terpisah dan tidak termasuk audit edit profil ini.
+
 Pagination Member (30 Oktober 2026): GET /members menerima perPage default 100, maksimal 1000. FE memakai default 100 dengan opsi 100/250/500/1000, kembali page=1 saat ukuran/filter berubah. Ini khusus daftar Member; pilihan pagination tabel lain dan riwayat kegiatan pada detail member tidak berubah. Footer bersama menampilkan Tampilkan + selector + total di kiri, nomor/ellipsis + panah prev/next di kanan; tanpa tombol first/last. Envelope existing tetap.
 
 Tambahan profil/minat member (20 Oktober 2026): [kontrak shared](member-reading-profile.md). Detail, options dan input create/edit mendapat tambahan opsional; list/CSV dan permission existing tetap.
