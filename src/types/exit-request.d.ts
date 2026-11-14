@@ -4,7 +4,8 @@ export type ExitRequestStatus = 'pending' | 'approved' | 'rejected';
 
 export interface ExitRequest {
     id: Identifier;
-    member: { id: Identifier; name: string; memberNumber: string | null };
+    // id is null once the member was deleted permanently; the name and number are then the text kept at that moment.
+    member: { id: Identifier | null; name: string; memberNumber: string | null };
     reason: string | null;
     submittedAt: string;
     attempt: number;

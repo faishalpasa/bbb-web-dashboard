@@ -48,6 +48,10 @@ export const DeleteDialog = () => {
                         {member.statistics.joined} riwayat kegiatan ({member.statistics.attended} hadir) ikut terhapus, termasuk jawaban dan berkas
                         pendaftarannya.
                     </li>
+                    <li>
+                        Riwayat permintaan keluar yang sudah diputuskan tetap tersimpan sebagai catatan (nama, nomor anggota, tanggal, dan admin yang
+                        memutuskan).
+                    </li>
                     <li>Member yang sedang masuk langsung keluar dari aplikasi.</li>
                     <li>Email dan nomor WhatsApp member bisa dipakai orang lain setelah ini.</li>
                 </ul>
