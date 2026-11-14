@@ -77,6 +77,15 @@ export const PageContent = () => {
                                                 </td>
                                                 <td className="px-3 py-3 font-medium" data-test-id={`exit_history_cell_name_${request.id}`}>
                                                     {request.member.name}
+                                                    {request.member.id === null && (
+                                                        <span className="ml-2 align-middle">
+                                                            <StatusBadge
+                                                                tone="neutral"
+                                                                label="Member dihapus"
+                                                                data-test-id={`exit_history_badge_deleted_${request.id}`}
+                                                            />
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="px-3 py-3 whitespace-nowrap">{formatTableDate(request.submittedAt)}</td>
                                                 <td className="px-3 py-3">
@@ -104,7 +113,18 @@ export const PageContent = () => {
                                         data-test-id={`exit_history_card_${request.id}`}
                                     >
                                         <div className="flex items-start justify-between gap-3">
-                                            <p className="font-semibold">{request.member.name}</p>
+                                            <p className="font-semibold">
+                                                {request.member.name}
+                                                {request.member.id === null && (
+                                                    <span className="ml-2 align-middle">
+                                                        <StatusBadge
+                                                            tone="neutral"
+                                                            label="Member dihapus"
+                                                            data-test-id={`exit_history_card_badge_deleted_${request.id}`}
+                                                        />
+                                                    </span>
+                                                )}
+                                            </p>
                                             <StatusBadge
                                                 tone={request.status.value === 'approved' ? 'success' : 'danger'}
                                                 label={request.status.label}
