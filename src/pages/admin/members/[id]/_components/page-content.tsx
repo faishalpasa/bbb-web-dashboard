@@ -14,6 +14,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { memberGreetingMessage, whatsappChatUrl } from '@/utils/string';
 
 import { usePageContext } from '../_context';
+import { DeleteDialog } from './delete-dialog';
 import { InternalNote } from './internal-note';
 import { MemberHistory } from './member-history';
 import { MemberProfile } from './member-profile';
@@ -22,7 +23,7 @@ import { StatusDialogs } from './status-dialogs';
 
 export const PageContent = () => {
     const { can } = usePermissions();
-    const { member, failure, isLoading, resetMessage, isSendingReset, sendResetPassword, openStatusDialog, reload } = usePageContext();
+    const { member, failure, isLoading, resetMessage, isSendingReset, sendResetPassword, openStatusDialog, openDelete, reload } = usePageContext();
 
     if (failure) {
         return (
@@ -134,6 +135,17 @@ export const PageContent = () => {
                                     Aktifkan
                                 </Button>
                             )}
+                            {can(P.MEMBER_DELETE) && member.actions.canDelete && (
+                                <Button
+                                    variant="outline"
+                                    className="bg-card border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
+                                    title="Hapus member beserta riwayatnya untuk selamanya"
+                                    onClick={openDelete}
+                                    data-test-id="member_detail_button_delete"
+                                >
+                                    Hapus Permanen
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </header>
@@ -157,6 +169,7 @@ export const PageContent = () => {
             </div>
 
             <StatusDialogs />
+            <DeleteDialog />
         </div>
     );
 };

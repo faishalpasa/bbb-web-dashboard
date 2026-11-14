@@ -1,5 +1,7 @@
 # Admin member management contract (DRAFT)
 
+Audit edit profil (14 November 2026): penyimpanan profil yang mengubah data menulis satu entri tipe `members` di transaksi yang sama, memuat aktor, identitas member, dan nama field yang berubah (termasuk profil bacaan serta pilihan minat). Perubahan email digabung di entri yang sama dan tetap memuat alamat lama serta baru. Simpan tanpa perubahan, validasi gagal, atau transaksi rollback tidak meninggalkan entri. Catatan internal memakai endpoint terpisah dan tidak termasuk audit edit profil ini.
+
 Pagination Member (30 Oktober 2026): GET /members menerima perPage default 100, maksimal 1000. FE memakai default 100 dengan opsi 100/250/500/1000, kembali page=1 saat ukuran/filter berubah. Ini khusus daftar Member; pilihan pagination tabel lain dan riwayat kegiatan pada detail member tidak berubah. Footer bersama menampilkan Tampilkan + selector + total di kiri, nomor/ellipsis + panah prev/next di kanan; tanpa tombol first/last. Envelope existing tetap.
 
 Tambahan profil/minat member (20 Oktober 2026): [kontrak shared](member-reading-profile.md). Detail, options dan input create/edit mendapat tambahan opsional; list/CSV dan permission existing tetap.
@@ -20,8 +22,13 @@ Status: **di MySQL** untuk artboard 9a-9e. Diimplementasi di `bbb-api` dan dipak
 | `POST` | `/api/admin/members/{id}/activate` | -> `MemberDetail`; `422` bila bukan nonaktif |
 | `POST` | `/api/admin/members/{id}/reset-password` | -> `{ email }`; mengantrekan email berisi link atur ulang password (pengiriman nyata menunggu provider email) dan mematikan link reset lama yang belum dipakai; `422` bila member belum melengkapi data |
 | `PUT` | `/api/admin/members/{id}/note` | `{ note }` -> `{ note }` (maks. 2000 karakter) |
+| `DELETE` | `/api/admin/members/{id}` | -> `204`; menghapus member permanen (`404` bila tidak ada); izin `member-delete` |
 
 Daftar wilayah memakai endpoint `/api/regions/*` yang sama dengan member.
+
+## Hapus permanen
+
+Permintaan owner 14 Nov 2026: member bisa dihapus tuntas supaya email dan nomor WhatsApp-nya bisa dipakai orang lain. `DELETE /api/admin/members/{id}` menghapus dalam satu transaksi akun masuk (token email dan tautan Google ikut hilang), profil, notifikasi, minat baca, **seluruh pendaftaran kegiatan beserta jawaban dan berkas unggahannya (termasuk riwayat hadir)**, dan permintaan keluar; foto profil dan berkas unggahan dihapus dari penyimpanan setelah commit. Tidak bisa dibatalkan dan tidak ada status yang dikecualikan; member lain dan kegiatannya tidak berubah, tetapi kursi yang dipakai member itu kembali kosong. Sesi yang masih aktif berhenti (`401`). Member yang pernah soft delete ikut terhapus sehingga nomor WhatsApp-nya juga bebas. Audit log tipe `members` mencatat `Menghapus permanen member {nama} ({nomor})` tanpa email dan nomor WhatsApp; baris ledger impor masterlist dipertahankan tanpa tautan ke member dan akun yang dihapus. Izin `member-delete` (bergantung pada `member-view`) hanya diberikan ke role superadmin sistem oleh migrasi; role lain harus diberi manual. Dashboard meminta konfirmasi lewat popup yang menyebut nama member dan jumlah riwayat kegiatan yang ikut terhapus (`statistics`), lalu mewajibkan admin mengetik nama member (huruf harus sama persis; spasi di tepi dan spasi ganda diabaikan) sebelum tombol hapus aktif. Pemeriksaan nama hanya di dashboard; API tidak menerima nama.
 
 ## List
 
@@ -73,7 +80,7 @@ interface MemberDetail {
     statistics: { joined: number; attended: number; absent: number };
     history: { eventId: string; title: string; startsAt: string; status: { value: 'registered' | 'present' | 'absent'; label: string } }[];
     note: string;
-    actions: { canEdit: boolean; canResetPassword: boolean; canDeactivate: boolean; canActivate: boolean };
+    actions: { canEdit: boolean; canResetPassword: boolean; canDeactivate: boolean; canActivate: boolean; canDelete: boolean };
 }
 ```
 

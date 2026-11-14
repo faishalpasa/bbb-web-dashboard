@@ -31,6 +31,7 @@ Semua route di bawah berawalan `/api/admin`. Aksi memerlukan view modul terkait 
 | member-deactivate | POST /members/{id}/deactivate |
 | member-reset-password | POST /members/{id}/reset-password |
 | member-note-update | PUT /members/{id}/note |
+| member-delete | DELETE /members/{id} |
 | event-view | GET /events, /events/{id}, /events/options |
 | event-create | POST /events (draft) |
 | event-update | PUT /events/{id} |

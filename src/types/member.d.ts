@@ -83,7 +83,7 @@ export interface MemberDetail extends ReadingProfile {
     statistics: { joined: number; attended: number; absent: number };
     history: MemberHistoryItem[];
     note: string;
-    actions: { canEdit: boolean; canResetPassword: boolean; canDeactivate: boolean; canActivate: boolean };
+    actions: { canEdit: boolean; canResetPassword: boolean; canDeactivate: boolean; canActivate: boolean; canDelete: boolean };
 }
 
 export interface MemberEditInput extends ReadingProfileInput {
