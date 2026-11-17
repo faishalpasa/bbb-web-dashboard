@@ -47,12 +47,20 @@ test('validation: Indonesian mobile only, other countries 8 to 15 digits, never 
 });
 
 test('a stored number splits back into country and number, longest code first', () => {
-    assert.deepEqual(w.splitWhatsapp('6281234567890'), { iso: 'ID', national: '081234567890' });
+    assert.deepEqual(w.splitWhatsapp('6281234567890'), { iso: 'ID', national: '81234567890' });
     assert.deepEqual(w.splitWhatsapp('4917781621395'), { iso: 'DE', national: '17781621395' });
     assert.deepEqual(w.splitWhatsapp('14155552671'), { iso: 'US', national: '4155552671' });
     assert.deepEqual(w.splitWhatsapp('8801712345678'), { iso: 'BD', national: '1712345678' });
-    assert.deepEqual(w.splitWhatsapp('081234567890'), { iso: 'ID', national: '081234567890' });
+    assert.deepEqual(w.splitWhatsapp('081234567890'), { iso: 'ID', national: '81234567890' });
     assert.deepEqual(w.splitWhatsapp(''), { iso: 'ID', national: '' });
+});
+
+test('opening a stored number and saving it again changes nothing, with no extra 0 in front', () => {
+    for (const stored of ['6281234567890', '6285877643194', '4917781621395', '14155552671', '8801712345678', '60123456789']) {
+        const { iso, national } = w.splitWhatsapp(stored);
+        assert.doesNotMatch(national, /^0/, stored);
+        assert.equal(w.composeWhatsapp(iso, national), stored);
+    }
 });
 
 test('every country has a unique entry, an Indonesian name and a flag; Indonesia is listed first', () => {
