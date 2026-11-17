@@ -1,3 +1,6 @@
+import { matchDialPrefix } from '@/utils/whatsapp';
+
+// The admin WhatsApp number in the settings stays an Indonesian number; members' numbers use utils/whatsapp.
 const INDONESIA_COUNTRY_CODE = '62';
 
 // Accepts 0812…, +62812…, 62812… and 812… and returns the stored 628… form.
@@ -16,11 +19,15 @@ export const isValidWhatsapp = (normalized: string): boolean => /^628\d{8,12}$/.
 export const toLocalWhatsapp = (normalized: string): string =>
     normalized.startsWith(INDONESIA_COUNTRY_CODE) ? `0${normalized.slice(INDONESIA_COUNTRY_CODE.length)}` : normalized;
 
-// 6281234567890 -> 0812-3456-7890, for reading in a table.
-export const formatWhatsapp = (normalized: string): string => {
-    const local = toLocalWhatsapp(normalized);
+// 6281234567890 -> 0812-3456-7890, 4917781621395 -> +49 17781621395, for reading in a table.
+export const formatWhatsapp = (digits: string): string => {
+    if (digits.startsWith('62')) {
+        return `0${digits.slice(2)}`.replace(/^(\d{4})(\d{4})(\d+)$/, '$1-$2-$3');
+    }
 
-    return local.replace(/^(\d{4})(\d{4})(\d+)$/, '$1-$2-$3');
+    const match = matchDialPrefix(digits);
+
+    return match ? `+${digits.slice(0, digits.length - match.rest.length)} ${match.rest}` : `+${digits}`;
 };
 
 // A WhatsApp chat with the message already typed, for the admin to review and send.

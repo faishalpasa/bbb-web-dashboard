@@ -1,3 +1,4 @@
+import { DEFAULT_PHONE_COUNTRY } from '@/constants/phone-countries';
 import { useReadingProfile } from '@/hooks/useReadingProfile';
 import type { ReadingProfileOptions } from '@/types/reading-profile';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -6,7 +7,7 @@ import { getCountries, getDistricts, getProvinces, getRegencies, getVillages } f
 import type { MemberDetail, MemberEditInput } from '@/types/member';
 import type { CountryOption, DistrictOption, DomicileType, RegionOption, VillageOption } from '@/types/region';
 import { fieldErrorMessage } from '@/utils/error';
-import { isValidWhatsapp, normalizeWhatsapp, toLocalWhatsapp } from '@/utils/string';
+import { composeWhatsapp, isValidWhatsapp, splitWhatsapp } from '@/utils/whatsapp';
 
 const MIN_MEMBER_AGE = 17;
 const MAX_MEMBER_AGE = 100;
@@ -16,6 +17,7 @@ export type MemberFieldName =
     | 'birthYear'
     | 'email'
     | 'whatsapp'
+    | 'whatsappCountry'
     | 'participationPreference'
     | 'provinceCode'
     | 'regencyCode'
@@ -32,6 +34,7 @@ export interface MemberFormFields {
     birthYear: string;
     email: string;
     whatsapp: string;
+    whatsappCountry: string;
     participationPreference: string;
     provinceCode: string;
     regencyCode: string;
@@ -48,6 +51,7 @@ const EMPTY_FIELDS: MemberFormFields = {
     birthYear: '',
     email: '',
     whatsapp: '',
+    whatsappCountry: DEFAULT_PHONE_COUNTRY,
     participationPreference: '',
     provinceCode: '',
     regencyCode: '',
@@ -82,11 +86,18 @@ export const memberBirthYears = (): number[] => {
     return Array.from({ length: MAX_MEMBER_AGE - MIN_MEMBER_AGE + 1 }, (_, index) => latest - index);
 };
 
+// The stored number is international digits; the form shows the country code and the number apart.
+const whatsappFields = (stored: string): Pick<MemberFormFields, 'whatsapp' | 'whatsappCountry'> => {
+    const parts = splitWhatsapp(stored);
+
+    return { whatsapp: parts.national, whatsappCountry: parts.iso };
+};
+
 const fieldsFromMember = (member: MemberDetail): MemberFormFields => ({
     name: member.name,
     birthYear: String(member.birthYear),
     email: member.email,
-    whatsapp: toLocalWhatsapp(member.whatsapp),
+    ...whatsappFields(member.whatsapp),
     participationPreference: member.preference?.value ?? '',
     provinceCode: member.province?.code ?? '',
     regencyCode: member.regency?.code ?? '',
@@ -230,7 +241,7 @@ export const useMemberForm = (member?: MemberDetail, options: ReadingProfileOpti
     const validate = (options: { requireEmail: boolean }): MemberEditInput | null => {
         const readingValid = reading.validate();
         const nextErrors: MemberFormErrors = {};
-        const whatsapp = normalizeWhatsapp(fields.whatsapp);
+        const whatsapp = composeWhatsapp(fields.whatsappCountry, fields.whatsapp);
 
         if (!fields.name.trim()) nextErrors.name = 'Nama lengkap harus diisi.';
         if (!fields.birthYear) nextErrors.birthYear = 'Pilih tahun lahir.';

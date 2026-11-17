@@ -40,7 +40,7 @@ interface MemberListItem {
     memberNumber: string | null; // null sebelum data dilengkapi
     name: string;
     email: string; // alamat akun, ditampilkan di list dan CTA mailto; tidak mengirim email otomatis
-    whatsapp: string; // 628...
+    whatsapp: string; // digit internasional tanpa +, mis. 6281234567890 atau 4917781621395
     regency: string | null;
     province: string | null;
     preference: { value: string; label: string } | null; // null = "Belum diisi"
@@ -91,7 +91,7 @@ interface MemberEditInput {
     email?: string; // opsional; beda dari email sekarang = ganti email masuk
     name: string; // wajib
     birthYear: number; // wajib, usia minimal 17 tahun
-    whatsapp: string; // wajib, 628 + 8-12 digit
+    whatsapp: string; // wajib; Indonesia 628 + 8-12 digit, negara lain 8-15 digit dengan kode negara
     participationPreference: string | null; // opsional: online | offline | both
     provinceCode: string; // wajib
     regencyCode: string; // wajib, sesuai provinsi
@@ -106,7 +106,7 @@ interface MemberCreateInput extends MemberEditInput {
 }
 ```
 
-Nomor anggota, status, dan persetujuan yang tercatat tidak berubah lewat edit (field itu diabaikan bila dikirim); status diubah lewat endpoint deactivate/activate. Edit boleh mengirim `email` untuk mengganti email masuk member (keputusan owner 10 Nov 2026; tidak dikirim = email tetap): dinormalisasi huruf kecil, unik (`422 "Email sudah terdaftar."`), langsung berlaku dan status terverifikasi tetap (admin menjamin alamatnya). Saat email berubah, link verifikasi/atur ulang password yang belum dipakai dimatikan, akun Google yang tertaut tetap bisa dipakai (dicocokkan lewat ID Google), sesi aktif tidak dicabut, audit log mencatat email lama dan baru, dan email pemberitahuan diantrekan ke alamat lama dan baru. Edit berlaku untuk member berstatus apa pun, tidak melengkapi data member yang masih `awaiting_data`, dan ikut memperbarui nama akun. Nomor anggota (`BFF-xxxxx`) dibuat server saat disimpan (urutan transaksional), status awal `active`, `signupMethod` `admin`. Email dicek unik tanpa memperhatikan huruf besar/kecil dan disimpan huruf kecil (`422 "Email sudah terdaftar."`); WhatsApp dinormalisasi ke `628...` (`08...` diterima) dan unik termasuk member yang sudah dihapus. Akun dibuat tanpa password: dengan `sendInvitation` email belum terverifikasi dan sebuah link atur password diantrekan (pengiriman nyata menunggu provider), tanpa itu email dianggap terverifikasi oleh admin. `consentAcknowledged: true` mencatat persetujuan dengan versi aturan terkini dan waktu sekarang; selain itu `consent` tetap `null`.
+Nomor anggota, status, dan persetujuan yang tercatat tidak berubah lewat edit (field itu diabaikan bila dikirim); status diubah lewat endpoint deactivate/activate. Edit boleh mengirim `email` untuk mengganti email masuk member (keputusan owner 10 Nov 2026; tidak dikirim = email tetap): dinormalisasi huruf kecil, unik (`422 "Email sudah terdaftar."`), langsung berlaku dan status terverifikasi tetap (admin menjamin alamatnya). Saat email berubah, link verifikasi/atur ulang password yang belum dipakai dimatikan, akun Google yang tertaut tetap bisa dipakai (dicocokkan lewat ID Google), sesi aktif tidak dicabut, audit log mencatat email lama dan baru, dan email pemberitahuan diantrekan ke alamat lama dan baru. Edit berlaku untuk member berstatus apa pun, tidak melengkapi data member yang masih `awaiting_data`, dan ikut memperbarui nama akun. Nomor anggota (`BFF-xxxxx`) dibuat server saat disimpan (urutan transaksional), status awal `active`, `signupMethod` `admin`. Email dicek unik tanpa memperhatikan huruf besar/kecil dan disimpan huruf kecil (`422 "Email sudah terdaftar."`); WhatsApp dinormalisasi ke digit internasional tanpa `+` (`08...` jadi `628...`, `+49...` dan `0049...` diterima; nomor Indonesia harus nomor seluler `628...`, negara lain 8-15 digit) dan unik termasuk member yang sudah dihapus. Akun dibuat tanpa password: dengan `sendInvitation` email belum terverifikasi dan sebuah link atur password diantrekan (pengiriman nyata menunggu provider), tanpa itu email dianggap terverifikasi oleh admin. `consentAcknowledged: true` mencatat persetujuan dengan versi aturan terkini dan waktu sekarang; selain itu `consent` tetap `null`.
 
 Penonaktifan mengubah status tersimpan menjadi `unsubscribed` (tampil `inactive`), membatalkan pendaftaran `registered` pada kegiatan yang belum berakhir (riwayat hadir tidak berubah, kursi kembali), dan dicatat ke audit log tipe `members`. Pengaktifan kembali (`inactive` -> `active`) tidak memulihkan pendaftaran. Permintaan keluar yang masih menunggu tidak diputuskan oleh penonaktifan; keputusannya tetap lewat layar Permintaan Keluar.
 
