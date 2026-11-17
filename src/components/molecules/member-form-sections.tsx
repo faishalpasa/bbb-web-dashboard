@@ -1,6 +1,7 @@
 import { FormField } from '@/components/molecules/form-field';
 import { ReadingProfileSection } from '@/components/molecules/reading-profile-section';
 import { SearchableSelect } from '@/components/molecules/searchable-select';
+import { WhatsappField } from '@/components/molecules/whatsapp-field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import type { MemberForm } from '@/hooks/useMemberForm';
@@ -89,26 +90,16 @@ export const MemberFormSections = ({ form, preferences, emailHint, disabled, 'da
                         />
                     </FormField>
 
-                    <FormField
-                        id="whatsapp"
-                        label="Nomor WhatsApp"
-                        hint="Nomor Indonesia. Disimpan sebagai 628xx."
+                    <WhatsappField
+                        country={fields.whatsappCountry}
+                        value={fields.whatsapp}
                         error={errors.whatsapp}
-                        data-test-id={`${testId}_whatsapp`}
-                    >
-                        <Input
-                            id="whatsapp"
-                            type="tel"
-                            inputMode="tel"
-                            value={fields.whatsapp}
-                            aria-required="true"
-                            autoComplete="off"
-                            onChange={(event) => setField('whatsapp', event.target.value.replace(/\D/g, ''))}
-                            placeholder="081234567890"
-                            className="bg-card h-11 font-mono"
-                            data-test-id={`${testId}_input_whatsapp`}
-                        />
-                    </FormField>
+                        onChange={(country, value) => {
+                            setField('whatsappCountry', country);
+                            setField('whatsapp', value);
+                        }}
+                        data-test-id={testId}
+                    />
                 </div>
 
                 <FormField
