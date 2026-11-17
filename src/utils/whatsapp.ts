@@ -72,17 +72,20 @@ export const matchDialPrefix = (digits: string): { iso: string; rest: string } |
     return null;
 };
 
-/** The inverse, to fill the form from a stored number (or from the 0812… a migrated account may still hold). */
+/**
+ * The inverse, to fill the form from a stored number (or from the 0812… a migrated account may still hold). The number
+ * is shown without the trunk 0, because the country code in front already stands for it: +62 813…, not +62 0813….
+ */
 export const splitWhatsapp = (value: string): { iso: string; national: string } => {
     const digits = value.replace(/\D/g, '');
 
     if (digits === '') return { iso: DEFAULT_PHONE_COUNTRY, national: '' };
 
-    if (digits.startsWith('0')) return { iso: DEFAULT_PHONE_COUNTRY, national: digits };
+    if (digits.startsWith('0')) return { iso: DEFAULT_PHONE_COUNTRY, national: digits.replace(/^0/, '') };
 
     const match = matchDialPrefix(digits);
 
     if (!match) return { iso: DEFAULT_PHONE_COUNTRY, national: digits };
 
-    return { iso: match.iso, national: match.iso === DEFAULT_PHONE_COUNTRY ? `0${match.rest}` : match.rest };
+    return { iso: match.iso, national: match.rest };
 };
