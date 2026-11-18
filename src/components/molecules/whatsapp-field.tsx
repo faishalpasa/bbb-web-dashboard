@@ -65,7 +65,7 @@ export const WhatsappField = ({ country, value, error, onChange, 'data-test-id':
                         autoComplete="off"
                         value={value}
                         onChange={(event) => handleValueChange(event.target.value)}
-                        placeholder={country === 'ID' ? '81234567890' : 'Nomor tanpa kode negara'}
+                        placeholder="8123456789"
                         className="bg-card h-11 min-w-0 flex-1 font-mono"
                         aria-invalid={!!error}
                         aria-describedby={error ? 'whatsapp-hint whatsapp-error' : 'whatsapp-hint'}

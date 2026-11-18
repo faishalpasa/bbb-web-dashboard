@@ -148,6 +148,10 @@ export const MemberFilters = () => {
                         <option value="memberNumber:desc">Nomor member: turun</option>
                         <option value="name:asc">Nama: A–Z</option>
                         <option value="name:desc">Nama: Z–A</option>
+                        <option value="joinedCount:desc">Ikut kegiatan: terbanyak</option>
+                        <option value="joinedCount:asc">Ikut kegiatan: tersedikit</option>
+                        <option value="presentCount:desc">Hadir kegiatan: terbanyak</option>
+                        <option value="presentCount:asc">Hadir kegiatan: tersedikit</option>
                     </NativeSelect>
                 </div>
             </FilterDialog>
