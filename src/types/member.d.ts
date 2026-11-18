@@ -3,7 +3,7 @@ import type { ReadingProfile, ReadingProfileInput, ReadingProfileOptions } from 
 import type { CountryOption, DistrictOption, DomicileType, RegionOption, VillageOption } from '@/types/region';
 
 export type MemberAdminStatus = 'active' | 'exit_requested' | 'awaiting_data' | 'inactive';
-export type MemberSortBy = 'memberNumber' | 'name' | 'joinedAt';
+export type MemberSortBy = 'memberNumber' | 'name' | 'joinedAt' | 'joinedCount' | 'presentCount';
 export type MemberSortDirection = 'asc' | 'desc';
 
 export type MemberHistoryStatus = 'registered' | 'present' | 'absent';

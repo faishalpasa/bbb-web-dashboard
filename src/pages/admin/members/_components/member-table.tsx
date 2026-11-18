@@ -171,7 +171,25 @@ export const MemberTable = () => {
                             </th>
                             <th className="px-3 py-3 font-semibold whitespace-nowrap">Preferensi</th>
                             <th className="px-3 py-3 font-semibold whitespace-nowrap">Status</th>
-                            <th className="px-3 py-3 text-right font-semibold whitespace-nowrap">Ikut / Hadir</th>
+                            <th className="px-3 py-3 text-right whitespace-nowrap">
+                                <span className="inline-flex items-center gap-1">
+                                    <SortableHeader
+                                        label="Ikut"
+                                        sortBy="joinedCount"
+                                        activeSortBy={query.sortBy}
+                                        direction={query.sortDirection}
+                                        onSort={setSort}
+                                    />
+                                    <span aria-hidden="true">/</span>
+                                    <SortableHeader
+                                        label="Hadir"
+                                        sortBy="presentCount"
+                                        activeSortBy={query.sortBy}
+                                        direction={query.sortDirection}
+                                        onSort={setSort}
+                                    />
+                                </span>
+                            </th>
                             <th className="py-3 pr-4 pl-3 text-right font-semibold">Aksi</th>
                         </tr>
                     </thead>
