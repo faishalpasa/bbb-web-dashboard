@@ -13,7 +13,7 @@
 ## Data and copy
 
 - Type every service request and response in `src/types/<domain>.d.ts`; never import raw `axios` outside `utils/api.ts`.
-- UI copy is Indonesian and addresses members as “Ibu”.
+- UI copy is Indonesian and addresses members as “kamu”.
 - Do not expose internal enum values directly; map them to centralized Indonesian labels (`src/constants/`).
 - Do not guess data fields, design details, secrets, or unresolved product behavior.
 

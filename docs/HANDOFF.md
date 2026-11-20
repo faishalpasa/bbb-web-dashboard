@@ -32,7 +32,7 @@ Buka via Chrome yang sudah login; Play -> Prototypes -> artboard admin 8–13. T
 KONVENSI:
 - Page named export Page<Nama>, index tipis; _context pegang state/effects/services; _components untuk UI halaman.
 - App-context hanya global; halaman tidak import Axios. Service verb get/post/put/delete, return {data,status:true}, throw ServiceError.
-- UI Indonesia, member disebut Ibu, semua field wajib diberi * lewat FormField/RequiredMark; elemen interaktif data-test-id modul_elemen_aksi.
+- UI Indonesia, member disebut kamu, semua field wajib diberi * lewat FormField/RequiredMark; elemen interaktif data-test-id modul_elemen_aksi.
 - Pakai ulang form/dialog/primitives; destructive action perlu confirmation. API pemegang otoritas bisnis/authorization; capability UI bukan authorization.
 - Kontrak docs/contracts/frontend-api.md sekarang identik di KETIGA repo. Kalau ubah kontrak, update semua salinan dan kabari gw. Admin kontrak BELUM didefinisikan.
 - API masih DUMMY: tanpa migrasi, tanpa MySQL/database. File session/cache, Faker kegiatan. Jangan keluar fase dummy sebelum gw bilang.
