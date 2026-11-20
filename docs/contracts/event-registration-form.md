@@ -130,7 +130,7 @@ Contoh submit member (ID ilustratif, bukan fixture credential):
 - Perubahan struktur setelah lockedAt terisi: 422 code registration_form_locked dan errors.registrationForm. Mengirim definisi yang identik diperbolehkan untuk menyimpan detail kegiatan; field, label, tipe, required, options, dan urutan semuanya bagian struktur.
 - Omit registrationForm pada PUT event mempertahankan definisi existing, tidak menghapus custom field. Create tanpa registrationForm selama rollout menyiapkan default version=1, fields=[]; FE baru selalu mengirim definisi.
 - Validasi input: 422 { message, errors }. Key mengikuti payload: name, email, consentVersion, formVersion, answers, answers.0.fieldId, answers.0.value, registrationForm.fields.0.label, dst. UI memetakan index error ke fieldId yang disubmit.
-- Field wajib ditolak bila tidak diisi; optional kosong null. Pesan Indonesia, member disebut Ibu.
+- Field wajib ditolak bila tidak diisi; optional kosong null. Pesan Indonesia, member disebut kamu.
 - Kuota penuh/cutoff/duplicate/status tetap aturan dan code existing, bukan diganti error form. Semua pengecekan final, jawaban, pendaftaran, dan first lock tersimpan atomik; kegagalan tidak mengambil kursi, membuat guest yatim, atau mengunci form.
 - 401/403 existing tidak diubah; permission denial 403 code permission_denied. 404 tetap { message: "Data tidak ditemukan." }.
 - Recheck definisi versi terbaru di bawah lock event. Race edit form vs pendaftaran pertama harus menghasilkan satu urutan sah: edit menang -> submit versi lama ditolak; submit menang -> edit struktur ditolak.

@@ -20,7 +20,7 @@ Review React/TypeScript code against this project's rules and the design artboar
 
 ### UX and accessibility
 
-- [ ] Indonesian copy addresses members as “Ibu”.
+- [ ] Indonesian copy addresses members as “kamu”.
 - [ ] 44px targets, visible labels/errors, keyboard access, and WCAG AA contrast.
 - [ ] Member/public screens checked at 390px; admin at 1360px.
 - [ ] Required `data-test-id` attributes follow project convention.
