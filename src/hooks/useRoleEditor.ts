@@ -84,7 +84,6 @@ export const useRoleEditor = (roleId?: string) => {
         event.preventDefault();
         if (!canSave || isSaving) return;
         const next: RoleErrors = {};
-        if (isCreating && !fields.name.trim()) next.name = 'Nama role harus diisi.';
         if (!fields.label.trim()) next.label = 'Label role harus diisi.';
         setErrors(next);
         if (Object.keys(next).length > 0) {
@@ -102,7 +101,14 @@ export const useRoleEditor = (roleId?: string) => {
         try {
             const input = { label: fields.label.trim(), permissionIds: fields.permissionIds };
             if (isCreating) {
-                const response = await postRole({ ...input, name: fields.name.trim().toLowerCase() });
+                const slug = input.label
+                    .normalize('NFKD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+                const name = `${slug.slice(0, 80).replace(/-+$/, '') || 'role'}-${crypto.randomUUID().slice(0, 8)}`;
+                const response = await postRole({ ...input, name: /^[a-z]/.test(name) ? name : `role-${name}` });
                 toast.add({ type: 'success', title: 'Role berhasil dibuat.' });
                 void navigate({ to: ROUTES.roleDetail, params: { roleId: response.data.id } });
                 return;
@@ -114,7 +120,7 @@ export const useRoleEditor = (roleId?: string) => {
         } catch (error) {
             setErrors({
                 name: fieldErrorMessage(error, 'name'),
-                label: fieldErrorMessage(error, 'label'),
+                label: fieldErrorMessage(error, 'label') ?? fieldErrorMessage(error, 'name'),
                 permissionIds: fieldErrorMessage(error, 'permissionIds'),
             });
             setSaveError(errorMessage(error));
