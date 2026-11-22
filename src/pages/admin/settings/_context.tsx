@@ -12,6 +12,7 @@ export type SettingsFieldName =
     | 'registrationCloseMinutes'
     | 'cancellationCloseMinutes'
     | 'attendanceOpenMinutes'
+    | 'attendanceCloseAfterMinutes'
     | 'engagedWindowMonths'
     | 'adminWhatsapp'
     | 'whatsappGroupUrl'
@@ -26,6 +27,7 @@ const FIELD_NAMES: SettingsFieldName[] = [
     'registrationCloseMinutes',
     'cancellationCloseMinutes',
     'attendanceOpenMinutes',
+    'attendanceCloseAfterMinutes',
     'engagedWindowMonths',
     'adminWhatsapp',
     'whatsappGroupUrl',
@@ -51,7 +53,7 @@ interface PageContextValue {
 }
 
 // Typed as "jam:menit" in the form, sent as minutes.
-const DURATION_FIELDS = ['registrationCloseMinutes', 'cancellationCloseMinutes', 'attendanceOpenMinutes'] as const;
+const DURATION_FIELDS = ['registrationCloseMinutes', 'cancellationCloseMinutes', 'attendanceOpenMinutes', 'attendanceCloseAfterMinutes'] as const;
 
 const PageContext = createContext<PageContextValue | null>(null);
 
@@ -59,6 +61,7 @@ const toFields = (settings: AdminSettings): SettingsFields => ({
     registrationCloseMinutes: toDurationText(settings.registrationCloseMinutes),
     cancellationCloseMinutes: toDurationText(settings.cancellationCloseMinutes),
     attendanceOpenMinutes: toDurationText(settings.attendanceOpenMinutes),
+    attendanceCloseAfterMinutes: toDurationText(settings.attendanceCloseAfterMinutes),
     engagedWindowMonths: String(settings.engagedWindowMonths),
     adminWhatsapp: settings.adminWhatsapp ? toLocalWhatsapp(settings.adminWhatsapp) : '',
     whatsappGroupUrl: settings.whatsappGroupUrl ?? '',
@@ -150,6 +153,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             registrationCloseMinutes: registrationMinutes,
             cancellationCloseMinutes: cancellationMinutes,
             attendanceOpenMinutes: attendanceMinutes,
+            attendanceCloseAfterMinutes: durationTextToMinutes(fields.attendanceCloseAfterMinutes) ?? 0,
             engagedWindowMonths: Number(fields.engagedWindowMonths),
             adminWhatsapp: fields.adminWhatsapp.trim() ? whatsapp : null,
             whatsappGroupUrl: fields.whatsappGroupUrl.trim() || null,
