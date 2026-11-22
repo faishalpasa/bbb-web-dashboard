@@ -62,24 +62,6 @@ export const RoleForm = ({ editor }: RoleFormProps) => {
                                     {readOnlyReason}
                                 </p>
                             )}
-                            <FormField
-                                id="roleName"
-                                label="Nama role"
-                                hint="Nama stabil, misalnya member-editor. Tidak bisa diubah setelah dibuat."
-                                error={errors.name}
-                                data-test-id="roles_name"
-                            >
-                                <Input
-                                    id="roleName"
-                                    className="bg-card"
-                                    value={fields.name}
-                                    onChange={(event) => editor.setField('name', event.target.value)}
-                                    disabled={!isCreating || !canSave || isBusy}
-                                    maxLength={100}
-                                    aria-required="true"
-                                    data-test-id="roles_input_name"
-                                />
-                            </FormField>
                             <FormField id="roleLabel" label="Label role" error={errors.label} data-test-id="roles_label">
                                 <Input
                                     id="roleLabel"
