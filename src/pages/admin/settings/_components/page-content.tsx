@@ -150,7 +150,7 @@ export const PageContent = () => {
                         description="Berlaku untuk semua kegiatan. Admin tetap bisa menambah peserta sampai akhir hari acara."
                         data-test-id="settings_card_events"
                     >
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-4 min-[1400px]:grid-cols-4 sm:grid-cols-2">
                             {durationField('registrationCloseMinutes', 'Batas member mendaftar (sebelum acara)')}
                             {durationField('cancellationCloseMinutes', 'Batas member membatalkan (sebelum acara)')}
                             {durationField(
