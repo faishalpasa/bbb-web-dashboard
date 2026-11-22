@@ -158,6 +158,7 @@ export const PageContent = () => {
                                 'Absensi dibuka (sebelum acara)',
                                 'Tidak boleh lebih besar dari batas member mendaftar.',
                             )}
+                            {durationField('attendanceCloseAfterMinutes', 'Presensi ditutup (setelah acara)', 'Acara otomatis ditutup setelah batas ini.')}
                         </div>
                         <p className="bg-secondary/70 rounded-md px-3 py-2 text-sm" data-test-id="settings_text_example">
                             {exampleText(fields.registrationCloseMinutes, fields.cancellationCloseMinutes, fields.attendanceOpenMinutes)}

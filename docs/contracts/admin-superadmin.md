@@ -28,6 +28,7 @@ interface AdminSettings {
     registrationCloseMinutes: number; // member bisa mendaftar sampai N menit sebelum acara
     cancellationCloseMinutes: number; // member bisa membatalkan sampai N menit sebelum acara
     attendanceOpenMinutes: number; // member bisa mengisi kode absensi mulai N menit sebelum acara (bawaan 30); tidak boleh lebih besar dari registrationCloseMinutes
+    attendanceCloseAfterMinutes: number; // batas presensi setelah acara berakhir (bawaan 360 menit; 0–10080)
     engagedWindowMonths: number; // "Terlibat" = hadir minimal 1 kegiatan dalam N bulan terakhir
     adminWhatsapp: string | null; // 628...
     whatsappGroupUrl: string | null; // harus diawali https://chat.whatsapp.com/

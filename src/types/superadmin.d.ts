@@ -6,6 +6,7 @@ export interface AdminSettings {
     cancellationCloseMinutes: number;
     /** Minutes before an event starts at which members may begin entering the attendance code; at most `registrationCloseMinutes`. */
     attendanceOpenMinutes: number;
+    attendanceCloseAfterMinutes: number;
     engagedWindowMonths: number;
     adminWhatsapp: string | null;
     whatsappGroupUrl: string | null;
