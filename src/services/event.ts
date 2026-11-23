@@ -242,3 +242,14 @@ export const putParticipantAttendance = async (
         throw toServiceError(error);
     }
 };
+
+export const postCancelParticipant = async (eventId: string, participantId: string): Promise<ServiceResponse<{ summary: ParticipantSummary }>> => {
+    try {
+        const { data } = await axiosClient.post<ApiEnvelope<{ summary: ParticipantSummary }>>(
+            `/admin/events/${eventId}/participants/${participantId}/cancel`,
+        );
+        return { data: data.data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};

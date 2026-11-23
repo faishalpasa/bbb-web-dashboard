@@ -20,6 +20,7 @@ export const PERMISSIONS = {
     EVENT_CLOSE: 'event-close',
     EVENT_PARTICIPANT_VIEW: 'event-participant-view',
     EVENT_PARTICIPANT_CREATE: 'event-participant-create',
+    EVENT_PARTICIPANT_CANCEL: 'event-participant-cancel',
     EVENT_PARTICIPANT_EXPORT: 'event-participant-export',
     EVENT_PARTICIPANT_ATTENDANCE_UPDATE: 'event-participant-attendance-update',
     EXIT_REQUEST_VIEW: 'exit-request-view',

@@ -1,5 +1,7 @@
 import { Check, Download, X } from 'lucide-react';
+import { useState } from 'react';
 
+import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { StatusBadge } from '@/components/molecules/status-badge';
 import { TablePagination } from '@/components/molecules/table-pagination';
@@ -101,11 +103,49 @@ const DetailAction = ({ participant }: AttendanceActionProps) => {
     );
 };
 
+const CancelParticipantAction = ({ participant }: AttendanceActionProps) => {
+    const { can } = usePermissions();
+    const { event, pendingParticipantIds, cancelParticipant } = usePageContext();
+    const [open, setOpen] = useState(false);
+    const pending = pendingParticipantIds.includes(participant.id);
+    if (!can(P.EVENT_PARTICIPANT_CANCEL) || event?.status.value !== 'published' || participant.status.value !== 'registered') return null;
+
+    return (
+        <>
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setOpen(true)}
+                data-test-id={`event_detail_button_cancel_participant_${participant.id}`}
+            >
+                Batalkan
+            </Button>
+            <ConfirmationDialog
+                open={open}
+                onClose={() => setOpen(false)}
+                onConfirm={() =>
+                    void cancelParticipant(participant.id).then(() => {
+                        setOpen(false);
+                    })
+                }
+                title="Batalkan pendaftaran peserta?"
+                description={`Pendaftaran ${participant.name} akan dibatalkan dan email pemberitahuan akan dikirim.`}
+                confirmLabel="Batalkan pendaftaran"
+                isSubmitting={pending}
+                error={null}
+                isDestructive
+                data-test-id={`event_detail_dialog_cancel_${participant.id}`}
+            />
+        </>
+    );
+};
+
 const ParticipantActions = ({ participant }: AttendanceActionProps) => (
     <div className="flex items-center justify-end gap-2">
         <DetailAction participant={participant} />
         <WhatsappAction participant={participant} />
         <AttendanceAction participant={participant} />
+        <CancelParticipantAction participant={participant} />
     </div>
 );
 
