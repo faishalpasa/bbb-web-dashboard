@@ -2,6 +2,7 @@ import { AdminPageHeader } from '@/components/layout/admin-page-header';
 import { Link } from '@tanstack/react-router';
 import { Download } from 'lucide-react';
 
+import { ConfirmationDialog } from '@/components/molecules/confirmation-dialog';
 import { FeedbackToast } from '@/components/molecules/feedback-toast';
 import { Button } from '@/components/ui/button';
 import { PERMISSIONS as P } from '@/constants/permission';
@@ -14,7 +15,8 @@ import { EventTable } from './event-table';
 
 export const PageContent = () => {
     const { can } = usePermissions();
-    const { list, failure, isExporting, exportError, exportEvents, reload } = usePageContext();
+    const { list, failure, isExporting, exportError, exportEvents, reload, draftToDelete, isDeleting, deleteError, closeDeleteDraft, deleteDraft } =
+        usePageContext();
     const canManageEvents = can(P.EVENT_CREATE);
 
     return (
@@ -62,6 +64,18 @@ export const PageContent = () => {
                     <EventTable />
                 )}
             </section>
+            <ConfirmationDialog
+                open={can(P.EVENT_DELETE) && draftToDelete !== null}
+                onClose={closeDeleteDraft}
+                onConfirm={() => void deleteDraft()}
+                title="Hapus draf kegiatan?"
+                description={`Draf "${draftToDelete?.title ?? ''}" akan hilang dari daftar kegiatan dan tidak bisa dibuka lagi dari dashboard. Hanya draf yang bisa dihapus.`}
+                confirmLabel="Hapus draf"
+                isSubmitting={isDeleting}
+                error={deleteError}
+                isDestructive
+                data-test-id="events_dialog_delete_draft"
+            />
         </div>
     );
 };

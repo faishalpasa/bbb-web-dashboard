@@ -1,7 +1,7 @@
 import { PERMISSIONS as P } from '@/constants/permission';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Link } from '@tanstack/react-router';
-import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Pencil } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Pencil, Trash2 } from 'lucide-react';
 
 import { ROW_ACTION_ITEM_CLASS, RowActionsMenu } from '@/components/molecules/row-actions-menu';
 import { StatusBadge } from '@/components/molecules/status-badge';
@@ -51,9 +51,11 @@ interface EventActionsProps {
     event: EventListItem;
     canEdit: boolean;
     canViewParticipants: boolean;
+    canDelete: boolean;
+    onDelete: (event: EventListItem) => void;
 }
 
-const EventActions = ({ event, canEdit, canViewParticipants }: EventActionsProps) => (
+const EventActions = ({ event, canEdit, canViewParticipants, canDelete, onDelete }: EventActionsProps) => (
     <RowActionsMenu label={event.title} data-test-id={`events_actions_${event.id}`}>
         {(close) => (
             <>
@@ -81,6 +83,21 @@ const EventActions = ({ event, canEdit, canViewParticipants }: EventActionsProps
                         Edit kegiatan
                     </Link>
                 )}
+                {canDelete && (
+                    <button
+                        type="button"
+                        role="menuitem"
+                        className={`${ROW_ACTION_ITEM_CLASS} text-destructive`}
+                        onClick={() => {
+                            close();
+                            onDelete(event);
+                        }}
+                        data-test-id={`events_button_delete_${event.id}`}
+                    >
+                        <Trash2 className="size-4 shrink-0" aria-hidden="true" />
+                        Hapus draf
+                    </button>
+                )}
             </>
         )}
     </RowActionsMenu>
@@ -90,7 +107,7 @@ export const EventTable = () => {
     const { can } = usePermissions();
     const canViewParticipants = can(P.EVENT_PARTICIPANT_VIEW);
     const canEdit = (event: EventListItem) => can(P.EVENT_UPDATE) && isEditable(event);
-    const { list, isLoading, query, hasActiveFilter, goToPage, setPerPage, setSort } = usePageContext();
+    const { list, isLoading, query, hasActiveFilter, goToPage, setPerPage, setSort, openDeleteDraft } = usePageContext();
     const items = list?.items ?? [];
     const meta = list?.meta;
 
@@ -168,7 +185,13 @@ export const EventTable = () => {
                                           />
                                       </td>
                                       <td className="py-2 pr-4 pl-3">
-                                          <EventActions event={event} canEdit={canEdit(event)} canViewParticipants={canViewParticipants} />
+                                          <EventActions
+                                              event={event}
+                                              canEdit={canEdit(event)}
+                                              canViewParticipants={canViewParticipants}
+                                              canDelete={can(P.EVENT_DELETE) && event.status.value === 'draft'}
+                                              onDelete={openDeleteDraft}
+                                          />
                                       </td>
                                   </tr>
                               ))}
@@ -197,7 +220,13 @@ export const EventTable = () => {
                               <p className="text-muted-foreground text-xs">
                                   {event.format.label} · {audienceOf(event)} · Terdaftar {quotaOf(event)} · Hadir {attendedOf(event)}
                               </p>
-                              <EventActions event={event} canEdit={canEdit(event)} canViewParticipants={canViewParticipants} />
+                              <EventActions
+                                  event={event}
+                                  canEdit={canEdit(event)}
+                                  canViewParticipants={canViewParticipants}
+                                  canDelete={can(P.EVENT_DELETE) && event.status.value === 'draft'}
+                                  onDelete={openDeleteDraft}
+                              />
                           </li>
                       ))}
             </ul>
