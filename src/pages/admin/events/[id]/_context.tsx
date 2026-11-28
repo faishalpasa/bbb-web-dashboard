@@ -11,6 +11,7 @@ import {
     getEventParticipants,
     getEventParticipantsExport,
     postCancelEvent,
+    postCancelParticipant,
     postCloseEvent,
     postDuplicateEvent,
     postEventParticipant,
@@ -65,6 +66,7 @@ interface PageContextValue {
     goToPage: (page: number) => void;
     changePerPage: (perPage: number) => void;
     toggleAttendance: (participantId: string, present: boolean) => Promise<void>;
+    cancelParticipant: (participantId: string) => Promise<boolean>;
     exportParticipants: () => Promise<void>;
     copyText: (text: string, label: string) => Promise<void>;
     setCloseDialogOpen: (open: boolean) => void;
@@ -269,6 +271,25 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         setNotice(isCopied ? { tone: 'success', text: `${label} disalin.` } : { tone: 'error', text: `${label} gagal disalin.` });
     }, []);
 
+    const cancelParticipant = useCallback(
+        async (participantId: string): Promise<boolean> => {
+            if (!eventId) return false;
+            setPendingParticipantIds((current) => [...current, participantId]);
+            try {
+                await postCancelParticipant(eventId, participantId);
+                toast.add({ type: 'success', title: 'Pendaftaran peserta dibatalkan.' });
+                setReloadToken((token) => token + 1);
+                return true;
+            } catch (error) {
+                setNotice({ tone: 'error', text: errorMessage(error) });
+                return false;
+            } finally {
+                setPendingParticipantIds((current) => current.filter((id) => id !== participantId));
+            }
+        },
+        [eventId],
+    );
+
     const closeEvent = useCallback(async () => {
         if (!eventId) return;
 
@@ -433,6 +454,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
                 setPage(1);
             },
             toggleAttendance,
+            cancelParticipant,
             exportParticipants,
             copyText,
             setCloseDialogOpen: (open) => {
@@ -499,6 +521,7 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             addError,
             isAdding,
             toggleAttendance,
+            cancelParticipant,
             exportParticipants,
             copyText,
             closeEvent,

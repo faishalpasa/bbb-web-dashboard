@@ -72,6 +72,11 @@ const EditForm = () => {
         cancelReason,
         setCancelReason,
         isDuplicating,
+        isDeleteDialogOpen,
+        isDeleting,
+        deleteError,
+        setDeleteDialogOpen,
+        deleteDraft,
         setCancelDialogOpen,
         duplicate,
         copyAnnouncement,
@@ -192,10 +197,12 @@ const EditForm = () => {
                             )}
                             <EventActionsMenu
                                 canCancel={can(P.EVENT_CANCEL) && event.actions.canCancel}
+                                canDelete={can(P.EVENT_DELETE) && event.actions.canDelete}
                                 isDuplicating={isDuplicating}
                                 onDuplicate={() => void duplicate()}
                                 onCopyAnnouncement={() => void copyAnnouncement()}
                                 onCancel={() => setCancelDialogOpen(true)}
+                                onDelete={() => setDeleteDialogOpen(true)}
                             />
                         </div>
                     </section>
@@ -259,19 +266,34 @@ const EditForm = () => {
                     data-test-id="event_edit_dialog_cancel_reason"
                 />
             </ConfirmationDialog>
+            <ConfirmationDialog
+                open={can(P.EVENT_DELETE) && event.actions.canDelete && isDeleteDialogOpen}
+                onClose={() => setDeleteDialogOpen(false)}
+                onConfirm={() => void deleteDraft()}
+                title="Hapus draf kegiatan?"
+                description={`Draf "${event.title}" akan hilang dari daftar kegiatan dan tidak bisa dibuka lagi dari dashboard. Hanya draf yang bisa dihapus.`}
+                confirmLabel="Hapus draf"
+                cancelLabel="Tidak jadi"
+                isSubmitting={isDeleting}
+                error={deleteError}
+                isDestructive
+                data-test-id="event_edit_dialog_delete"
+            />
         </form>
     );
 };
 
 interface EventActionsMenuProps {
     canCancel: boolean;
+    canDelete: boolean;
     isDuplicating: boolean;
     onDuplicate: () => void;
     onCopyAnnouncement: () => void;
     onCancel: () => void;
+    onDelete: () => void;
 }
 
-const EventActionsMenu = ({ canCancel, isDuplicating, onDuplicate, onCopyAnnouncement, onCancel }: EventActionsMenuProps) => {
+const EventActionsMenu = ({ canCancel, canDelete, isDuplicating, onDuplicate, onCopyAnnouncement, onCancel, onDelete }: EventActionsMenuProps) => {
     const { can } = usePermissions();
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -365,6 +387,17 @@ const EventActionsMenu = ({ canCancel, isDuplicating, onDuplicate, onCopyAnnounc
                             data-test-id="event_edit_button_cancel_event"
                         >
                             Batalkan kegiatan
+                        </button>
+                    )}
+                    {canDelete && (
+                        <button
+                            type="button"
+                            role="menuitem"
+                            className="text-destructive hover:bg-destructive/5 focus-visible:bg-destructive/5 focus-visible:ring-destructive w-full rounded-sm px-3 py-2 text-left text-sm outline-hidden focus-visible:ring-2"
+                            onClick={() => runAction(onDelete)}
+                            data-test-id="event_edit_button_delete_event"
+                        >
+                            Hapus draf kegiatan
                         </button>
                     )}
                 </div>

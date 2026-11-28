@@ -103,6 +103,17 @@ export const postDuplicateEvent = async (eventId: string): Promise<ServiceRespon
     }
 };
 
+// Soft delete: the draft leaves every list, its data stays in the database.
+export const deleteEvent = async (eventId: string): Promise<ServiceResponse<null>> => {
+    try {
+        await axiosClient.delete(`/admin/events/${eventId}`);
+
+        return { data: null, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
 export const postCancelEvent = async (eventId: string, reason = ''): Promise<ServiceResponse<EventDetail>> => {
     try {
         const note = reason.trim();
@@ -237,6 +248,17 @@ export const putParticipantAttendance = async (
             { present },
         );
 
+        return { data: data.data, status: true };
+    } catch (error) {
+        throw toServiceError(error);
+    }
+};
+
+export const postCancelParticipant = async (eventId: string, participantId: string): Promise<ServiceResponse<{ summary: ParticipantSummary }>> => {
+    try {
+        const { data } = await axiosClient.post<ApiEnvelope<{ summary: ParticipantSummary }>>(
+            `/admin/events/${eventId}/participants/${participantId}/cancel`,
+        );
         return { data: data.data, status: true };
     } catch (error) {
         throw toServiceError(error);

@@ -52,6 +52,7 @@ export interface EventDetail extends EventListItem {
         canPublish: boolean;
         canCancel: boolean;
         canClose: boolean;
+        canDelete: boolean;
         canAddParticipants: boolean;
         canMarkAttendance: boolean;
     };
