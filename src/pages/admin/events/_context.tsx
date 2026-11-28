@@ -1,9 +1,9 @@
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { toast } from '@/components/ui/toast';
-import { getEventOptions, getEvents, getEventsExport } from '@/services/event';
+import { deleteEvent, getEventOptions, getEvents, getEventsExport } from '@/services/event';
 import type { LoadFailure } from '@/types/api';
-import type { EventList, EventListQuery, EventOptions, EventSortBy, EventSortDirection } from '@/types/event';
+import type { EventList, EventListItem, EventListQuery, EventOptions, EventSortBy, EventSortDirection } from '@/types/event';
 import { errorMessage, toLoadFailure } from '@/utils/error';
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -35,6 +35,12 @@ interface PageContextValue {
     isLoading: boolean;
     isExporting: boolean;
     exportError: string | null;
+    draftToDelete: EventListItem | null;
+    isDeleting: boolean;
+    deleteError: string | null;
+    openDeleteDraft: (event: EventListItem) => void;
+    closeDeleteDraft: () => void;
+    deleteDraft: () => Promise<void>;
     setSearchText: (value: string) => void;
     applyFilters: (values: EventFilterValues) => void;
     resetFilters: () => void;
@@ -57,6 +63,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [failure, setFailure] = useState<LoadFailure | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [reloadToken, setReloadToken] = useState(0);
+    const [draftToDelete, setDraftToDelete] = useState<EventListItem | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
     const latestRequest = useRef(0);
 
     useEffect(() => {
@@ -138,6 +147,36 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         }
     }, [query]);
 
+    const openDeleteDraft = useCallback((event: EventListItem) => {
+        setDeleteError(null);
+        setDraftToDelete(event);
+    }, []);
+
+    const closeDeleteDraft = useCallback(() => {
+        setDraftToDelete(null);
+        setDeleteError(null);
+    }, []);
+
+    const deleteDraft = useCallback(async () => {
+        if (!draftToDelete || isDeleting) return;
+        setIsDeleting(true);
+        setDeleteError(null);
+        try {
+            await deleteEvent(draftToDelete.id);
+            toast.add({ type: 'success', title: 'Draf kegiatan dihapus.' });
+            setDraftToDelete(null);
+            if (list?.items.length === 1 && query.page > 1) {
+                setQuery((current) => ({ ...current, page: current.page - 1 }));
+            } else {
+                setReloadToken((token) => token + 1);
+            }
+        } catch (error) {
+            setDeleteError(errorMessage(error));
+        } finally {
+            setIsDeleting(false);
+        }
+    }, [draftToDelete, isDeleting, list, query.page]);
+
     const value = useMemo<PageContextValue>(
         () => ({
             query,
@@ -149,6 +188,12 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             isLoading,
             isExporting,
             exportError,
+            draftToDelete,
+            isDeleting,
+            deleteError,
+            openDeleteDraft,
+            closeDeleteDraft,
+            deleteDraft,
             setSearchText: setSearchTextState,
             applyFilters,
             resetFilters,
@@ -158,7 +203,26 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
             reload: () => setReloadToken((token) => token + 1),
             exportEvents,
         }),
-        [query, searchText, options, list, failure, isLoading, isExporting, exportError, applyFilters, resetFilters, setSort, exportEvents],
+        [
+            query,
+            searchText,
+            options,
+            list,
+            failure,
+            isLoading,
+            isExporting,
+            exportError,
+            draftToDelete,
+            isDeleting,
+            deleteError,
+            openDeleteDraft,
+            closeDeleteDraft,
+            deleteDraft,
+            applyFilters,
+            resetFilters,
+            setSort,
+            exportEvents,
+        ],
     );
 
     return <PageContext.Provider value={value}>{children}</PageContext.Provider>;
