@@ -3,7 +3,7 @@ import { createContext, type PropsWithChildren, useContext, useEffect, useState 
 
 import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/constants/route';
-import { getEvent, getEventOptions, postCancelEvent, postDuplicateEvent } from '@/services/event';
+import { deleteEvent, getEvent, getEventOptions, postCancelEvent, postDuplicateEvent } from '@/services/event';
 import type { LoadFailure } from '@/types/api';
 import type { EventDetail, EventOptions } from '@/types/event';
 import { copyToClipboard } from '@/utils/clipboard';
@@ -22,6 +22,11 @@ interface PageContextValue {
     isCancelling: boolean;
     cancelError: string | null;
     isDuplicating: boolean;
+    isDeleteDialogOpen: boolean;
+    isDeleting: boolean;
+    deleteError: string | null;
+    setDeleteDialogOpen: (open: boolean) => void;
+    deleteDraft: () => Promise<void>;
     setCancelDialogOpen: (open: boolean) => void;
     cancelReason: string;
     setCancelReason: (reason: string) => void;
@@ -46,6 +51,9 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
     const [cancelError, setCancelError] = useState<string | null>(null);
     const [cancelReason, setCancelReason] = useState('');
     const [isDuplicating, setIsDuplicating] = useState(false);
+    const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
     const [reloadToken, setReloadToken] = useState(0);
 
     useEffect(() => {
@@ -126,6 +134,23 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         }
     };
 
+    const deleteDraft = async () => {
+        if (!eventId) return;
+
+        setIsDeleting(true);
+        setDeleteError(null);
+
+        try {
+            await deleteEvent(eventId);
+            toast.add({ type: 'success', title: 'Draf kegiatan dihapus.' });
+            void navigate({ to: ROUTES.events });
+        } catch (error) {
+            setDeleteError(errorMessage(error));
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const value: PageContextValue = {
         event,
         options,
@@ -136,6 +161,14 @@ export const PageContextProvider = ({ children }: PropsWithChildren) => {
         isCancelling,
         cancelError,
         isDuplicating,
+        isDeleteDialogOpen,
+        isDeleting,
+        deleteError,
+        setDeleteDialogOpen: (open) => {
+            setDeleteError(null);
+            setDeleteDialogOpen(open);
+        },
+        deleteDraft,
         setCancelDialogOpen: (open) => {
             setCancelError(null);
             if (!open) setCancelReason('');

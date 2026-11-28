@@ -6,7 +6,7 @@ export const publicEventUrl = (slug: string): string => `${PUBLIC_WEB_URL || '[d
 
 // Plain text the admin can paste into WhatsApp or social media.
 export const buildAnnouncement = (event: EventDetail): string => {
-    const lines = [event.title];
+    const lines = ['Buibu Baca Buku (BBB) Book Club', event.title];
 
     if (event.startsAt) lines.push(formatEventRange(event.startsAt, event.endsAt, event.timezone));
 

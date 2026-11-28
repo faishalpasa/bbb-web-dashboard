@@ -17,6 +17,7 @@ Status: **di MySQL (langkah 13)**. Diimplementasi di `bbb-api` dan dipakai `web-
 | `POST` | `/api/admin/events` | `EventInput` -> `EventDetail` (`201`) |
 | `GET` | `/api/admin/events/{id}` | `EventDetail` (`404` bila tidak ada) |
 | `PUT` | `/api/admin/events/{id}` | `EventInput` -> `EventDetail` |
+| `DELETE` | `/api/admin/events/{id}` | -> `204`; menghapus draf dengan soft delete (`404` bila tidak ada atau sudah dihapus; `422` bila bukan `draft`); izin `event-delete`; dicatat di log audit |
 | `POST` | `/api/admin/events/{id}/duplicate` | -> `EventDetail` draf baru (`201`) |
 | `POST` | `/api/admin/events/{id}/cancel` | body opsional `{ reason?: string }` (teks biasa, di-trim, maks. 500 karakter; kosong = tanpa alasan; `422` untuk `reason` yang bukan teks atau terlalu panjang). -> `EventDetail`; `422` bila bukan `published`. Setelah commit, setiap pendaftar yang masih `registered` (member dan tamu) diantrekan email pembatalan yang memuat alasan bila ada; status pendaftaran tidak diubah. Alasan juga masuk ke log audit (dipotong 100 karakter) |
 | `POST` | `/api/admin/events/{id}/close` | -> `EventDetail`; `422` bila bukan `published` |
@@ -44,6 +45,7 @@ Semua parameter opsional; nilai yang tidak dikenal (atau bukan teks biasa) diaba
 - Draf boleh tidak lengkap (hanya judul, format, zona waktu, dan flag kuota/non-member wajib).
 - Menerbitkan (`publish: true`) dan mengedit kegiatan yang sudah dipublikasikan memakai aturan penuh: `startsAt` dan `endsAt` wajib dan `endsAt` setelah `startsAt`; `endsAt` harus di masa depan saat draf diterbitkan (`startsAt` boleh sudah lewat, misalnya kegiatan yang sedang berlangsung); offline butuh `venueName` dan `address`; online butuh `mapUrl` (link meeting); kuota aktif butuh `capacity`, dan `capacity` tidak boleh di bawah jumlah terdaftar.
 - Kegiatan `completed` dan `cancelled` tidak bisa diedit (`422`).
+- Hanya draf yang bisa dihapus (`DELETE`, izin `event-delete`), dengan soft delete: baris tetap di database, sehingga `slug` dan banner-nya tidak dipakai ulang, tetapi kegiatan hilang dari daftar admin, ringkasan, dan semua halaman member/publik (`404`). Kegiatan yang sudah dipublikasikan tidak dihapus, melainkan dibatalkan. `actions.canDelete` hanya `true` untuk draf. Migrasi `event-delete` memberikan izin ke superadmin dan peran yang sudah punya `event-update`.
 - Pengingat H-1: `php artisan events:send-reminders` (dijadwalkan tiap lima menit) mengantrekan satu email per pendaftar `registered` pada kegiatan `published` yang berlangsung besok (mulai 09.00 zona waktu kegiatan), satu kali per kegiatan (`events.reminder_sent_at`, internal, tidak ada di payload). Mengubah `startsAt` mengosongkan penanda itu.
 - Pengingat kegiatan online: `events:send-hour-reminders` berjalan tiap menit dalam satu jam sebelum mulai, kepada pendaftar berstatus `registered`, sekali per jadwal. Perubahan waktu mulai mereset penanda pengiriman.
 - `POST /api/admin/events/{eventId}/participants/{participantId}/cancel` membutuhkan permission `event-participant-cancel`. Pendaftaran berstatus terdaftar pada kegiatan yang dipublikasikan dapat dibatalkan, termasuk sesudah mulai. Peserta menerima email, kuota dilepas, dan tindakan dicatat di log. Response `{ "data": { "summary": ... } }`.
@@ -89,7 +91,7 @@ interface EventDetail extends EventListItem {
     publicPath: string; // "/e/{slug}"
     present: number;
     registration: { closesAt: string | null; adminAddUntil: string | null };
-    actions: { canEdit; canPublish; canCancel; canClose; canAddParticipants; canMarkAttendance: boolean };
+    actions: { canEdit; canPublish; canCancel; canClose; canDelete; canAddParticipants; canMarkAttendance: boolean };
 }
 
 interface EventInput {

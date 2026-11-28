@@ -15,6 +15,7 @@ export const PERMISSIONS = {
     EVENT_EXPORT: 'event-export',
     EVENT_UPDATE: 'event-update',
     EVENT_PUBLISH: 'event-publish',
+    EVENT_DELETE: 'event-delete',
     EVENT_DUPLICATE: 'event-duplicate',
     EVENT_CANCEL: 'event-cancel',
     EVENT_CLOSE: 'event-close',

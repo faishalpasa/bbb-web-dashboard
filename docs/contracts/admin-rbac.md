@@ -36,6 +36,7 @@ Semua route di bawah berawalan `/api/admin`. Aksi memerlukan view modul terkait 
 | event-create | POST /events (draft) |
 | event-update | PUT /events/{id} |
 | event-publish | Tambahan untuk POST publish=true atau transisi draft menjadi published pada PUT |
+| event-delete | DELETE /events/{id} (hanya draf, soft delete; butuh event-view) |
 | event-duplicate | POST /events/{id}/duplicate; juga membutuhkan event-create |
 | event-cancel | POST /events/{id}/cancel |
 | event-close | POST /events/{id}/close |
